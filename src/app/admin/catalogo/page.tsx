@@ -26,10 +26,13 @@ export default async function AdminCatalogPage({
       : products.filter((product) => product.category === active);
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4">
+    <div className="min-w-0">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-3xl">Catalogo</h2>
-        <Link href="/admin/catalogo/nuovo" className="rounded-full bg-ivory px-5 py-2 text-sm text-ink">
+        <Link
+          href="/admin/catalogo/nuovo"
+          className="shrink-0 rounded-full bg-ivory px-4 py-2 text-sm text-ink sm:px-5"
+        >
           Nuovo capo
         </Link>
       </div>
@@ -52,7 +55,7 @@ export default async function AdminCatalogPage({
               scroll={false}
               role="tab"
               aria-selected={selected}
-              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+              className={`rounded-full border px-3 py-2 text-sm transition-colors sm:px-4 ${
                 selected
                   ? "border-halo bg-halo/10 text-halo-bright"
                   : "border-ink-line text-ivory-dim hover:border-halo/60 hover:text-ivory"
@@ -79,16 +82,19 @@ export default async function AdminCatalogPage({
         <ul className="mt-6 divide-y divide-ink-line border-y border-ink-line">
           {visible.map((product) => {
             const tipo = labelFromCategoryId(product.category, storeCategories);
+            const meta = [
+              tipo,
+              formatPrice(product.price),
+              `${product.stock} pz`,
+              product.published === false ? "nascosto" : "pubblico",
+            ];
             return (
-              <li
-                key={product.uuid ?? product.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-4"
-              >
+              <li key={product.uuid ?? product.id} className="grid gap-4 py-5 sm:flex sm:items-center sm:justify-between sm:gap-4">
                 <Link
                   href={`/admin/catalogo/${product.uuid}`}
-                  className="flex min-w-0 flex-1 items-center gap-4"
+                  className="flex min-w-0 items-center gap-3 sm:flex-1 sm:gap-4"
                 >
-                  <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-ink-soft">
+                  <span className="relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-ink-soft sm:h-20 sm:w-16">
                     {product.gallery && product.gallery.length > 0 ? (
                       <Image
                         src={product.image}
@@ -100,27 +106,39 @@ export default async function AdminCatalogPage({
                     ) : null}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-display text-2xl">{product.name}</p>
-                    <p className="text-sm text-ivory-dim">
-                      {tipo} · {formatPrice(product.price)} · {product.stock} pz in tutto ·{" "}
-                      {product.published === false ? "nascosto" : "pubblico"}
+                    <p className="truncate font-display text-xl leading-none sm:text-2xl">
+                      {product.name}
                     </p>
+                    <ul className="mt-2 flex flex-wrap gap-1.5">
+                      {meta.map((item) => (
+                        <li
+                          key={item}
+                          className="rounded-full border border-ink-line px-2 py-0.5 text-[11px] text-ivory-dim sm:text-xs"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </Link>
-                <div className="flex gap-2">
+                <div className="flex gap-2 sm:shrink-0">
                   <form
+                    className="min-w-0 flex-1 sm:flex-none"
                     action={async () => {
                       "use server";
                       await togglePublishedAction(product.uuid ?? "", !(product.published ?? true));
                     }}
                   >
-                    <button type="submit" className="rounded-full border border-ink-line px-4 py-2 text-sm">
+                    <button
+                      type="submit"
+                      className="w-full rounded-full border border-ink-line px-3 py-2 text-xs sm:w-auto sm:px-4 sm:text-sm"
+                    >
                       {product.published === false ? "Pubblica" : "Nascondi"}
                     </button>
                   </form>
                   <Link
                     href={`/admin/catalogo/${product.uuid}`}
-                    className="rounded-full border border-ink-line px-4 py-2 text-sm"
+                    className="min-w-0 flex-1 rounded-full border border-ink-line px-3 py-2 text-center text-xs sm:flex-none sm:px-4 sm:text-sm"
                   >
                     Modifica
                   </Link>
