@@ -305,7 +305,12 @@ export async function updateOrderAction(formData: FormData) {
   }
 
   revalidatePath("/admin/ordini");
-  redirect(`/admin/ordini/${id}`);
+  revalidatePath(`/admin/ordini/${id}`);
+  const query = new URLSearchParams({ ok: "1", stato: status });
+  if (status === "ready_for_pickup" || status === "shipped") {
+    query.set("mail", "1");
+  }
+  redirect(`/admin/ordini/${id}?${query.toString()}`);
 }
 
 export async function saveSettingsAction(formData: FormData) {

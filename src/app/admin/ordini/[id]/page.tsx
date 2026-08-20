@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/products";
 import { nextStatuses, orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orders";
 import { updateOrderAction } from "@/app/admin/actions";
 import { OrderStatusSelect } from "@/components/order-status-select";
+import { OrderUpdatedNotice, UpdateOrderButton } from "@/components/update-order-feedback";
 
 type OrderItem = {
   id: string;
@@ -18,10 +19,13 @@ type OrderItem = {
 
 export default async function AdminOrderDetail({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ok?: string; stato?: string; mail?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const admin = createAdminClient();
   const { data: order } = await admin
     .from("halo_orders")
@@ -35,6 +39,13 @@ export default async function AdminOrderDetail({
 
   return (
     <div className="max-w-2xl">
+      {query.ok === "1" && query.stato ? (
+        <OrderUpdatedNotice
+          status={query.stato as OrderStatus}
+          mailed={query.mail === "1"}
+        />
+      ) : null}
+
       <h2 className="font-display text-4xl">Ordine #{order.id.slice(0, 8)}</h2>
       <p className="mt-2 text-ivory-dim">
         {order.halo_customers?.email} · {order.fulfillment === "pickup" ? "Ritiro" : "Spedizione"} ·{" "}
@@ -113,9 +124,7 @@ export default async function AdminOrderDetail({
             />
           </>
         )}
-        <button type="submit" className="rounded-full bg-ivory py-3 text-sm font-medium text-ink">
-          Aggiorna ordine
-        </button>
+        <UpdateOrderButton />
       </form>
     </div>
   );
