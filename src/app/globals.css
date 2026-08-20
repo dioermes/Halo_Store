@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #0a0a0b;
-  --color-ink-soft: #121215;
-  --color-ink-line: #26262b;
-  --color-ivory: #f5f3ef;
-  --color-ivory-dim: #a5a29b;
-  --color-halo: #c9a96a;
-  --color-halo-bright: #e6cd9a;
+  /* Vintage Wine 4975 C · Sage Green 16-1124 TCX */
+  --color-ink: #3f1521;
+  --color-ink-soft: #4c1c28;
+  --color-ink-line: #6b3a45;
+  --color-ivory: #f4f2ee;
+  --color-ivory-dim: #9aa392;
+  --color-halo: #a2b29f;
+  --color-halo-bright: #c4d1c0;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;

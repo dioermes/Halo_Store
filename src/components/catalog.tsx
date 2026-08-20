@@ -5,10 +5,18 @@ import { AnimatePresence, motion } from "motion/react";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
 import { ProductDialog } from "@/components/product-dialog";
-import { categories, products, type CategoryId, type Product } from "@/lib/products";
+import { type Product, type StoreCategory } from "@/lib/products";
+import { catalogFilters } from "@/lib/categories";
 
-export function Catalog() {
-  const [active, setActive] = useState<CategoryId | "tutti">("tutti");
+export function Catalog({
+  products,
+  categories,
+}: {
+  products: Product[];
+  categories: StoreCategory[];
+}) {
+  const filters = catalogFilters(categories, products.length);
+  const [active, setActive] = useState("tutti");
   const [selected, setSelected] = useState<Product | null>(null);
 
   const visible = useMemo(
@@ -16,7 +24,7 @@ export function Catalog() {
       active === "tutti"
         ? products
         : products.filter((product) => product.category === active),
-    [active],
+    [active, products],
   );
 
   return (
@@ -43,14 +51,15 @@ export function Catalog() {
           </div>
           <Reveal delay={0.2} className="max-w-sm">
             <p className="leading-relaxed text-ivory-dim">
-              Metti da parte i capi che ti interessano: te li teniamo pronti in
-              camerino per 48 ore, senza impegno e senza pagare nulla adesso.
+              Scegli taglia e colore e metti nel carrello. Ritiro in negozio a
+              Conversano: prenoti e paghi in cassa. Spedizione in Italia: paghi
+              sul sito.
             </p>
           </Reveal>
         </div>
 
         <div className="mt-14 flex flex-wrap gap-2" role="tablist" aria-label="Categorie del catalogo">
-          {categories.map((category) => {
+          {filters.map((category) => {
             const isActive = active === category.id;
             return (
               <button
@@ -81,7 +90,7 @@ export function Catalog() {
           {active !== "tutti" && (
             <>
               {" · "}
-              {categories.find((category) => category.id === active)?.hint}
+              {filters.find((category) => category.id === active)?.hint}
             </>
           )}
         </p>

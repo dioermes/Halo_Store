@@ -8,9 +8,12 @@ import {
   formatPrice,
   getColorLook,
   getGallery,
+  findVariant,
+  productImageForColor,
+  variantAvailable,
   type Product,
 } from "@/lib/products";
-import { useReservation } from "@/components/reservation-provider";
+import { useCart } from "@/components/reservation-provider";
 import { ProductGallery } from "@/components/product-gallery";
 
 const FOCUSABLE =
@@ -27,11 +30,12 @@ export function ProductDialog({
   const closeRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
-  const { add, has, openBag } = useReservation();
+  const { add, has, openBag } = useCart();
   const [size, setSize] = useState<string | null>(null);
   const [color, setColor] = useState<string>("");
   const [justAdded, setJustAdded] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [alertSent, setAlertSent] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -39,7 +43,18 @@ export function ProductDialog({
     setColor(product.colors[0] ?? "");
     setJustAdded(false);
     setGalleryOpen(false);
+    setAlertSent(false);
   }, [product]);
+
+  useEffect(() => {
+    if (!product) return;
+    const closeOverlays = () => {
+      setGalleryOpen(false);
+      onClose();
+    };
+    window.addEventListener("hashchange", closeOverlays);
+    return () => window.removeEventListener("hashchange", closeOverlays);
+  }, [product, onClose]);
 
   useEffect(() => {
     if (!product) return;
@@ -84,15 +99,20 @@ export function ProductDialog({
   }, [product, onClose, galleryOpen]);
 
   const needsSize = Boolean(product && product.sizes.length > 1 && !size);
-  const alreadyReserved = Boolean(
+  const available = product && size ? variantAvailable(product, size, color) : 0;
+  const soldOut = Boolean(product && size && available <= 0);
+  const alreadyInCart = Boolean(
     product && size && has({ productId: product.id, size, color }),
   );
   const look = getColorLook(color);
-  const shots = product ? getGallery(product) : [];
+  const shots = product ? getGallery(product, color) : [];
+  const variant = product && size ? findVariant(product, size, color) : undefined;
+  const colorPhoto = product ? productImageForColor(product, color) : "";
+  const hasColorPhoto = Boolean(product?.colorImages?.[color]);
 
-  const handleReserve = () => {
-    if (!product || !size) return;
-    add({ productId: product.id, size, color });
+  const handleAdd = () => {
+    if (!product || !size || soldOut) return;
+    add({ productId: product.id, variantId: variant?.id, size, color });
     setJustAdded(true);
   };
 
@@ -100,7 +120,7 @@ export function ProductDialog({
     <AnimatePresence>
       {product && (
         <div
-          className="fixed inset-0 z-[70] flex items-stretch justify-center md:items-center md:p-5 lg:p-8"
+          className="fixed inset-0 z-[120] flex items-stretch justify-center md:items-center md:p-5 lg:p-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="dettaglio-capo-titolo"
@@ -125,8 +145,7 @@ export function ProductDialog({
             className="relative flex h-dvh w-full flex-col overflow-hidden bg-ink-soft md:h-[min(900px,92dvh)] md:max-w-6xl md:rounded-3xl md:border md:border-ink-line lg:flex-row"
           >
             <div className="relative h-[46dvh] min-h-[240px] shrink-0 lg:h-auto lg:min-h-0 lg:w-[48%]">
-              <motion.div
-                layoutId={`media-${product.id}`}
+              <div
                 className="absolute inset-0 cursor-zoom-in"
                 onClick={() => setGalleryOpen(true)}
                 role="button"
@@ -140,15 +159,15 @@ export function ProductDialog({
                 aria-label="Espandi la foto e vedi le alternative"
               >
                 <Image
-                  src={product.image}
-                  alt={`${product.name}, ${product.subtitle}`}
+                  src={colorPhoto}
+                  alt={`${product.name}, ${product.subtitle}${color ? `, ${color}` : ""}`}
                   fill
                   sizes="(max-width: 1024px) 100vw, 48vw"
                   className="object-cover"
-                  style={look.filter ? { filter: look.filter } : undefined}
+                  style={!hasColorPhoto && look.filter ? { filter: look.filter } : undefined}
                   priority
                 />
-              </motion.div>
+              </div>
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-soft via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-ink-soft" />
 
               <div className="absolute inset-x-4 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex items-center justify-between">
@@ -228,8 +247,11 @@ export function ProductDialog({
                           setJustAdded(false);
                         }}
                         aria-pressed={size === option}
+                        disabled={variantAvailable(product, option, color) <= 0}
                         className={`min-w-14 rounded-full border px-4 py-2 text-sm transition-colors ${
-                          size === option
+                          variantAvailable(product, option, color) <= 0
+                            ? "cursor-not-allowed border-ink-line text-ivory-dim/40 line-through"
+                            : size === option
                             ? "border-halo bg-halo/15 text-halo-bright"
                             : "border-ink-line text-ivory-dim hover:border-ivory/40 hover:text-ivory"
                         }`}
@@ -290,34 +312,59 @@ export function ProductDialog({
                 </dl>
 
                 <p className="mt-5 text-sm text-ivory-dim">
-                  {product.stock <= 1
-                    ? "Ne è rimasto uno solo in negozio."
-                    : `Disponibili ${product.stock} pezzi in negozio.`}
+                  {!size
+                    ? "Scegli taglia e colore per vedere la disponibilità."
+                    : soldOut
+                      ? "Questa taglia e colore non sono disponibili."
+                      : available <= 1
+                        ? "Ne è rimasto uno solo."
+                        : `Disponibili ${available} pezzi.`}
                 </p>
               </div>
 
               <div className="border-t border-ink-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8">
                 <button
                   type="button"
-                  onClick={handleReserve}
-                  disabled={needsSize || alreadyReserved}
+                  onClick={handleAdd}
+                  disabled={needsSize || soldOut}
                   className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-medium transition-all duration-300 ${
-                    alreadyReserved
-                      ? "cursor-default border border-halo/50 bg-halo/10 text-halo-bright"
-                      : needsSize
-                        ? "cursor-not-allowed border border-ink-line text-ivory-dim"
-                        : "bg-ivory text-ink hover:scale-[1.02]"
+                    soldOut
+                      ? "cursor-not-allowed border border-ink-line text-ivory-dim"
+                      : alreadyInCart
+                        ? "border border-halo/50 bg-halo/10 text-halo-bright hover:scale-[1.02]"
+                        : needsSize
+                          ? "cursor-not-allowed border border-ink-line text-ivory-dim"
+                          : "bg-ivory text-ink hover:scale-[1.02]"
                   }`}
                 >
-                  {alreadyReserved ? (
+                  {soldOut ? (
+                    "Non disponibile"
+                  ) : alreadyInCart ? (
                     <>
                       <Check className="h-4 w-4" aria-hidden />
-                      Già nella tua lista
+                      Aggiungi un altro
                     </>
                   ) : (
-                    "Tienimelo da parte"
+                    "Aggiungi al carrello"
                   )}
                 </button>
+
+                {soldOut && variant?.id && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await fetch("/api/stock-alert", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ variantId: variant.id }),
+                      });
+                      setAlertSent(true);
+                    }}
+                    className="mt-3 w-full rounded-full border border-ink-line px-6 py-4 text-sm"
+                  >
+                    {alertSent ? "Ti avvisiamo noi" : "Avvisami quando torna"}
+                  </button>
+                )}
 
                 <AnimatePresence>
                   {justAdded && (
@@ -332,14 +379,15 @@ export function ProductDialog({
                       }}
                       className="mt-3 w-full rounded-full border border-ink-line px-6 py-4 text-sm text-ivory transition-colors hover:border-halo/60 hover:text-halo-bright"
                     >
-                      Vai alle prenotazioni
+                      Vai al carrello
                     </motion.button>
                   )}
                 </AnimatePresence>
 
                 <p className="mt-3 text-center text-xs leading-relaxed text-ivory-dim">
-                  Prenotare non costa nulla e non impegna: passi in negozio, provi
-                  il capo e decidi con calma.
+                  Ritiro in negozio: prenoti e paghi in cassa. Spedizione:
+                  paghi sul sito. Le scorte si prenotano alla conferma, non
+                  prima.
                 </p>
               </div>
             </div>

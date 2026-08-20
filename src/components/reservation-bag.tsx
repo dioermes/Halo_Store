@@ -1,40 +1,36 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Show, SignInButton } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Copy, ShoppingBag, Trash2, X } from "lucide-react";
-import { useReservation } from "@/components/reservation-provider";
-import { formatPrice, getProduct } from "@/lib/products";
-import { getUpcomingOpenDays } from "@/lib/opening-hours";
-import { storeConfig } from "@/lib/store-config";
-import { buildReservationMessage, buildWhatsappUrl } from "@/lib/whatsapp";
+import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { useCart } from "@/components/reservation-provider";
+import { formatPrice, productImageForColor } from "@/lib/products";
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export function ReservationBag() {
-  const { items, count, total, isOpen, openBag, closeBag, remove, clear } =
-    useReservation();
+  const {
+    items,
+    count,
+    total,
+    isOpen,
+    openBag,
+    closeBag,
+    remove,
+    setQuantity,
+    clear,
+    productById,
+  } = useCart();
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [day, setDay] = useState("");
-  const [note, setNote] = useState("");
-  const [touched, setTouched] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const openDays = useMemo(() => getUpcomingOpenDays(6), []);
-
-  useEffect(() => {
-    if (!day && openDays.length > 0) setDay(openDays[0].value);
-  }, [day, openDays]);
+  const router = useRouter();
 
   useEffect(() => {
     if (!isOpen) return;
-
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
     window.setTimeout(() => closeRef.current?.focus(), 60);
@@ -66,23 +62,9 @@ export function ReservationBag() {
     };
   }, [isOpen, closeBag]);
 
-  const nameIsValid = name.trim().length >= 2;
-  const message = buildReservationMessage(items, { name, phone, day, note });
-
-  const handleSend = () => {
-    setTouched(true);
-    if (!nameIsValid || count === 0) return;
-    window.open(buildWhatsappUrl(message), "_blank", "noopener,noreferrer");
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(message);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2500);
-    } catch {
-      setCopied(false);
-    }
+  const goCheckout = () => {
+    closeBag();
+    router.push("/checkout");
   };
 
   return (
@@ -101,12 +83,10 @@ export function ReservationBag() {
             <span className="flex items-center gap-3">
               <ShoppingBag className="h-4 w-4 text-halo" aria-hidden />
               <span className="text-sm">
-                {count} {count === 1 ? "capo" : "capi"} da parte
+                {count} {count === 1 ? "capo" : "capi"} nel carrello
               </span>
             </span>
-            <span className="text-sm text-halo-bright">
-              {formatPrice(total)}
-            </span>
+            <span className="text-sm text-halo-bright">{formatPrice(total)}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -117,7 +97,7 @@ export function ReservationBag() {
             className="fixed inset-0 z-[80] flex justify-end"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="prenotazioni-titolo"
+            aria-labelledby="carrello-titolo"
           >
             <motion.button
               type="button"
@@ -126,7 +106,7 @@ export function ReservationBag() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               onClick={closeBag}
-              aria-label="Chiudi le prenotazioni"
+              aria-label="Chiudi il carrello"
               className="absolute inset-0 cursor-default bg-ink/80 backdrop-blur-md"
             />
 
@@ -140,11 +120,8 @@ export function ReservationBag() {
             >
               <div className="flex items-center justify-between border-b border-ink-line px-6 py-5">
                 <div>
-                  <h2
-                    id="prenotazioni-titolo"
-                    className="font-display text-3xl leading-none"
-                  >
-                    Da parte per te
+                  <h2 id="carrello-titolo" className="font-display text-3xl leading-none">
+                    Il tuo carrello
                   </h2>
                   <p className="mt-2 text-sm text-ivory-dim">
                     {count === 0
@@ -170,8 +147,8 @@ export function ReservationBag() {
                       <ShoppingBag className="h-6 w-6 text-ivory-dim" aria-hidden />
                     </span>
                     <p className="mt-6 max-w-xs leading-relaxed text-ivory-dim">
-                      Scegli i capi dal catalogo e li teniamo pronti in camerino
-                      fino al tuo arrivo.
+                      Scegli i capi dal catalogo: li paghi qui e li ritiri in negozio
+                      oppure te li spediamo in Italia.
                     </p>
                     <button
                       type="button"
@@ -186,7 +163,7 @@ export function ReservationBag() {
                     <ul className="space-y-4">
                       <AnimatePresence initial={false}>
                         {items.map((item) => {
-                          const product = getProduct(item.productId);
+                          const product = productById(item.productId);
                           if (!product) return null;
                           return (
                             <motion.li
@@ -199,7 +176,7 @@ export function ReservationBag() {
                             >
                               <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-line">
                                 <Image
-                                  src={product.image}
+                                  src={productImageForColor(product, item.color)}
                                   alt=""
                                   fill
                                   sizes="80px"
@@ -215,14 +192,33 @@ export function ReservationBag() {
                                   {item.color ? ` · ${item.color}` : ""}
                                 </p>
                                 <p className="mt-1.5 text-sm text-halo-bright">
-                                  {formatPrice(product.price)}
+                                  {formatPrice(product.price * item.quantity)}
                                 </p>
+                                <div className="mt-2 flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className="flex h-7 w-7 items-center justify-center rounded-full border border-ink-line"
+                                    onClick={() => setQuantity(item, item.quantity - 1)}
+                                    aria-label="Diminuisci quantità"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </button>
+                                  <span className="w-6 text-center text-sm">{item.quantity}</span>
+                                  <button
+                                    type="button"
+                                    className="flex h-7 w-7 items-center justify-center rounded-full border border-ink-line"
+                                    onClick={() => setQuantity(item, item.quantity + 1)}
+                                    aria-label="Aumenta quantità"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => remove(item)}
                                 className="self-start rounded-full p-2 text-ivory-dim transition-colors hover:text-ivory"
-                                aria-label={`Togli ${product.name} taglia ${item.size} dalla lista`}
+                                aria-label={`Togli ${product.name} dal carrello`}
                               >
                                 <Trash2 className="h-4 w-4" aria-hidden />
                               </button>
@@ -231,146 +227,40 @@ export function ReservationBag() {
                         })}
                       </AnimatePresence>
                     </ul>
-
                     <button
                       type="button"
                       onClick={clear}
                       className="mt-5 text-xs text-ivory-dim underline underline-offset-4 transition-colors hover:text-ivory"
                     >
-                      Svuota la lista
+                      Svuota il carrello
                     </button>
-
-                    <div className="mt-8 space-y-4 border-t border-ink-line pt-8">
-                      <div>
-                        <label
-                          htmlFor="prenotazione-nome"
-                          className="text-xs uppercase tracking-[0.2em] text-ivory-dim"
-                        >
-                          Il tuo nome
-                        </label>
-                        <input
-                          id="prenotazione-nome"
-                          value={name}
-                          onChange={(event) => setName(event.target.value)}
-                          onBlur={() => setTouched(true)}
-                          placeholder="Come ti chiamiamo quando arrivi"
-                          className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm text-ivory outline-none transition-colors placeholder:text-ivory-dim/50 focus:border-halo/60"
-                          aria-invalid={touched && !nameIsValid}
-                          aria-describedby="prenotazione-nome-errore"
-                        />
-                        {touched && !nameIsValid && (
-                          <p
-                            id="prenotazione-nome-errore"
-                            className="mt-2 text-xs text-halo"
-                          >
-                            Scrivi almeno il nome, così sappiamo per chi tenere i capi.
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="prenotazione-telefono"
-                          className="text-xs uppercase tracking-[0.2em] text-ivory-dim"
-                        >
-                          Telefono (facoltativo)
-                        </label>
-                        <input
-                          id="prenotazione-telefono"
-                          value={phone}
-                          onChange={(event) => setPhone(event.target.value)}
-                          inputMode="tel"
-                          placeholder="Se preferisci essere richiamato"
-                          className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm text-ivory outline-none transition-colors placeholder:text-ivory-dim/50 focus:border-halo/60"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="prenotazione-giorno"
-                          className="text-xs uppercase tracking-[0.2em] text-ivory-dim"
-                        >
-                          Quando passi
-                        </label>
-                        <select
-                          id="prenotazione-giorno"
-                          value={day}
-                          onChange={(event) => setDay(event.target.value)}
-                          className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm text-ivory outline-none transition-colors focus:border-halo/60"
-                        >
-                          {openDays.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="prenotazione-note"
-                          className="text-xs uppercase tracking-[0.2em] text-ivory-dim"
-                        >
-                          Note (facoltativo)
-                        </label>
-                        <textarea
-                          id="prenotazione-note"
-                          value={note}
-                          onChange={(event) => setNote(event.target.value)}
-                          rows={2}
-                          placeholder="Es. vorrei provarlo anche in una taglia in più"
-                          className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm text-ivory outline-none transition-colors placeholder:text-ivory-dim/50 focus:border-halo/60"
-                        />
-                      </div>
-                    </div>
                   </>
                 )}
               </div>
 
               {count > 0 && (
                 <div className="border-t border-ink-line px-6 py-5">
-                  {!storeConfig.whatsapp.isConfigured && (
-                    <p className="mb-3 rounded-xl border border-halo/30 bg-halo/5 px-4 py-3 text-xs leading-relaxed text-halo-bright">
-                      Il numero del negozio non è ancora collegato al sito:
-                      WhatsApp si aprirà con il riepilogo già scritto e ti
-                      chiederà a chi inviarlo.
-                    </p>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleSend}
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-ivory px-6 py-4 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.02]"
-                  >
-                    {storeConfig.whatsapp.isConfigured
-                      ? "Invia la richiesta su WhatsApp"
-                      : "Apri WhatsApp con il riepilogo"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm transition-colors ${
-                      copied
-                        ? "border-halo/50 text-halo-bright"
-                        : "border-ink-line text-ivory hover:border-halo/60 hover:text-halo-bright"
-                    }`}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4" aria-hidden />
-                        Riepilogo copiato
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" aria-hidden />
-                        Copia il riepilogo
-                      </>
-                    )}
-                  </button>
-
+                  <Show when="signed-in">
+                    <button
+                      type="button"
+                      onClick={goCheckout}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-ivory px-6 py-4 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.02]"
+                    >
+                      Vai alla cassa
+                    </button>
+                  </Show>
+                  <Show when="signed-out">
+                    <SignInButton mode="modal" forceRedirectUrl="/checkout">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center rounded-full bg-ivory px-6 py-4 text-sm font-medium text-ink"
+                      >
+                        Accedi per continuare
+                      </button>
+                    </SignInButton>
+                  </Show>
                   <p className="mt-3 text-center text-xs text-ivory-dim">
-                    Teniamo i capi da parte 48 ore. Nessun pagamento anticipato.
+                    Ritiro: prenoti e paghi in cassa. Spedizione: paghi sul sito.
                   </p>
                 </div>
               )}

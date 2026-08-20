@@ -21,11 +21,12 @@ export function ProductGallery({
   onColorChange: (color: string) => void;
   onClose: () => void;
 }) {
-  const shots = getGallery(product);
+  const shots = getGallery(product, color);
   const [index, setIndex] = useState(0);
   const touchX = useRef<number | null>(null);
   const look = getColorLook(color);
-  const filterOnMain = index === 0 ? look.filter : undefined;
+  const hasColorPhoto = Boolean(product.colorImages?.[color]);
+  const filterOnMain = !hasColorPhoto && index === 0 ? look.filter : undefined;
 
   useEffect(() => {
     setIndex(0);
@@ -73,7 +74,7 @@ export function ProductGallery({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.28 }}
-      className="fixed inset-0 z-[90] flex flex-col bg-ink"
+      className="fixed inset-0 z-[130] flex flex-col bg-ink"
       role="dialog"
       aria-modal="true"
       aria-label={`Foto di ${product.name}`}
@@ -167,7 +168,7 @@ export function ProductGallery({
                   sizes="44px"
                   className="object-cover"
                   style={
-                    shotIndex === 0 && look.filter
+                    shotIndex === 0 && look.filter && !hasColorPhoto
                       ? { filter: look.filter }
                       : undefined
                   }

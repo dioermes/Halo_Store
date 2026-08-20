@@ -1,6 +1,6 @@
 import { formatPrice, getProduct } from "@/lib/products";
 import { storeConfig } from "@/lib/store-config";
-import type { ReservationItem } from "@/components/reservation-provider";
+import type { CartItem } from "@/components/reservation-provider";
 
 export type ReservationDetails = {
   name: string;
@@ -10,7 +10,7 @@ export type ReservationDetails = {
 };
 
 export function buildReservationMessage(
-  items: ReservationItem[],
+  items: CartItem[],
   details: ReservationDetails,
 ) {
   const lines: string[] = [
@@ -42,4 +42,33 @@ export function buildReservationMessage(
 
 export function buildWhatsappUrl(message: string) {
   return `https://wa.me/${storeConfig.whatsapp.number}?text=${encodeURIComponent(message)}`;
+}
+
+export function notifyOwnerNewOrder(order: {
+  id: string;
+  total_cents: number;
+  fulfillment: string;
+  customer_note?: string | null;
+  halo_customers: { email: string; full_name: string | null } | null;
+  halo_order_items: Array<{ product_name: string; size: string; color: string; quantity: number }>;
+}) {
+  const payInStore = order.fulfillment === "pickup";
+  const lines = [
+    payInStore
+      ? `Nuovo ritiro Halo Store (${order.id.slice(0, 8)}) — da incassare in negozio`
+      : `Nuovo ordine Halo Store (${order.id.slice(0, 8)})`,
+    payInStore ? "Ritiro in negozio" : "Spedizione Italia",
+    `${order.halo_customers?.full_name ?? ""} ${order.halo_customers?.email ?? ""}`.trim(),
+    ...order.halo_order_items.map(
+      (item) => `• ${item.product_name} · ${item.size} · ${item.color} × ${item.quantity}`,
+    ),
+    payInStore
+      ? `Da pagare in cassa ${formatPrice(order.total_cents / 100)}`
+      : `Totale ${formatPrice(order.total_cents / 100)}`,
+  ];
+  if (order.customer_note) lines.push(order.customer_note);
+  const message = lines.join("\n");
+  if (storeConfig.whatsapp.isConfigured) {
+    console.info("[owner-whatsapp]", buildWhatsappUrl(message));
+  }
 }

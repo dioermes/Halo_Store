@@ -47,7 +47,10 @@ export const storeConfig = {
     region: "Puglia",
     country: "IT",
   },
-  plusCode: "X488+59 Conversano",
+  phone: {
+    display: "+39 331 987 5979",
+    href: "tel:+393319875979",
+  },
   coordinates: {
     lat: 40.9654381,
     lng: 17.1159334,

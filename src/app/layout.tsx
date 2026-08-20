@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { HaloCursor } from "@/components/halo-cursor";
@@ -7,7 +8,10 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ReservationBag } from "@/components/reservation-bag";
 import { StructuredData } from "@/components/structured-data";
+import { CookieBanner } from "@/components/cookie-banner";
 import { storeConfig, fullAddress } from "@/lib/store-config";
+import { clerkAppearance } from "@/lib/clerk-appearance";
+import { getPublishedProducts } from "@/lib/catalog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +33,7 @@ export const metadata: Metadata = {
     template: "%s · Halo Store Conversano",
   },
   description:
-    "Halo Store, Via Castellana 18A a Conversano. Capi che non trovi ovunque, tessuti di qualità e prezzi onesti. Sfoglia il catalogo e prenota il capo prima di venire in negozio.",
+    "Halo Store, Via Castellana 18A a Conversano. Capi che non trovi ovunque. Catalogo online, ritiro in negozio o spedizione in Italia.",
   keywords: [
     "negozio abbigliamento Conversano",
     "Halo Store Conversano",
@@ -42,39 +46,44 @@ export const metadata: Metadata = {
     locale: "it_IT",
     title: "Halo Store Conversano · Abbigliamento uomo e donna",
     description:
-      "Capi che non trovi ovunque. Sfoglia il catalogo e prenota il tuo capo prima di arrivare in negozio.",
+      "Capi che non trovi ovunque. Acquista online, ritira in negozio o fatti spedire in Italia.",
     siteName: "Halo Store",
     images: [{ url: "/catalogo/amb-interno.jpg", width: 1400, height: 933 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Halo Store Conversano",
-    description: "Capi che non trovi ovunque. Prenota prima di arrivare.",
+    description: "Capi che non trovi ovunque. Acquista online.",
   },
   alternates: { canonical: "/" },
   other: { "geo.placename": fullAddress },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0b",
+  themeColor: "#3f1521",
   colorScheme: "dark",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const products = await getPublishedProducts();
+
   return (
     <html
       lang="it"
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <StructuredData />
-        <ReservationProvider>
-          <HaloCursor />
-          <SiteNav />
-          <main id="top">{children}</main>
-          <SiteFooter />
-          <ReservationBag />
-        </ReservationProvider>
+        <ClerkProvider appearance={clerkAppearance}>
+          <StructuredData />
+          <ReservationProvider products={products}>
+            <HaloCursor />
+            <SiteNav />
+            <main id="top">{children}</main>
+            <SiteFooter />
+            <ReservationBag />
+            <CookieBanner />
+          </ReservationProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

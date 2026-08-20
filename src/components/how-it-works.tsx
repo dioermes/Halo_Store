@@ -2,32 +2,32 @@
 
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { Hand, MessageCircle, Shirt } from "lucide-react";
+import { Hand, Store, Shirt } from "lucide-react";
 import { Reveal, RevealWords } from "@/components/reveal";
-import { useReservation } from "@/components/reservation-provider";
+import { useCart } from "@/components/reservation-provider";
 
 const steps = [
   {
     icon: Hand,
     title: "Scegli i capi",
-    body: "Apri la scheda, seleziona la taglia e tocca Tienimelo da parte. Nessuna registrazione, nessun account.",
+    body: "Apri la scheda, seleziona taglia e colore, aggiungi al carrello. Il catalogo è pubblico: l'account serve per confermare.",
   },
   {
-    icon: MessageCircle,
-    title: "Mandaci la lista",
-    body: "Un messaggio WhatsApp già pronto con capi, taglie e il giorno in cui passi. Tu devi solo premere invio.",
+    icon: Store,
+    title: "Prenota o spedisci",
+    body: "Ritiro in negozio: scegli l'orario e paghi in cassa. Spedizione in Italia: paghi sul sito con i metodi accesi su Stripe.",
   },
   {
     icon: Shirt,
-    title: "Provali con calma",
-    body: "Li trovi pronti in camerino per 48 ore. Se non ti convincono, non hai perso niente.",
+    title: "Ritiro o spedizione",
+    body: "Ti scriviamo quando il capo è pronto in Via Castellana, o quando parte il pacco con il tracking.",
   },
 ];
 
 export function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
-  const { openBag } = useReservation();
+  const { openBag } = useCart();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start 0.8", "center 0.5"],
@@ -43,7 +43,7 @@ export function HowItWorks() {
         <div className="max-w-2xl">
           <Reveal>
             <p className="text-xs uppercase tracking-[0.34em] text-halo">
-              Prenota prima di arrivare
+              Come funziona
             </p>
           </Reveal>
           <h2 className="mt-6 font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
@@ -56,8 +56,9 @@ export function HowItWorks() {
           </h2>
           <Reveal delay={0.2}>
             <p className="mt-8 text-lg leading-relaxed text-ivory-dim">
-              Molti capi arrivano in pochi pezzi per taglia. Mettili da parte in
-              trenta secondi: quando entri sono già lì che ti aspettano.
+              Molti capi arrivano in pochi pezzi per taglia. Mettili nel
+              carrello: per il ritiro te li teniamo da parte, per la spedizione
+              paghi sul sito.
             </p>
           </Reveal>
         </div>
@@ -101,7 +102,7 @@ export function HowItWorks() {
               onClick={openBag}
               className="rounded-full border border-ink-line px-7 py-4 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
             >
-              Apri la mia lista
+              Apri il carrello
             </button>
           </div>
         </Reveal>

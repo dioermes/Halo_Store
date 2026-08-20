@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 
 /**
- * L'alone che da il nome al negozio: una luce calda che segue il puntatore.
+ * L'alone che da il nome al negozio: una luce salvia che segue il puntatore.
  * Disattivato su dispositivi touch e quando l'utente chiede meno animazioni.
  */
 export function HaloCursor() {
@@ -57,7 +57,7 @@ export function HaloCursor() {
           translateX: "-50%",
           translateY: "-50%",
           background:
-            "radial-gradient(circle, rgba(201,169,106,0.16) 0%, rgba(201,169,106,0.06) 38%, transparent 68%)",
+            "radial-gradient(circle, rgba(162,178,159,0.18) 0%, rgba(162,178,159,0.06) 38%, transparent 68%)",
         }}
         animate={{ opacity: visible ? 1 : 0 }}
         transition={{ duration: 0.4 }}

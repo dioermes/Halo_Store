@@ -13,11 +13,17 @@
     "logo": "node scripts/build-logo.mjs assets/logo-halo-originale.png"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.7.9",
+    "@stripe/react-stripe-js": "^6.8.1",
+    "@stripe/stripe-js": "^9.13.0",
+    "@supabase/supabase-js": "^2.112.3",
     "lucide-react": "^1.33.0",
     "motion": "^13.1.0",
     "next": "16.3.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "resend": "^6.20.0",
+    "stripe": "^22.5.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

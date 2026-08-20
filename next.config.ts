@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
      * I JPEG in /public/catalogo sono gia compressi: li serviamo cosi come sono.
      */
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "arxdubgfweajgurymsms.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
   },
 };
 

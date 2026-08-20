@@ -1,4 +1,5 @@
-import { MapPin } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
+import Link from "next/link";
 import { InstagramGlyph } from "@/components/icons";
 import { HaloLogo } from "@/components/halo-logo";
 import { fullAddress, storeConfig } from "@/lib/store-config";
@@ -10,11 +11,10 @@ export function SiteFooter() {
         aria-hidden
         className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[min(900px,90vw)] -translate-x-1/2 rounded-full bg-halo/10 blur-3xl"
       />
-      {/* Il padding extra lascia spazio alla barra prenotazioni fissa su mobile */}
       <div className="relative mx-auto max-w-7xl px-5 pt-16 pb-32 sm:px-8 md:pb-16">
         <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
-                <div className="max-w-sm">
-                  <HaloLogo className="h-16 text-ivory" />
+          <div className="max-w-sm">
+            <HaloLogo className="h-16 text-ivory" />
             <p className="mt-4 text-sm leading-relaxed text-ivory-dim">
               {storeConfig.claim}. Abbigliamento uomo e donna a Conversano,
               scelto capo per capo.
@@ -35,15 +35,17 @@ export function SiteFooter() {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <span>{fullAddress}</span>
               </a>
-              <p className="mt-2 text-sm text-ivory-dim">
-                {storeConfig.plusCode}
-              </p>
+              <a
+                href={storeConfig.phone.href}
+                className="mt-3 flex items-center gap-2 text-sm text-ivory transition-colors hover:text-halo-bright"
+              >
+                <Phone className="h-4 w-4 shrink-0" aria-hidden />
+                <span>{storeConfig.phone.display}</span>
+              </a>
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ivory-dim">
-                Seguici
-              </p>
+              <p className="text-xs uppercase tracking-[0.2em] text-ivory-dim">Seguici</p>
               <a
                 href={storeConfig.instagram.url}
                 target="_blank"
@@ -57,13 +59,21 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-2 border-t border-ink-line pt-6 text-xs text-ivory-dim sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-ink-line pt-6 text-xs text-ivory-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
             {storeConfig.legalName} · {storeConfig.address.city} (
             {storeConfig.address.province})
           </p>
-          <p>
-            Catalogo dimostrativo: nomi e prezzi dei capi sono di esempio.
+          <p className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/privacy" className="hover:text-ivory">
+              Privacy
+            </Link>
+            <Link href="/cookie" className="hover:text-ivory">
+              Cookie
+            </Link>
+            <Link href="/termini" className="hover:text-ivory">
+              Vendite e recesso
+            </Link>
           </p>
         </div>
       </div>

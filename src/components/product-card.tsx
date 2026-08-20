@@ -33,7 +33,7 @@ export function ProductCard({
   const rotateY = useSpring(useTransform(pointerX, [0, 1], [-7, 7]), spring);
   const glowX = useTransform(pointerX, (value) => `${value * 100}%`);
   const glowY = useTransform(pointerY, (value) => `${value * 100}%`);
-  const glow = useMotionTemplate`radial-gradient(340px circle at ${glowX} ${glowY}, rgba(201,169,106,0.22), transparent 70%)`;
+  const glow = useMotionTemplate`radial-gradient(340px circle at ${glowX} ${glowY}, rgba(162,178,159,0.22), transparent 70%)`;
 
   const handleMove = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (reduceMotion) return;
@@ -76,7 +76,7 @@ export function ProductCard({
             tall ? "aspect-[3/4]" : "aspect-[4/5]"
           }`}
         >
-          <motion.div layoutId={`media-${product.id}`} className="absolute inset-0">
+          <div className="absolute inset-0">
             <Image
               src={product.image}
               alt={`${product.name}, ${product.subtitle}`}
@@ -84,7 +84,7 @@ export function ProductCard({
               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
               className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
             />
-          </motion.div>
+          </div>
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/5 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
 
@@ -128,7 +128,7 @@ export function ProductCard({
           {/* Su touch l'hover resta appiccicato dopo il tap: la CTA vive solo dove esiste un puntatore */}
           <div className="pointer-events-none absolute inset-x-5 bottom-5 translate-y-6 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden">
             <span className="flex items-center justify-center rounded-full bg-ivory/95 py-3 text-sm font-medium text-ink backdrop-blur">
-              Guarda e prenota
+              Guarda e acquista
             </span>
           </div>
         </div>

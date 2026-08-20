@@ -43,7 +43,7 @@ export function Hero() {
       <motion.div
         aria-hidden
         style={{ scale: glowScale }}
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[820px] w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(201,169,106,0.20)_0%,rgba(201,169,106,0.05)_42%,transparent_70%)] animate-halo-pulse"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[820px] w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(162,178,159,0.22)_0%,rgba(162,178,159,0.06)_42%,transparent_70%)] animate-halo-pulse"
       />
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">

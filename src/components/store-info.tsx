@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Compass, MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Phone } from "lucide-react";
 import { InstagramGlyph } from "@/components/icons";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { OpenBadge } from "@/components/open-badge";
@@ -49,10 +49,13 @@ export function StoreInfo() {
                   <span>{fullAddress}</span>
                 </a>
 
-                <p className="flex items-start gap-3 text-sm text-ivory-dim">
-                  <Compass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  Plus Code {storeConfig.plusCode}
-                </p>
+                <a
+                  href={storeConfig.phone.href}
+                  className="flex items-center gap-3 text-lg transition-colors hover:text-halo-bright"
+                >
+                  <Phone className="h-5 w-5 shrink-0 text-halo" aria-hidden />
+                  <span>{storeConfig.phone.display}</span>
+                </a>
 
                 <div>
                   <OpenBadge />
@@ -100,10 +103,17 @@ export function StoreInfo() {
             <Reveal delay={0.4}>
               <div className="mt-10 flex flex-wrap gap-3">
                 <a
+                  href={storeConfig.phone.href}
+                  className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
+                >
+                  <Phone className="h-4 w-4" aria-hidden />
+                  Chiama
+                </a>
+                <a
                   href={storeConfig.maps.directions}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
+                  className="group inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <Navigation className="h-4 w-4" aria-hidden />
                   Indicazioni stradali
