@@ -72,20 +72,28 @@ export default async function AccountPage() {
           <li className="text-ivory-dim">Nessun ordine ancora. Il catalogo è a un tocco di distanza.</li>
         )}
         {(orders ?? []).map((order) => (
-          <li key={order.id} className="rounded-2xl border border-ink-line p-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <p className="font-display text-2xl">#{order.id.slice(0, 8)}</p>
-              <p className="text-sm text-halo-bright">
-                {orderStatusLabel[order.status as OrderStatus]}
+          <li key={order.id}>
+            <Link
+              href={`/account/ordini/${order.id}`}
+              className="block rounded-2xl border border-ink-line p-5 transition-colors hover:border-halo/50"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <p className="font-display text-2xl">#{order.id.slice(0, 8)}</p>
+                <p className="text-sm text-halo-bright">
+                  {orderStatusLabel[order.status as OrderStatus]}
+                </p>
+              </div>
+              <p className="mt-2 text-sm text-ivory-dim">
+                {order.fulfillment === "pickup" ? "Ritiro in negozio" : "Spedizione"} ·{" "}
+                {order.fulfillment === "pickup" &&
+                order.status !== "completed" &&
+                order.status !== "cancelled"
+                  ? `Da pagare in negozio ${formatPrice(order.total_cents / 100)}`
+                  : formatPrice(order.total_cents / 100)}
+                {order.tracking_code ? ` · tracking ${order.tracking_code}` : ""}
               </p>
-            </div>
-            <p className="mt-2 text-sm text-ivory-dim">
-              {order.fulfillment === "pickup" ? "Ritiro in negozio" : "Spedizione"} ·{" "}
-              {order.fulfillment === "pickup" && order.status !== "completed" && order.status !== "cancelled"
-                ? `Da pagare in negozio ${formatPrice(order.total_cents / 100)}`
-                : formatPrice(order.total_cents / 100)}
-              {order.tracking_code ? ` · tracking ${order.tracking_code}` : ""}
-            </p>
+              <p className="mt-3 text-xs text-halo-bright">Vedi i dettagli</p>
+            </Link>
           </li>
         ))}
       </ul>
