@@ -94,7 +94,7 @@ export function ReservationBag() {
       <AnimatePresence>
         {isOpen && (
           <div
-            className="fixed inset-0 z-[80] flex justify-end"
+            className="fixed inset-0 z-[140] flex justify-end"
             role="dialog"
             aria-modal="true"
             aria-labelledby="carrello-titolo"

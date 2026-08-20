@@ -117,7 +117,7 @@ export function SiteNav() {
               <SignInButton mode="modal">
                 <button
                   type="button"
-                  className="hidden items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm text-ivory-dim transition-colors hover:border-halo/60 hover:text-halo-bright sm:inline-flex"
+                  className="inline-flex items-center gap-2 rounded-full border border-ink-line px-3 py-2 text-sm text-ivory-dim transition-colors hover:border-halo/60 hover:text-halo-bright sm:px-4"
                 >
                   <User className="h-4 w-4" aria-hidden />
                   Accedi
@@ -211,19 +211,38 @@ export function SiteNav() {
                   </Link>
                 </motion.li>
               ))}
-              <motion.li
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <Link
-                  href="/account"
-                  onClick={() => setMenuOpen(false)}
-                  className="block border-b border-ink-line py-5 font-display text-4xl"
+              <Show when="signed-out">
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
                 >
-                  Account
-                </Link>
-              </motion.li>
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      onClick={() => setMenuOpen(false)}
+                      className="block w-full border-b border-ink-line py-5 text-left font-display text-4xl"
+                    >
+                      Accedi
+                    </button>
+                  </SignInButton>
+                </motion.li>
+              </Show>
+              <Show when="signed-in">
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <Link
+                    href="/account"
+                    onClick={() => setMenuOpen(false)}
+                    className="block border-b border-ink-line py-5 font-display text-4xl"
+                  >
+                    Account
+                  </Link>
+                </motion.li>
+              </Show>
             </ul>
             <div className="px-6 pt-10">
               <OpenBadge />
