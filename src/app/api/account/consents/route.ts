@@ -13,14 +13,25 @@ export async function POST(req: Request) {
   };
   const admin = createAdminClient();
   const customer = await ensureCustomer(user);
-  const { error } = await admin.from("halo_consents").upsert({
+
+  const row: Record<string, unknown> = {
     customer_id: customer.id,
-    email_marketing: Boolean(body.email_marketing),
-    email_marketing_at: body.email_marketing ? new Date().toISOString() : null,
-    cookie_analytics: Boolean(body.cookie_analytics),
-    cookie_marketing: Boolean(body.cookie_marketing),
     source: "account",
     updated_at: new Date().toISOString(),
+  };
+  if (typeof body.email_marketing === "boolean") {
+    row.email_marketing = body.email_marketing;
+    row.email_marketing_at = body.email_marketing ? new Date().toISOString() : null;
+  }
+  if (typeof body.cookie_analytics === "boolean") {
+    row.cookie_analytics = body.cookie_analytics;
+  }
+  if (typeof body.cookie_marketing === "boolean") {
+    row.cookie_marketing = body.cookie_marketing;
+  }
+
+  const { error } = await admin.from("halo_consents").upsert(row, {
+    onConflict: "customer_id",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
