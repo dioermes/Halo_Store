@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0a0a0b;
+  --color-ink-soft: #121215;
+  --color-ink-line: #26262b;
+  --color-ivory: #f5f3ef;
+  --color-ivory-dim: #a5a29b;
+  --color-halo: #c9a96a;
+  --color-halo-bright: #e6cd9a;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+
+  --ease-halo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-ink);
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-halo);
+  color: var(--color-ink);
+}
+
+/* Scrollbar discreta, coerente col fondo scuro */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-line) transparent;
+}
+
+@utility text-balance-display {
+  text-wrap: balance;
+}
+
+/* Riga di lettering usata negli ingressi tipografici.
+   Il padding compensato dal margine allarga solo il box di clipping, cosi la
+   coda dei corsivi non viene tagliata a fine riga. */
+@utility mask-reveal {
+  overflow: hidden;
+  display: block;
+  padding-right: 0.12em;
+  margin-right: -0.12em;
+}
+
+/* Bordo sottile ricorrente delle superfici */
+@utility surface {
+  background-color: color-mix(in oklab, var(--color-ink-soft) 80%, transparent);
+  border: 1px solid var(--color-ink-line);
+}
+
+@utility halo-ring {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-halo) 35%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--color-halo) 60%, transparent);
+}
+
+@keyframes halo-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes grain-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2%, 1%);
+  }
+  50% {
+    transform: translate(1%, -2%);
+  }
+  75% {
+    transform: translate(2%, 2%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.animate-halo-pulse {
+  animation: halo-pulse 7s var(--ease-halo) infinite;
+}
+
+.animate-marquee {
+  animation: marquee-x 38s linear infinite;
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 8s steps(4) infinite;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-halo);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-halo-pulse,
+  .animate-marquee,
+  .animate-ping,
+  .grain::after {
+    animation: none !important;
+  }
+}
