@@ -48,6 +48,10 @@ export const storeConfig = {
     country: "IT",
   },
   plusCode: "X488+59 Conversano",
+  coordinates: {
+    lat: 40.9654381,
+    lng: 17.1159334,
+  },
   whatsapp: {
     number: rawWhatsapp,
     isConfigured: rawWhatsapp.length >= 11,
@@ -58,12 +62,16 @@ export const storeConfig = {
     url: "https://www.instagram.com/halostoreconversano/",
   },
   maps: {
+    /**
+     * CID della scheda Google ufficiale "Halo Store" (Via Castellana 18A).
+     * I link a testo libero possono cadere su un indirizzo generico: questi no.
+     */
+    cid: "16351928461352445376",
     embed:
-      "https://www.google.com/maps?q=Halo+Store+Via+Castellana+18A+70014+Conversano+BA&output=embed",
+      "https://www.google.com/maps?cid=16351928461352445376&hl=it&z=17&output=embed",
     directions:
-      "https://www.google.com/maps/dir/?api=1&destination=Halo+Store%2C+Via+Castellana+18A%2C+70014+Conversano+BA",
-    place:
-      "https://www.google.com/maps/search/?api=1&query=Halo+Store+Via+Castellana+18A+Conversano",
+      "https://www.google.com/maps/dir/?api=1&destination=40.9654381,17.1159334&travelmode=driving",
+    place: "https://maps.google.com/?cid=16351928461352445376",
   },
   rating: {
     value: 5,

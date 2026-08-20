@@ -15,10 +15,18 @@ export type Product = {
   care: string;
   description: string;
   image: string;
+  /** Altre viste del capo, usate nel viewer a schermo intero */
+  gallery?: string[];
   /** Etichetta breve mostrata sulla card, es. "Nuovo arrivo" */
   badge?: string;
   /** Pezzi realmente disponibili in negozio: alimenta il senso di urgenza */
   stock: number;
+};
+
+export type ColorLook = {
+  hex: string;
+  /** Filtro CSS per simulare la variante quando non c'e una foto dedicata */
+  filter?: string;
 };
 
 export const categories: Array<{
@@ -324,4 +332,83 @@ export function formatPrice(value: number) {
 
 export function getProduct(id: string) {
   return products.find((product) => product.id === id);
+}
+
+const CATEGORY_GALLERY: Record<CategoryId, string[]> = {
+  top: [
+    "/catalogo/amb-rack.jpg",
+    "/catalogo/tshirt-bianca.jpg",
+    "/catalogo/camicia-bianca.jpg",
+    "/catalogo/polo-bianca.jpg",
+  ],
+  denim: [
+    "/catalogo/amb-denim.jpg",
+    "/catalogo/jeans-indaco.jpg",
+    "/catalogo/giacca-denim.jpg",
+    "/catalogo/camicia-denim.jpg",
+  ],
+  outerwear: [
+    "/catalogo/amb-pelle.jpg",
+    "/catalogo/giubbotto-pelle.jpg",
+    "/catalogo/giacca-pelle-cuoio.jpg",
+    "/catalogo/bomber-cammello.jpg",
+  ],
+  accessori: [
+    "/catalogo/amb-interno.jpg",
+    "/catalogo/cintura-cuoio.jpg",
+    "/catalogo/occhiali-sole.jpg",
+    "/catalogo/berretto-lana.jpg",
+  ],
+};
+
+/** Palette e filtri per le varianti colore del catalogo dimostrativo. */
+export const colorLooks: Record<string, ColorLook> = {
+  "Bianco ottico": { hex: "#f4f1ea" },
+  Bianco: { hex: "#f2efe8" },
+  "Bianco panna": { hex: "#ebe4d4" },
+  Panna: { hex: "#e8dfcc" },
+  Sabbia: { hex: "#c4b08a", filter: "sepia(0.42) saturate(0.55) brightness(0.92)" },
+  "Beige naturale": { hex: "#c9b89a", filter: "sepia(0.35) saturate(0.5) brightness(0.9)" },
+  "Beige avena": { hex: "#d4c4a4" },
+  Cammello: { hex: "#b9895a" },
+  Cuoio: { hex: "#8a5a32" },
+  "Cuoio naturale": { hex: "#a56b3c" },
+  "Testa di moro": {
+    hex: "#4a2e22",
+    filter: "sepia(0.55) hue-rotate(-12deg) brightness(0.45) contrast(1.15)",
+  },
+  Havana: { hex: "#6b3f24", filter: "sepia(0.7) hue-rotate(-8deg) saturate(1.1) brightness(0.55)" },
+  Nero: { hex: "#1a1a1a", filter: "brightness(0.28) contrast(1.2) grayscale(0.45)" },
+  "Nero pieno": { hex: "#111111" },
+  "Nero lucido": { hex: "#0d0d0d", filter: "brightness(0.32) contrast(1.25) grayscale(0.3)" },
+  "Grigio pietra": { hex: "#8a8680", filter: "grayscale(0.85) brightness(0.78) contrast(1.05)" },
+  "Grigio melange": { hex: "#9a9792", filter: "grayscale(0.8) brightness(0.82)" },
+  Grigio: { hex: "#7d7d7d", filter: "grayscale(1) brightness(0.7)" },
+  "Azzurro polvere": {
+    hex: "#9bb7c9",
+    filter: "sepia(0.2) hue-rotate(180deg) saturate(0.7) brightness(0.92)",
+  },
+  "Blu notte": {
+    hex: "#1c2a44",
+    filter: "hue-rotate(205deg) saturate(0.7) brightness(0.42) contrast(1.15)",
+  },
+  "Blu medio": { hex: "#3d5a7a" },
+  "Blu chiaro": { hex: "#7fa0bd" },
+  "Indaco scuro": { hex: "#2c3d5c" },
+  "Verde salvia": {
+    hex: "#7d8f74",
+    filter: "sepia(0.25) hue-rotate(55deg) saturate(0.55) brightness(0.82)",
+  },
+};
+
+export function getColorLook(name: string): ColorLook {
+  return colorLooks[name] ?? { hex: "#c9a96a" };
+}
+
+/** Foto del capo: scatto principale + viste alternative, senza duplicati. */
+export function getGallery(product: Product): string[] {
+  const extras = (product.gallery ?? CATEGORY_GALLERY[product.category]).filter(
+    (src) => src !== product.image,
+  );
+  return [product.image, ...extras].slice(0, 4);
 }

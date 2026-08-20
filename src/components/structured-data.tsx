@@ -21,6 +21,11 @@ export function StructuredData() {
       addressCountry: storeConfig.address.country,
     },
     hasMap: storeConfig.maps.place,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: storeConfig.coordinates.lat,
+      longitude: storeConfig.coordinates.lng,
+    },
     currenciesAccepted: "EUR",
     priceRange: "€€",
     openingHoursSpecification: toSchemaOpeningHours(),
