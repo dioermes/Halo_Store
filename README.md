@@ -22,6 +22,21 @@ npm run build
 npm run start
 ```
 
+## Deploy su Vercel
+
+Il repo GitHub è già la root dell'app Next.js: **non** impostare Root Directory su
+`Halo_Store`. Nel dashboard del progetto:
+
+1. **Settings → General → Framework Preset** = Next.js (non Other)
+2. **Root Directory** vuoto
+3. **Output Directory** lasciato al default del preset (non `public`, non `out`)
+4. **Settings → Deployment Protection** = off in Production, altrimenti i clienti
+   del negozio vedono il login Vercel invece del catalogo
+5. Redeploy (Deployments → ⋮ → Redeploy, senza build cache)
+
+`vercel.json` nel repo forza già il framework Next.js. Dopo il push, un deploy
+sano dura decine di secondi (install + `next build`), non un secondo.
+
 ## Configurazione
 
 Copia `.env.example` in `.env.local` e inserisci il numero WhatsApp del negozio:
