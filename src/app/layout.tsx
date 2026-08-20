@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { itIT } from "@clerk/localizations";
 import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { HaloCursor } from "@/components/halo-cursor";
@@ -73,7 +74,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <ClerkProvider appearance={clerkAppearance}>
+        <ClerkProvider appearance={clerkAppearance} localization={itIT}>
           <StructuredData />
           <ReservationProvider products={products}>
             <HaloCursor />

@@ -13,6 +13,7 @@
     "logo": "node scripts/build-logo.mjs assets/logo-halo-originale.png"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.15.4",
     "@clerk/nextjs": "^7.7.9",
     "@stripe/react-stripe-js": "^6.8.1",
     "@stripe/stripe-js": "^9.13.0",
