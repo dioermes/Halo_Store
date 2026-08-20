@@ -1,8 +1,20 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 import { nextStatuses, orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orders";
 import { updateOrderAction } from "@/app/admin/actions";
+import { OrderStatusSelect } from "@/components/order-status-select";
+
+type OrderItem = {
+  id: string;
+  product_name: string;
+  size: string;
+  color: string;
+  quantity: number;
+  unit_price_cents: number;
+  image_url: string | null;
+};
 
 export default async function AdminOrderDetail({
   params,
@@ -19,6 +31,7 @@ export default async function AdminOrderDetail({
   if (!order) notFound();
 
   const options = nextStatuses(order.status as OrderStatus, order.fulfillment as Fulfillment);
+  const items = (order.halo_order_items ?? []) as OrderItem[];
 
   return (
     <div className="max-w-2xl">
@@ -27,13 +40,29 @@ export default async function AdminOrderDetail({
         {order.halo_customers?.email} · {order.fulfillment === "pickup" ? "Ritiro" : "Spedizione"} ·{" "}
         {orderStatusLabel[order.status as OrderStatus]}
       </p>
-      <ul className="mt-8 space-y-2 text-sm">
-        {order.halo_order_items.map((item: { id: string; product_name: string; size: string; color: string; quantity: number; unit_price_cents: number }) => (
-          <li key={item.id} className="flex justify-between border-b border-ink-line py-2">
-            <span>
-              {item.product_name} · {item.size} · {item.color} × {item.quantity}
+      <ul className="mt-8 divide-y divide-ink-line border-y border-ink-line">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-center gap-4 py-4">
+            <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-ink-soft">
+              {item.image_url ? (
+                <Image
+                  src={item.image_url}
+                  alt={item.product_name}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+              ) : null}
             </span>
-            <span>{formatPrice((item.unit_price_cents * item.quantity) / 100)}</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-2xl leading-none">{item.product_name}</p>
+              <p className="mt-2 text-sm text-ivory-dim">
+                {item.size} · {item.color} × {item.quantity}
+              </p>
+            </div>
+            <span className="shrink-0 text-sm text-halo-bright">
+              {formatPrice((item.unit_price_cents * item.quantity) / 100)}
+            </span>
           </li>
         ))}
       </ul>
@@ -67,18 +96,21 @@ export default async function AdminOrderDetail({
 
       <form action={updateOrderAction} className="mt-10 grid gap-3">
         <input type="hidden" name="id" value={order.id} />
-        <select name="status" defaultValue={order.status} className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3">
-          <option value={order.status}>{orderStatusLabel[order.status as OrderStatus]}</option>
-          {options.map((status) => (
-            <option key={status} value={status}>
-              {orderStatusLabel[status]}
-            </option>
-          ))}
-        </select>
+        <OrderStatusSelect current={order.status as OrderStatus} options={options} />
         {order.fulfillment === "shipping" && (
           <>
-            <input name="trackingCarrier" defaultValue={order.tracking_carrier ?? ""} placeholder="Corriere" className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3" />
-            <input name="trackingCode" defaultValue={order.tracking_code ?? ""} placeholder="Tracking" className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3" />
+            <input
+              name="trackingCarrier"
+              defaultValue={order.tracking_carrier ?? ""}
+              placeholder="Corriere"
+              className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3"
+            />
+            <input
+              name="trackingCode"
+              defaultValue={order.tracking_code ?? ""}
+              placeholder="Tracking"
+              className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3"
+            />
           </>
         )}
         <button type="submit" className="rounded-full bg-ivory py-3 text-sm font-medium text-ink">
