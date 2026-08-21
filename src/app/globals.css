@@ -23,6 +23,11 @@
 html {
   scroll-behavior: smooth;
   background-color: var(--color-ink);
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -30,17 +35,16 @@ body {
   color: var(--color-ivory);
   font-family: var(--font-sans);
   overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 ::selection {
   background-color: var(--color-halo);
   color: var(--color-ink);
-}
-
-/* Scrollbar discreta, coerente col fondo salvia */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-ivory) transparent;
 }
 
 @utility text-balance-display {
@@ -67,6 +71,63 @@ body {
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--color-halo) 35%, transparent),
     0 0 40px -12px color-mix(in oklab, var(--color-halo) 60%, transparent);
+}
+
+/* Scrollbar discreta per i filtri (non quella della pagina). */
+@utility halo-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-halo) 45%, transparent) transparent;
+}
+
+.halo-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.halo-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.halo-scrollbar::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-halo) 42%, transparent);
+  border-radius: 999px;
+}
+
+.halo-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.halo-slider {
+  appearance: none;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-ivory) 18%, transparent);
+  cursor: pointer;
+}
+
+.halo-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-ivory);
+}
+
+.halo-slider::-moz-range-track {
+  height: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-ivory) 18%, transparent);
+}
+
+.halo-slider::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-ivory);
 }
 
 @keyframes halo-pulse {

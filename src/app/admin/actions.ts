@@ -24,8 +24,10 @@ import { getStripe } from "@/lib/stripe";
 import type { OrderStatus } from "@/lib/orders";
 import {
   BUILTIN_CATEGORY_IDS,
+  deleteStoreCategory,
   ensureStoreCategory,
   saveCategoryOverride,
+  updateStoreCategory,
 } from "@/lib/categories";
 import type { StoreCategory } from "@/lib/products";
 import { createHmac } from "node:crypto";
@@ -137,6 +139,34 @@ export async function createCategoryAction(input: {
     return { category };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Tipologia non creata." };
+  }
+}
+
+export async function updateCategoryAction(input: {
+  id: string;
+  label: string;
+  hint?: string;
+}): Promise<{ category: StoreCategory } | { error: string }> {
+  try {
+    await requireOwner();
+    const category = await updateStoreCategory(input);
+    revalidatePath("/");
+    revalidatePath("/admin/catalogo");
+    return { category };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Tipologia non aggiornata." };
+  }
+}
+
+export async function deleteCategoryAction(id: string): Promise<{ ok: true } | { error: string }> {
+  try {
+    await requireOwner();
+    await deleteStoreCategory(id);
+    revalidatePath("/");
+    revalidatePath("/admin/catalogo");
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Tipologia non eliminata." };
   }
 }
 
@@ -307,6 +337,12 @@ export async function togglePublishedAction(id: string, published: boolean) {
   revalidatePath("/admin");
   revalidatePath("/admin/catalogo");
   revalidatePath("/admin/sito");
+}
+
+export async function togglePublishedFormAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const published = String(formData.get("published") ?? "") === "1";
+  await togglePublishedAction(id, published);
 }
 
 export async function deleteProductAction(formData: FormData) {

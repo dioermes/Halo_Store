@@ -41,7 +41,7 @@ export function FeaturedRail({
           <RevealWords text={title} className="block" />
         </h2>
 
-        <div className="mt-12 grid grid-cols-1 items-stretch gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-2 items-stretch gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4">
           {featured.map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} onOpen={setSelected} />
           ))}
@@ -70,7 +70,7 @@ export function FeaturedRail({
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   className="w-full overflow-hidden"
                 >
-                  <div className="mt-12 grid grid-cols-1 items-stretch gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="mt-12 grid grid-cols-2 items-stretch gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4">
                     {extra.map((product, index) => (
                       <ProductCard
                         key={product.id}

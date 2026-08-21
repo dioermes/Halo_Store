@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import {
   createAdminClient,
   createPublicClient,
@@ -115,6 +116,7 @@ export function mapProductRow(
 const select = "*, halo_product_images(*), halo_variants(*)";
 
 export async function getPublishedProducts(): Promise<Product[]> {
+  noStore();
   if (!isSupabaseConfigured()) return fallbackProducts;
   try {
     const client = createPublicClient();

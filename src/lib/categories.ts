@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import {
   createAdminClient,
   createPublicClient,
@@ -90,9 +91,67 @@ async function writeSetting(key: string, value: unknown) {
 }
 
 export async function getStoreCategories(): Promise<StoreCategory[]> {
+  noStore();
   const fromTable = await readCategoryTable();
   const fromSettings = asCategoryList(await readSetting(CATEGORIES_KEY));
-  return mergeCategories(fallbackCategories, fromTable, fromSettings);
+  const managed = mergeCategories(fromTable, fromSettings);
+  return managed.length ? managed : fallbackCategories;
+}
+
+async function persistCategoryList(list: StoreCategory[]) {
+  const client = createAdminClient();
+  for (const [index, category] of list.entries()) {
+    const { error } = await client.from("halo_categories").upsert({
+      id: category.id,
+      label: category.label,
+      hint: category.hint,
+      sort_order: index + 1,
+    });
+    if (error) break;
+  }
+  await writeSetting(CATEGORIES_KEY, list);
+}
+
+export async function updateStoreCategory(input: {
+  id: string;
+  label: string;
+  hint?: string;
+}): Promise<StoreCategory> {
+  const id = input.id.trim();
+  const label = input.label.trim();
+  if (!id) throw new Error("Tipologia mancante.");
+  if (!label) throw new Error("Dai un nome alla tipologia.");
+  const category: StoreCategory = {
+    id,
+    label,
+    hint: input.hint?.trim() ?? "",
+  };
+  const current = await getStoreCategories();
+  if (!current.some((row) => row.id === id)) throw new Error("Tipologia non trovata.");
+  const next = current.map((row) => (row.id === id ? category : row));
+  await persistCategoryList(next);
+  return category;
+}
+
+export async function deleteStoreCategory(id: string) {
+  const current = await getStoreCategories();
+  if (!current.some((row) => row.id === id)) throw new Error("Tipologia non trovata.");
+  if (current.length <= 1) throw new Error("Deve restare almeno una tipologia.");
+
+  const client = createAdminClient();
+  const { count } = await client
+    .from("halo_products")
+    .select("id", { count: "exact", head: true })
+    .eq("category", id);
+  const overrides = await getProductCategoryOverrides();
+  const overrideCount = Object.values(overrides).filter((value) => value === id).length;
+  if ((count ?? 0) + overrideCount > 0) {
+    throw new Error("Sposta prima i capi di questa tipologia, poi puoi eliminarla.");
+  }
+
+  await client.from("halo_categories").delete().eq("id", id);
+  const next = current.filter((row) => row.id !== id);
+  await writeSetting(CATEGORIES_KEY, next);
 }
 
 async function readCategoryTable(): Promise<StoreCategory[]> {

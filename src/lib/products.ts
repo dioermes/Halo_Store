@@ -366,6 +366,17 @@ export function formatPrice(value: number) {
   }).format(value);
 }
 
+export function stockBySize(product: Product) {
+  const totals = new Map<string, number>();
+  for (const size of product.sizes) totals.set(size, 0);
+  for (const variant of product.variants ?? []) {
+    totals.set(variant.size, (totals.get(variant.size) ?? 0) + variant.stock);
+  }
+  const rows = [...totals.entries()];
+  if (!rows.length) return [`${product.stock} pz`];
+  return rows.map(([size, qty]) => `${qty} ${size}`);
+}
+
 export function getProduct(id: string) {
   return products.find((product) => product.id === id);
 }

@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AdminCategoryBar } from "@/components/admin-category-bar";
 import { getAllProductsAdmin } from "@/lib/catalog";
-import { catalogFilters, getStoreCategories, labelFromCategoryId } from "@/lib/categories";
-import { formatPrice } from "@/lib/products";
-import { togglePublishedAction } from "@/app/admin/actions";
+import { getStoreCategories, labelFromCategoryId } from "@/lib/categories";
+import { formatPrice, stockBySize } from "@/lib/products";
+import { togglePublishedFormAction } from "@/app/admin/actions";
 import { DeleteProductButton } from "@/components/delete-product-button";
 
 export default async function AdminCatalogPage({
@@ -16,8 +17,7 @@ export default async function AdminCatalogPage({
     getAllProductsAdmin(),
     getStoreCategories(),
   ]);
-  const filters = catalogFilters(storeCategories, products.length);
-  const active = filters.some((category) => category.id === query.tipo)
+  const active = storeCategories.some((category) => category.id === query.tipo)
     ? query.tipo!
     : "tutti";
   const visible =
@@ -37,43 +37,9 @@ export default async function AdminCatalogPage({
         </Link>
       </div>
 
-      <div
-        className="mt-6 flex flex-wrap gap-2"
-        role="tablist"
-        aria-label="Filtra per tipologia"
-      >
-        {filters.map((category) => {
-          const selected = active === category.id;
-          const href =
-            category.id === "tutti"
-              ? "/admin/catalogo"
-              : `/admin/catalogo?tipo=${category.id}`;
-          return (
-            <Link
-              key={category.id}
-              href={href}
-              scroll={false}
-              role="tab"
-              aria-selected={selected}
-              className={`rounded-full border px-3 py-2 text-sm transition-colors sm:px-4 ${
-                selected
-                  ? "border-halo bg-halo/10 text-halo-bright"
-                  : "border-ink-line text-ivory-dim hover:border-halo/60 hover:text-ivory"
-              }`}
-            >
-              {category.id === "tutti" ? "Tutti" : category.label}
-            </Link>
-          );
-        })}
-      </div>
+      <AdminCategoryBar categories={storeCategories} active={active} />
       <p className="mt-3 text-sm text-ivory-dim">
         {visible.length} {visible.length === 1 ? "capo" : "capi"}
-        {active !== "tutti" && (
-          <>
-            {" · "}
-            {filters.find((category) => category.id === active)?.hint}
-          </>
-        )}
       </p>
 
       {visible.length === 0 ? (
@@ -82,10 +48,11 @@ export default async function AdminCatalogPage({
         <ul className="mt-6 divide-y divide-ink-line border-y border-ink-line">
           {visible.map((product) => {
             const tipo = labelFromCategoryId(product.category, storeCategories);
+            const sizeStock = stockBySize(product);
             const meta = [
               tipo,
               formatPrice(product.price),
-              `${product.stock} pz`,
+              ...sizeStock,
               product.published === false ? "nascosto" : "pubblico",
             ];
             return (
@@ -112,7 +79,7 @@ export default async function AdminCatalogPage({
                     <ul className="mt-2 flex flex-wrap gap-1.5">
                       {meta.map((item) => (
                         <li
-                          key={item}
+                          key={`${product.uuid ?? product.id}-${item}`}
                           className="rounded-full border border-ink-line px-2 py-0.5 text-[11px] text-ivory-dim sm:text-xs"
                         >
                           {item}
@@ -124,11 +91,14 @@ export default async function AdminCatalogPage({
                 <div className="flex gap-2 sm:shrink-0">
                   <form
                     className="min-w-0 flex-1 sm:flex-none"
-                    action={async () => {
-                      "use server";
-                      await togglePublishedAction(product.uuid ?? "", !(product.published ?? true));
-                    }}
+                    action={togglePublishedFormAction}
                   >
+                    <input type="hidden" name="id" value={product.uuid ?? ""} />
+                    <input
+                      type="hidden"
+                      name="published"
+                      value={product.published === false ? "1" : "0"}
+                    />
                     <button
                       type="submit"
                       className="w-full rounded-full border border-ink-line px-3 py-2 text-xs sm:w-auto sm:px-4 sm:text-sm"

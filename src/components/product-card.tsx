@@ -108,16 +108,16 @@ export function ProductCard({
           </div>
         </div>
 
-        <div className="mt-4 flex min-h-[4.75rem] items-start justify-between gap-3">
+        <div className="mt-4 flex min-h-[4.25rem] items-start justify-between gap-2 sm:min-h-[4.75rem] sm:gap-3">
           <div className="min-w-0">
-            <p className="font-display text-2xl leading-none">{product.name}</p>
-            <p className="mt-2 line-clamp-2 text-sm text-ivory-dim">{product.subtitle}</p>
+            <p className="font-display text-xl leading-none sm:text-2xl">{product.name}</p>
+            <p className="mt-2 line-clamp-2 text-xs text-ivory-dim sm:text-sm">{product.subtitle}</p>
           </div>
           <div className="shrink-0 pt-0.5 text-right">
             {product.compareAt ? (
               <p className="text-xs text-ivory-dim line-through">{formatPrice(product.compareAt)}</p>
             ) : null}
-            <p className="font-display text-xl text-halo-bright">{formatPrice(product.price)}</p>
+            <p className="font-display text-lg text-halo-bright sm:text-xl">{formatPrice(product.price)}</p>
           </div>
         </div>
       </motion.button>

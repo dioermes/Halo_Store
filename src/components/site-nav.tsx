@@ -101,13 +101,13 @@ export function SiteNav() {
 
           <Link
             href="/"
-            className="flex h-11 items-center justify-center sm:h-14"
+            className="flex h-12 items-center justify-center sm:h-16"
             aria-label="Halo Store, torna alla home"
           >
             {inAdmin ? (
-              <HaloLogo className="h-8 text-ivory sm:h-9" />
+              <HaloLogo className="h-9 text-ivory sm:h-11" />
             ) : (
-              <HaloLogoOriginal className="h-11 sm:h-14" />
+              <HaloLogoOriginal className="h-12 sm:h-16" />
             )}
           </Link>
 
