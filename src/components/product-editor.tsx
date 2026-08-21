@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, CircleAlert, Eye, ImagePlus, Move, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { saveProductAction, type SaveProductState } from "@/app/admin/actions";
+import { uploadAdminFile } from "@/lib/admin-upload";
 import { PhotoCropper } from "@/components/photo-cropper";
 import { CategoryPicker } from "@/components/category-picker";
 import {
@@ -65,12 +66,7 @@ function draftsFromProduct(product?: Product): {
 }
 
 async function uploadFile(file: File) {
-  const body = new FormData();
-  body.append("file", file);
-  const response = await fetch("/api/admin/upload", { method: "POST", body });
-  const payload = (await response.json()) as { url?: string; error?: string };
-  if (!payload.url) throw new Error(payload.error ?? "Caricamento non riuscito");
-  return payload.url;
+  return uploadAdminFile(file);
 }
 
 function WordButton({
@@ -251,10 +247,12 @@ function LivePreview({
 
 export function ProductEditor({
   product,
+  productId,
   saved = false,
   categories: initialCategories,
 }: {
   product?: Product;
+  productId?: string;
   saved?: boolean;
   categories?: StoreCategory[];
 }) {
@@ -283,6 +281,9 @@ export function ProductEditor({
   const [fit, setFit] = useState(product?.fit ?? "");
   const [care, setCare] = useState(product?.care ?? "");
   const [published, setPublished] = useState(product?.published !== false);
+  const [isNewArrival, setIsNewArrival] = useState(Boolean(product?.isNewArrival));
+  const [isBestseller, setIsBestseller] = useState(Boolean(product?.isBestseller));
+  const [searchKeywords, setSearchKeywords] = useState(product?.searchKeywords ?? "");
   const [cover, setCover] = useState(initial.cover);
   const [sizes, setSizes] = useState(initial.sizes);
   const [newSize, setNewSize] = useState("");
@@ -444,7 +445,7 @@ export function ProductEditor({
         }}
         className="grid gap-10 pb-24 lg:pb-0"
       >
-        <input type="hidden" name="id" value={product?.uuid ?? ""} />
+        <input type="hidden" name="id" value={product?.uuid ?? productId ?? ""} />
         <input type="hidden" name="name" value={name} />
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="subtitle" value={subtitle} />
@@ -459,6 +460,9 @@ export function ProductEditor({
         <input type="hidden" name="fit" value={fit} />
         <input type="hidden" name="care" value={care} />
         {published ? <input type="hidden" name="published" value="on" /> : null}
+        {isNewArrival ? <input type="hidden" name="isNewArrival" value="on" /> : null}
+        {isBestseller ? <input type="hidden" name="isBestseller" value="on" /> : null}
+        <input type="hidden" name="searchKeywords" value={searchKeywords} />
         <input type="hidden" name="variantsJson" value={JSON.stringify(variants)} />
         <input
           type="hidden"
@@ -557,17 +561,35 @@ export function ProductEditor({
               className={fieldClass}
             />
           </label>
+          <p className="rounded-xl border border-ink-line bg-ink/40 px-4 py-3 text-sm text-ivory-dim">
+            Tessuto, vestibilità e cura: se un campo resta vuoto non compare nella scheda del capo in vetrina.
+          </p>
           <label className="text-sm text-ivory-dim">
             Tessuto
-            <input value={fabric} onChange={(event) => setFabric(event.target.value)} className={fieldClass} />
+            <input
+              value={fabric}
+              onChange={(event) => setFabric(event.target.value)}
+              placeholder="Opzionale"
+              className={fieldClass}
+            />
           </label>
           <label className="text-sm text-ivory-dim">
             Vestibilità
-            <input value={fit} onChange={(event) => setFit(event.target.value)} className={fieldClass} />
+            <input
+              value={fit}
+              onChange={(event) => setFit(event.target.value)}
+              placeholder="Opzionale"
+              className={fieldClass}
+            />
           </label>
           <label className="text-sm text-ivory-dim">
             Cura
-            <input value={care} onChange={(event) => setCare(event.target.value)} className={fieldClass} />
+            <input
+              value={care}
+              onChange={(event) => setCare(event.target.value)}
+              placeholder="Opzionale"
+              className={fieldClass}
+            />
           </label>
           <label className="flex items-center gap-3 text-sm text-ivory">
             <input
@@ -577,6 +599,33 @@ export function ProductEditor({
               className="accent-halo"
             />
             Mostra in vetrina
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ivory">
+            <input
+              type="checkbox"
+              checked={isNewArrival}
+              onChange={(event) => setIsNewArrival(event.target.checked)}
+              className="accent-halo"
+            />
+            Nuovo arrivo
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ivory">
+            <input
+              type="checkbox"
+              checked={isBestseller}
+              onChange={(event) => setIsBestseller(event.target.checked)}
+              className="accent-halo"
+            />
+            Best seller
+          </label>
+          <label className="text-sm text-ivory-dim">
+            Parole chiave ricerca
+            <input
+              value={searchKeywords}
+              onChange={(event) => setSearchKeywords(event.target.value)}
+              placeholder="es. maglietta, cotone, estate, oversize"
+              className={fieldClass}
+            />
           </label>
         </section>
 

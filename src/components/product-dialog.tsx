@@ -298,18 +298,24 @@ export function ProductDialog({
                   </div>
                 )}
 
-                <dl className="mt-8 divide-y divide-ink-line border-y border-ink-line text-sm">
-                  {[
+                {(() => {
+                  const details = [
                     ["Tessuto", product.fabric],
                     ["Vestibilità", product.fit],
                     ["Cura", product.care],
-                  ].map(([label, value]) => (
-                    <div key={label} className="flex gap-4 py-3">
-                      <dt className="w-28 shrink-0 text-ivory-dim">{label}</dt>
-                      <dd className="text-ivory">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
+                  ].filter(([, value]) => typeof value === "string" && value.trim());
+                  if (!details.length) return null;
+                  return (
+                    <dl className="mt-8 divide-y divide-ink-line border-y border-ink-line text-sm">
+                      {details.map(([label, value]) => (
+                        <div key={label} className="flex gap-4 py-3">
+                          <dt className="w-28 shrink-0 text-ivory-dim">{label}</dt>
+                          <dd className="text-ivory">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  );
+                })()}
 
                 <p className="mt-5 text-sm text-ivory-dim">
                   {!size

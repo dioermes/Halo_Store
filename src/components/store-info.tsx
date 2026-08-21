@@ -18,7 +18,7 @@ export function StoreInfo() {
   return (
     <section
       id="dove-siamo"
-      className="relative border-t border-ink-line py-24 sm:py-32"
+      className="relative scroll-mt-24 border-t border-ink-line py-24 sm:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">

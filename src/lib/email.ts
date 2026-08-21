@@ -3,6 +3,7 @@ import { storeConfig } from "@/lib/store-config";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
+import { returnsEmailHtml } from "@/lib/returns";
 
 type OrderEmail = {
   id: string;
@@ -32,12 +33,12 @@ function getResend() {
 function wrap(title: string, body: string) {
   return `<!doctype html>
 <html lang="it">
-<body style="margin:0;background:#3F1521;color:#F4F2EE;font-family:Georgia,serif;">
+<body style="margin:0;background:#C5CEBC;color:#3F1521;font-family:Georgia,serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-    <p style="letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:#A2B29F;">Halo Store · Conversano</p>
+    <p style="letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:#5C2432;">Halo Store · Conversano</p>
     <h1 style="font-weight:400;font-size:32px;margin:16px 0 24px;">${title}</h1>
     ${body}
-    <p style="margin-top:40px;font-size:13px;color:#9AA392;">${storeConfig.legalName}<br/>${storeConfig.address.street}, ${storeConfig.address.postalCode} ${storeConfig.address.city}</p>
+    <p style="margin-top:40px;font-size:13px;color:#6B3A45;">${storeConfig.legalName}<br/>${storeConfig.address.street}, ${storeConfig.address.postalCode} ${storeConfig.address.city}</p>
   </div>
 </body>
 </html>`;
@@ -48,7 +49,7 @@ function itemsHtml(order: OrderEmail) {
     .map(
       (item) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #6B3A45;">${item.name}<br/><span style="color:#9AA392;font-size:13px;">${item.size} · ${item.color} × ${item.quantity}</span></td>
+          <td style="padding:8px 0;border-bottom:1px solid #6B3A45;">${item.name}<br/><span style="color:#6B3A45;font-size:13px;">${item.size} · ${item.color} × ${item.quantity}</span></td>
           <td style="padding:8px 0;border-bottom:1px solid #6B3A45;text-align:right;">${formatPrice(item.unitPriceCents / 100)}</td>
         </tr>`,
     )
@@ -86,7 +87,8 @@ export async function sendOrderPaidEmail(order: OrderEmail) {
     wrap(
       "Grazie, è arrivato.",
       `<p>Ciao${order.name ? ` ${order.name}` : ""}, il pagamento è andato a buon fine.</p>${pickup}${itemsHtml(order)}
-       <p><a href="${siteUrl()}/account" style="color:#A2B29F;">Vedi l'ordine nel tuo account</a></p>`,
+       <p><a href="${siteUrl()}/account/ordini/${order.id}" style="color:#5C2432;">Vedi l'ordine nel tuo account</a></p>
+       ${returnsEmailHtml(order.fulfillment)}`,
     ),
   );
 }
@@ -101,8 +103,9 @@ export async function sendPickupReservedEmail(order: OrderEmail) {
     wrap(
       "Ti aspettiamo.",
       `<p>Ciao${order.name ? ` ${order.name}` : ""}, abbiamo messo da parte i capi. Paghi in negozio al ritiro, in ${storeConfig.address.street}, ${storeConfig.address.city}.</p>${when}${itemsHtml(order)}
-       <p style="text-align:right;margin-top:-8px;color:#A2B29F;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>
-       <p><a href="${siteUrl()}/account" style="color:#A2B29F;">Vedi l'ordine nel tuo account</a></p>`,
+       <p style="text-align:right;margin-top:-8px;color:#5C2432;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>
+       <p><a href="${siteUrl()}/account/ordini/${order.id}" style="color:#5C2432;">Vedi l'ordine nel tuo account</a></p>
+       ${returnsEmailHtml("pickup")}`,
     ),
   );
 }
@@ -122,7 +125,7 @@ export async function sendOwnerNewOrderEmail(order: OrderEmail) {
        ${order.pickupLabel ? `<p>Quando: ${order.pickupLabel}</p>` : ""}
        ${order.note ? `<p>${order.note}</p>` : ""}
        ${itemsHtml(order)}
-       <p><a href="${siteUrl()}/admin/ordini/${order.id}" style="color:#A2B29F;">Apri in amministrazione</a></p>`,
+       <p><a href="${siteUrl()}/admin/ordini/${order.id}" style="color:#5C2432;">Apri in amministrazione</a></p>`,
     ),
   );
 }
@@ -135,7 +138,7 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
       wrap(
         "È pronto.",
         `<p>Passa in ${storeConfig.address.street}, ${storeConfig.address.city}. Porta un documento. Paghi in cassa al ritiro.</p>${itemsHtml(order)}
-         <p style="text-align:right;margin-top:-8px;color:#A2B29F;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>`,
+         <p style="text-align:right;margin-top:-8px;color:#5C2432;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>`,
       ),
     );
     return;
@@ -159,7 +162,7 @@ export async function sendPaymentFailedEmail(email: string, name?: string | null
     wrap(
       "Il pagamento non è andato a buon fine",
       `<p>Ciao${name ? ` ${name}` : ""}, le scorte sono di nuovo disponibili. Puoi riprovare dalla cassa quando vuoi.</p>
-       <p><a href="${siteUrl()}/checkout" style="color:#A2B29F;">Torna alla cassa</a></p>`,
+       <p><a href="${siteUrl()}/checkout" style="color:#5C2432;">Torna alla cassa</a></p>`,
     ),
   );
 }
@@ -168,7 +171,7 @@ export async function sendMarketingEmail(to: string, subject: string, htmlBody: 
   await send(
     to,
     subject,
-    wrap(subject, `${htmlBody}<p style="font-size:12px;color:#9AA392;margin-top:32px;">Ricevi questa mail perché hai chiesto le novità di Halo Store. <a href="${unsubUrl}" style="color:#A2B29F;">Disiscriviti</a></p>`),
+    wrap(subject, `${htmlBody}<p style="font-size:12px;color:#6B3A45;margin-top:32px;">Ricevi questa mail perché hai chiesto le novità di Halo Store. <a href="${unsubUrl}" style="color:#5C2432;">Disiscriviti</a></p>`),
   );
 }
 

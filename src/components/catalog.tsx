@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Reveal, RevealWords } from "@/components/reveal";
+import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
 import { ProductDialog } from "@/components/product-dialog";
 import { type Product, type StoreCategory } from "@/lib/products";
@@ -30,35 +30,16 @@ export function Catalog({
   return (
     <section
       id="catalogo"
-      className="relative border-t border-ink-line py-24 sm:py-32"
+      className="relative scroll-mt-24 border-t border-ink-line py-24 sm:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Reveal>
-              <p className="text-xs uppercase tracking-[0.34em] text-halo">
-                Catalogo
-              </p>
-            </Reveal>
-            <h2 className="mt-6 font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
-              <RevealWords text="Guardali qui," className="block" />
-              <RevealWords
-                text="provali in negozio"
-                className="block italic text-ivory-dim"
-                delay={0.1}
-              />
-            </h2>
-          </div>
-          <Reveal delay={0.2} className="max-w-sm">
-            <p className="leading-relaxed text-ivory-dim">
-              Scegli taglia e colore e metti nel carrello. Ritiro in negozio a
-              Conversano: prenoti e paghi in cassa. Spedizione in Italia: paghi
-              sul sito.
-            </p>
-          </Reveal>
+        <div className="text-center">
+          <h2 className="font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
+            <RevealWords text="Il catalogo" className="block" />
+          </h2>
         </div>
 
-        <div className="mt-14 flex flex-wrap gap-2" role="tablist" aria-label="Categorie del catalogo">
+        <div className="mt-14 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Categorie del catalogo">
           {filters.map((category) => {
             const isActive = active === category.id;
             return (
@@ -96,8 +77,7 @@ export function Catalog({
         </p>
 
         <motion.div
-          layout
-          className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-4"
+          className="mt-12 grid grid-cols-1 items-stretch gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
         >
           <AnimatePresence mode="popLayout">
             {visible.map((product, index) => (

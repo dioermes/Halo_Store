@@ -50,20 +50,20 @@ export function HaloCursor() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-40">
       <motion.div
-        className="absolute h-[520px] w-[520px] rounded-full mix-blend-screen"
+        className="absolute h-[520px] w-[520px] rounded-full mix-blend-multiply"
         style={{
           x: glowX,
           y: glowY,
           translateX: "-50%",
           translateY: "-50%",
           background:
-            "radial-gradient(circle, rgba(162,178,159,0.18) 0%, rgba(162,178,159,0.06) 38%, transparent 68%)",
+            "radial-gradient(circle, rgba(63,21,33,0.14) 0%, rgba(63,21,33,0.05) 38%, transparent 68%)",
         }}
         animate={{ opacity: visible ? 1 : 0 }}
         transition={{ duration: 0.4 }}
       />
       <motion.div
-        className="absolute h-6 w-6 rounded-full border border-halo/70 mix-blend-screen"
+        className="absolute h-6 w-6 rounded-full border border-halo/70"
         style={{
           x: ringX,
           y: ringY,

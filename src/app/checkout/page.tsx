@@ -8,6 +8,7 @@ import { useCart } from "@/components/reservation-provider";
 import { formatPrice } from "@/lib/products";
 import { storeConfig } from "@/lib/store-config";
 import { getPickupSlotsWithinHours } from "@/lib/opening-hours";
+import { ReturnsNotice } from "@/components/returns-notice";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -156,6 +157,7 @@ export default function CheckoutPage() {
         >
           Vedi i tuoi ordini
         </Link>
+        <ReturnsNotice fulfillment="pickup" />
       </section>
     );
   }
@@ -167,7 +169,7 @@ export default function CheckoutPage() {
         <p className="mt-3 mb-8 text-ivory-dim">
           Restiamo sul sito. Le scorte restano prenotate per almeno 30 minuti.
         </p>
-        <div className="overflow-hidden rounded-3xl border border-ink-line bg-ivory p-2">
+        <div className="overflow-hidden rounded-3xl border border-ink-line bg-ink p-2">
           <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
             <EmbeddedCheckout />
           </EmbeddedCheckoutProvider>

@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
-import { Menu, ShoppingBag, User, X } from "lucide-react";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Show, useClerk } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
-import { OpenBadge } from "@/components/open-badge";
-import { HaloLogo } from "@/components/halo-logo";
+import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
+import { SiteSearch } from "@/components/site-search";
 import { adminNav, isAdminNavActive } from "@/lib/admin-nav";
 
 const storefrontLinks = [
+  { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
+  { href: "/#best-seller", label: "Best seller" },
   { href: "/#catalogo", label: "Catalogo" },
-  { href: "/#manifesto", label: "Il negozio" },
-  { href: "/#recensioni", label: "Recensioni" },
   { href: "/#dove-siamo", label: "Dove siamo" },
 ];
 
@@ -24,6 +24,8 @@ export function SiteNav() {
   const links = inAdmin ? adminNav : storefrontLinks;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const { count, openBag, lastAdded } = useReservation();
   const { scrollY } = useScroll();
 
@@ -43,6 +45,8 @@ export function SiteNav() {
 
   useEffect(() => {
     setMenuOpen(false);
+    setSearchOpen(false);
+    setAccountOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -52,87 +56,70 @@ export function SiteNav() {
     };
   }, [menuOpen]);
 
+  const iconBtn =
+    "flex h-10 w-10 items-center justify-center rounded-full text-ivory transition-colors hover:bg-ivory/10 hover:text-halo-bright";
+
   return (
     <>
       <motion.header
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         className={`pointer-events-auto fixed inset-x-0 top-0 z-[100] transition-colors duration-500 ${
           scrolled
-            ? "border-b border-ink-line/80 bg-ink/80 backdrop-blur-xl"
-            : "border-b border-transparent"
+            ? "border-b border-ink-line/80 bg-ink/85 backdrop-blur-xl"
+            : "border-b border-ink-line bg-ink md:border-transparent md:bg-ink/40 md:backdrop-blur-md"
         }`}
       >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:h-20 sm:px-8">
-          <Link
-            href="/"
-            className="group relative flex items-center"
-            aria-label="Halo Store, torna alla home"
-          >
-            <span
-              aria-hidden
-              className="absolute -inset-x-4 -inset-y-2 rounded-full bg-halo/0 blur-lg transition-colors duration-500 group-hover:bg-halo/15"
-            />
-            <HaloLogo className="relative h-8 text-ivory transition-colors duration-500 group-hover:text-halo-bright sm:h-9" />
-          </Link>
-
-          <div className="hidden items-center gap-8 md:flex">
-            {links.map((link) => {
-              const active = inAdmin && isAdminNavActive(link.href, pathname);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`group relative text-sm transition-colors ${
-                    active ? "text-ivory" : "text-ivory-dim hover:text-ivory"
-                  }`}
-                >
-                  {link.label}
-                  <span
-                    className={`absolute -bottom-1 left-0 h-px bg-halo transition-all duration-400 ${
-                      active ? "w-full" : "w-0 group-hover:w-full"
-                    }`}
-                  />
-                </Link>
-              );
-            })}
+        <nav className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-20 sm:px-8">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAccountOpen(false);
+                setMenuOpen(true);
+              }}
+              className={iconBtn}
+              aria-label="Apri il menu"
+            >
+              <Menu className="h-5 w-5" aria-hidden />
+            </button>
+            {!inAdmin ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountOpen(false);
+                  setSearchOpen(true);
+                }}
+                className={iconBtn}
+                aria-label="Cerca nel catalogo"
+              >
+                <Search className="h-5 w-5" aria-hidden />
+              </button>
+            ) : null}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:block">
-              <OpenBadge compact />
-            </div>
+          <Link
+            href="/"
+            className="flex h-11 items-center justify-center sm:h-14"
+            aria-label="Halo Store, torna alla home"
+          >
+            {inAdmin ? (
+              <HaloLogo className="h-8 text-ivory sm:h-9" />
+            ) : (
+              <HaloLogoOriginal className="h-11 sm:h-14" />
+            )}
+          </Link>
 
-            <Show when="signed-in">
-              <Link
-                href="/account"
-                className="hidden rounded-full border border-ink-line px-3 py-2 text-sm text-ivory-dim transition-colors hover:text-ivory sm:inline-flex"
-              >
-                Account
-              </Link>
-              <UserButton appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }} />
-            </Show>
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-full border border-ink-line px-3 py-2 text-sm text-ivory-dim transition-colors hover:border-halo/60 hover:text-halo-bright sm:px-4"
-                >
-                  <User className="h-4 w-4" aria-hidden />
-                  Accedi
-                </button>
-              </SignInButton>
-            </Show>
-
+          <div className="flex items-center justify-end gap-1">
+            <AccountMenu open={accountOpen} onOpenChange={setAccountOpen} iconClass={iconBtn} />
             <button
               type="button"
               onClick={openBag}
-              className="relative flex items-center gap-2 rounded-full border border-ink-line bg-ink-soft/70 px-4 py-2 text-sm text-ivory transition-colors hover:border-halo/60 hover:text-halo-bright"
+              className={`relative ${iconBtn}`}
               aria-label={`Apri il carrello, ${count} capi`}
             >
-              <ShoppingBag className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Carrello</span>
+              <ShoppingBag className="h-5 w-5" aria-hidden />
               <AnimatePresence>
                 {count > 0 && (
                   <motion.span
@@ -140,7 +127,7 @@ export function SiteNav() {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0 }}
-                    className="flex h-5 min-w-5 items-center justify-center rounded-full bg-halo px-1 text-xs font-medium text-ink"
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-halo px-1 text-[10px] font-medium text-ink"
                   >
                     {count}
                   </motion.span>
@@ -151,22 +138,13 @@ export function SiteNav() {
                   <motion.span
                     key="pulse"
                     initial={{ opacity: 0.7, scale: 1 }}
-                    animate={{ opacity: 0, scale: 1.5 }}
+                    animate={{ opacity: 0, scale: 1.6 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.9 }}
                     className="pointer-events-none absolute inset-0 rounded-full border border-halo"
                   />
                 )}
               </AnimatePresence>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-line text-ivory md:hidden"
-              aria-label="Apri il menu"
-            >
-              <Menu className="h-5 w-5" aria-hidden />
             </button>
           </div>
         </nav>
@@ -178,12 +156,13 @@ export function SiteNav() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-ink/95 backdrop-blur-xl md:hidden"
+            className="fixed inset-0 z-[110] bg-ink/95 backdrop-blur-xl"
             role="dialog"
             aria-modal="true"
             aria-label="Menu di navigazione"
           >
-            <div className="flex h-16 items-center justify-end px-5">
+            <div className="flex h-16 items-center justify-between px-5 sm:h-20 sm:px-8">
+              <p className="text-xs uppercase tracking-[0.28em] text-ivory-dim">Menu</p>
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
@@ -194,62 +173,132 @@ export function SiteNav() {
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            <ul className="flex flex-col gap-2 px-6 pt-8">
-              {links.map((link, index) => (
-                <motion.li
-                  key={link.href}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.06 * index, duration: 0.5 }}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="block border-b border-ink-line py-5 font-display text-4xl"
+            <ul className="flex flex-col gap-2 px-6 pt-6 sm:px-10">
+              {links.map((link, index) => {
+                const active = inAdmin && isAdminNavActive(link.href, pathname);
+                return (
+                  <motion.li
+                    key={link.href}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.06 * index, duration: 0.5 }}
                   >
-                    {link.label}
-                  </Link>
-                </motion.li>
-              ))}
+                    <Link
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`block border-b border-ink-line py-5 font-display text-4xl ${
+                        active ? "text-halo-bright" : ""
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.li>
+                );
+              })}
               <Show when="signed-out">
                 <motion.li
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
-                  <SignInButton mode="modal">
-                    <button
-                      type="button"
-                      onClick={() => setMenuOpen(false)}
-                      className="block w-full border-b border-ink-line py-5 text-left font-display text-4xl"
-                    >
-                      Accedi
-                    </button>
-                  </SignInButton>
-                </motion.li>
-              </Show>
-              <Show when="signed-in">
-                <motion.li
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                >
                   <Link
-                    href="/account"
+                    href="/sign-in"
                     onClick={() => setMenuOpen(false)}
                     className="block border-b border-ink-line py-5 font-display text-4xl"
                   >
-                    Account
+                    Accedi
                   </Link>
                 </motion.li>
               </Show>
             </ul>
-            <div className="px-6 pt-10">
-              <OpenBadge />
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SiteSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
+  );
+}
+
+function AccountMenu({
+  open,
+  onOpenChange,
+  iconClass,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  iconClass: string;
+}) {
+  const { signOut } = useClerk();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) onOpenChange(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onOpenChange]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <Show when="signed-out">
+        <Link href="/sign-in" className={iconClass} aria-label="Accedi">
+          <User className="h-5 w-5" aria-hidden />
+        </Link>
+      </Show>
+      <Show when="signed-in">
+        <button
+          type="button"
+          className={iconClass}
+          aria-label="Account"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          onClick={() => onOpenChange(!open)}
+        >
+          <User className="h-5 w-5" aria-hidden />
+        </button>
+        <AnimatePresence>
+          {open ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2 }}
+              role="menu"
+              className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] min-w-44 overflow-hidden rounded-2xl border border-ink-line bg-ink py-1 shadow-lg"
+            >
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={() => onOpenChange(false)}
+                className="block px-4 py-2.5 text-sm text-ivory hover:bg-ivory/10"
+              >
+                Account
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-4 py-2.5 text-left text-sm text-ivory hover:bg-ivory/10"
+                onClick={() => {
+                  onOpenChange(false);
+                  void signOut({ redirectUrl: "/" });
+                }}
+              >
+                Esci
+              </button>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </Show>
+    </div>
   );
 }

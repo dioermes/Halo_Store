@@ -38,6 +38,9 @@ export type Product = {
   colorImages?: Record<string, string>;
   /** Etichetta breve mostrata sulla card, es. "Nuovo arrivo" */
   badge?: string;
+  isNewArrival?: boolean;
+  isBestseller?: boolean;
+  searchKeywords?: string;
   /** Pezzi realmente disponibili in negozio: alimenta il senso di urgenza */
   stock: number;
   variants?: ProductVariant[];
@@ -83,6 +86,7 @@ export const products: Product[] = [
       "La base di tutto. Cotone pettinato pesante che non si deforma dopo il primo lavaggio, collo a costina rinforzato e cuciture piatte. Quella che compri una volta e cerchi ogni mattina.",
     image: "/catalogo/tshirt-bianca.jpg",
     badge: "Best seller",
+    isBestseller: true,
     stock: 6,
   },
   {
@@ -99,6 +103,7 @@ export const products: Product[] = [
     description:
       "Il popeline a filo ritorto tiene la piega tutto il giorno e resta fresco sulla pelle. Collo italiano che regge bene sia la cravatta sia il primo bottone aperto.",
     image: "/catalogo/camicia-bianca.jpg",
+    isNewArrival: true,
     stock: 4,
   },
   {
@@ -117,6 +122,7 @@ export const products: Product[] = [
       "Piquet compatto con costina ai bordi e tre bottoni in madreperla. Sta bene sotto una giacca leggera quanto sopra un paio di jeans.",
     image: "/catalogo/polo-bianca.jpg",
     badge: "In promozione",
+    isNewArrival: true,
     stock: 3,
   },
   {
@@ -134,6 +140,7 @@ export const products: Product[] = [
       "Coste inglesi larghe e lana merino mescolata al cotone, per tenere il caldo senza pizzicare. Il capo che il titolare tira fuori quando dici che hai freddo ma non vuoi un piumino.",
     image: "/catalogo/maglione-coste.jpg",
     badge: "Nuovo arrivo",
+    isNewArrival: true,
     stock: 5,
   },
   {
@@ -150,6 +157,7 @@ export const products: Product[] = [
     description:
       "Garzatura interna densa, cappuccio a doppio strato che sta su davvero e polsini elasticizzati che non cedono. Peso pieno, non la solita felpa da catena.",
     image: "/catalogo/felpa-cappuccio.jpg",
+    isNewArrival: true,
     stock: 7,
   },
   {
@@ -167,6 +175,7 @@ export const products: Product[] = [
       "Selvedge da 13,5 once con una punta di elastan, per non combattere quando ti siedi. Si consuma dove ti muovi tu: dopo sei mesi è un jeans che nessun altro ha.",
     image: "/catalogo/jeans-indaco.jpg",
     badge: "Best seller",
+    isBestseller: true,
     stock: 4,
   },
   {
@@ -183,6 +192,8 @@ export const products: Product[] = [
     description:
       "Nero pieno tinto in capo, gamba dritta che cade pulita sulla scarpa. Il jeans che risolve la serata quando non hai voglia di pensarci.",
     image: "/catalogo/jeans-neri.jpg",
+    isNewArrival: true,
+    isBestseller: true,
     stock: 5,
   },
   {
@@ -199,6 +210,7 @@ export const products: Product[] = [
     description:
       "Il trucker classico fatto bene: doppia tasca al petto, cintura regolabile sul fondo e un lavaggio stone che la fa sembrare già tua dal primo giorno.",
     image: "/catalogo/giacca-denim.jpg",
+    isNewArrival: true,
     stock: 3,
   },
   {
@@ -215,6 +227,7 @@ export const products: Product[] = [
     description:
       "Chambray leggero che si porta aperto sopra una t-shirt o chiuso sotto un maglione. Uno di quei capi che finisci per mettere tre volte a settimana.",
     image: "/catalogo/camicia-denim.jpg",
+    isBestseller: true,
     stock: 6,
   },
   {
@@ -232,6 +245,7 @@ export const products: Product[] = [
       "Nappa di agnello morbidissima, zip metallica pesante e fodera in cupro che scivola sopra il maglione. Il pezzo forte del negozio, ed è uno solo per taglia.",
     image: "/catalogo/giubbotto-pelle.jpg",
     badge: "Pezzo unico",
+    isBestseller: true,
     stock: 1,
   },
   {
@@ -249,6 +263,7 @@ export const products: Product[] = [
       "Idrorepellente fuori, caldo dentro, leggero come una felpa. Un cammello che sta bene con il denim e con qualunque cosa tu abbia già nell'armadio.",
     image: "/catalogo/bomber-cammello.jpg",
     badge: "Nuovo arrivo",
+    isNewArrival: true,
     stock: 2,
   },
   {

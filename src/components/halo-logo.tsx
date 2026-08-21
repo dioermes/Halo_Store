@@ -31,3 +31,15 @@ export function HaloLogo({ className }: { className?: string }) {
     />
   );
 }
+
+/** Logo a colori originali (bordeaux sul nero). */
+export function HaloLogoOriginal({ className }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo-halo-originale.png"
+      alt="Halo Store"
+      className={`block h-full w-auto object-contain ${className ?? ""}`}
+    />
+  );
+}

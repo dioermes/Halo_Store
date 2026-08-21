@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/reservation-provider";
+import { ReturnsNotice } from "@/components/returns-notice";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
 
@@ -119,6 +120,7 @@ function SuccessBody() {
         >
           Vedi i dettagli dell&apos;ordine
         </Link>
+        <ReturnsNotice fulfillment={order.fulfillment === "pickup" ? "pickup" : "shipping"} />
       </section>
     );
   }

@@ -11,6 +11,7 @@ import {
   type ProductVariant,
 } from "@/lib/products";
 import { applyCategoryOverride, getProductCategoryOverrides } from "@/lib/categories";
+import { applyCatalogMerch, getCatalogMerch } from "@/lib/site";
 
 export { findVariant } from "@/lib/products";
 
@@ -123,8 +124,14 @@ export async function getPublishedProducts(): Promise<Product[]> {
       .eq("published", true)
       .order("sort_order");
     if (error || !data?.length) return fallbackProducts;
-    const overrides = await getProductCategoryOverrides();
-    return (data as ProductRow[]).map((row) => mapProductRow(row, overrides));
+    const [overrides, merch] = await Promise.all([
+      getProductCategoryOverrides(),
+      getCatalogMerch(),
+    ]);
+    return applyCatalogMerch(
+      (data as ProductRow[]).map((row) => mapProductRow(row, overrides)),
+      merch,
+    );
   } catch {
     return fallbackProducts;
   }
@@ -142,8 +149,14 @@ export async function getAllProductsAdmin(): Promise<Product[]> {
     .select(select)
     .order("sort_order");
   if (error || !data) throw new Error(error?.message ?? "Catalogo non disponibile");
-  const overrides = await getProductCategoryOverrides();
-  return (data as ProductRow[]).map((row) => mapProductRow(row, overrides));
+  const [overrides, merch] = await Promise.all([
+    getProductCategoryOverrides(),
+    getCatalogMerch(),
+  ]);
+  return applyCatalogMerch(
+    (data as ProductRow[]).map((row) => mapProductRow(row, overrides)),
+    merch,
+  );
 }
 
 export async function getProductAdmin(id: string): Promise<Product | null> {
@@ -154,7 +167,10 @@ export async function getProductAdmin(id: string): Promise<Product | null> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  const overrides = await getProductCategoryOverrides();
-  return data ? mapProductRow(data as ProductRow, overrides) : null;
+  const [overrides, merch] = await Promise.all([
+    getProductCategoryOverrides(),
+    getCatalogMerch(),
+  ]);
+  return data ? applyCatalogMerch([mapProductRow(data as ProductRow, overrides)], merch)[0] : null;
 }
 

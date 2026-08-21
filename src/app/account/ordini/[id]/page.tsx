@@ -7,6 +7,7 @@ import { ensureCustomer } from "@/lib/auth";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
 import { fullAddress, storeConfig } from "@/lib/store-config";
+import { ReturnsNotice } from "@/components/returns-notice";
 
 type OrderItem = {
   id: string;
@@ -141,6 +142,10 @@ export default async function CustomerOrderPage({
 
       {order.customer_note ? (
         <p className="mt-6 whitespace-pre-line text-sm text-ivory">{order.customer_note}</p>
+      ) : null}
+
+      {status !== "cancelled" && status !== "refunded" ? (
+        <ReturnsNotice fulfillment={order.fulfillment === "pickup" ? "pickup" : "shipping"} />
       ) : null}
     </section>
   );

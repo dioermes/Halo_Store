@@ -1,21 +1,20 @@
-const sage = "#A2B29F";
-const sageBright = "#C4D1C0";
+const sage = "#C5CEBC";
+const sageSoft = "#B7C2B0";
 const wine = "#3F1521";
-const wineSoft = "#4C1C28";
-const ivory = "#F4F2EE";
+const wineSoft = "#5C2432";
 
-const visibleBorder = `2px solid ${sage}`;
+const visibleBorder = `2px solid ${wine}`;
 
 export const clerkAppearance = {
   variables: {
-    colorPrimary: sage,
-    colorBackground: wineSoft,
-    colorInputBackground: wine,
-    colorInputText: ivory,
-    colorText: ivory,
-    colorTextSecondary: sageBright,
-    colorDanger: sage,
-    colorNeutral: sage,
+    colorPrimary: wine,
+    colorBackground: sageSoft,
+    colorInputBackground: sage,
+    colorInputText: wine,
+    colorText: wine,
+    colorTextSecondary: wineSoft,
+    colorDanger: wine,
+    colorNeutral: wine,
     borderRadius: "0.9rem",
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
   },
@@ -25,28 +24,28 @@ export const clerkAppearance = {
     headerSubtitle: "text-ivory-dim",
     socialButtonsBlockButton: {
       border: visibleBorder,
-      backgroundColor: wine,
-      color: ivory,
+      backgroundColor: sage,
+      color: wine,
     },
     socialButtonsIconButton: {
       border: visibleBorder,
-      backgroundColor: wine,
-      color: ivory,
+      backgroundColor: sage,
+      color: wine,
     },
     alternativeMethodsBlockButton: {
       border: visibleBorder,
-      backgroundColor: wine,
-      color: ivory,
+      backgroundColor: sage,
+      color: wine,
     },
     formFieldInput: {
       border: visibleBorder,
-      backgroundColor: wine,
-      color: ivory,
+      backgroundColor: sage,
+      color: wine,
     },
     formButtonPrimary: {
       border: visibleBorder,
-      backgroundColor: sage,
-      color: wine,
+      backgroundColor: wine,
+      color: sage,
       boxShadow: "none",
     },
     formFieldInputShowPasswordButton: "text-halo-bright",
@@ -54,7 +53,7 @@ export const clerkAppearance = {
     identityPreviewEditButton: "text-halo-bright",
     userButtonPopoverCard: {
       border: visibleBorder,
-      backgroundColor: wineSoft,
+      backgroundColor: sageSoft,
     },
     userButtonPopoverActionButton: {
       border: visibleBorder,

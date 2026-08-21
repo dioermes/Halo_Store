@@ -42,6 +42,12 @@ export function SiteFooter() {
                 <Phone className="h-4 w-4 shrink-0" aria-hidden />
                 <span>{storeConfig.phone.display}</span>
               </a>
+              <a
+                href={storeConfig.support.emailHref}
+                className="mt-3 block text-sm text-ivory transition-colors hover:text-halo-bright"
+              >
+                {storeConfig.support.email}
+              </a>
             </div>
 
             <div>

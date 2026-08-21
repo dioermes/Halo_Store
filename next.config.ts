@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    proxyClientMaxBodySize: "80mb",
+  },
   images: {
     /**
      * Su Vercel le foto passano da `/_next/image`. Se il progetto ha

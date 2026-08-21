@@ -1,6 +1,7 @@
 export const adminNav = [
   { href: "/admin", label: "Panoramica" },
   { href: "/admin/catalogo", label: "Catalogo" },
+  { href: "/admin/sito", label: "Modifica sito" },
   { href: "/admin/ordini", label: "Ordini" },
   { href: "/admin/impostazioni", label: "Impostazioni" },
 ] as const;

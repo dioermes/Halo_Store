@@ -17,5 +17,5 @@ export default async function EditProductPage({
   if (id === "nuovo") return <ProductEditor saved={saved} categories={categories} />;
   const product = await getProductAdmin(id);
   if (!product) notFound();
-  return <ProductEditor product={product} saved={saved} categories={categories} />;
+  return <ProductEditor product={product} productId={id} saved={saved} categories={categories} />;
 }

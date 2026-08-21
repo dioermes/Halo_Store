@@ -5,6 +5,19 @@ import { redirect } from "next/navigation";
 import { requireOwner } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase";
 import { saveStoreSettings } from "@/lib/settings";
+import {
+  getCatalogMerch,
+  getSiteAppearance,
+  patchSiteAppearance,
+  productKey,
+  removeProductMerch,
+  saveCatalogMerch,
+  saveSiteAppearance,
+  setProductMerch,
+  type SiteAppearance,
+  type SiteMedia,
+} from "@/lib/site";
+import { getAllProductsAdmin } from "@/lib/catalog";
 import { sendMarketingEmail, sendOrderStatusEmail } from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 import { getStripe } from "@/lib/stripe";
@@ -26,8 +39,17 @@ export type SaveProductState = { error: string };
 
 function saveErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "";
-  if (/duplicate key|unique/i.test(message)) {
+  if (/halo_products_slug|halo_products_pkey/i.test(message) || (/duplicate key|unique/i.test(message) && /slug/i.test(message))) {
     return "Questo indirizzo in vetrina è già usato da un altro capo.";
+  }
+  if (/halo_images_product_color|halo_product_images/i.test(message)) {
+    return "Due foto usano lo stesso nome colore. Dai a ogni colore un nome diverso.";
+  }
+  if (/halo_variants|sku|product_id.*size.*color/i.test(message)) {
+    return "Taglia e colore si ripetono. Controlla le colorazioni e salva di nuovo.";
+  }
+  if (/duplicate key|unique/i.test(message)) {
+    return "Qualche dato del capo è già presente. Controlla taglie, colori e indirizzo in vetrina.";
   }
   if (message) return message;
   return "Non è stato possibile salvare il capo. Riprova.";
@@ -35,6 +57,71 @@ function saveErrorMessage(error: unknown) {
 
 function isCategoryConstraintError(message: string) {
   return /check constraint|23514|halo_products_category/i.test(message);
+}
+
+async function syncProductVariants(
+  client: ReturnType<typeof createAdminClient>,
+  productId: string,
+  variants: Array<{ size: string; color: string; stock: number }>,
+) {
+  const unique: Array<{ size: string; color: string; stock: number }> = [];
+  const seen = new Set<string>();
+  for (const variant of variants) {
+    const size = variant.size.trim();
+    const color = variant.color.trim();
+    if (!size || !color) continue;
+    const key = `${size.toLowerCase()}::${color.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push({ size, color, stock: Number(variant.stock) || 0 });
+  }
+  if (!unique.length) {
+    throw new Error("Aggiungi almeno una taglia e un colore.");
+  }
+
+  const { data: existing, error: readError } = await client
+    .from("halo_variants")
+    .select("id, size, color")
+    .eq("product_id", productId);
+  if (readError) throw new Error(readError.message);
+
+  const byKey = new Map(
+    (existing ?? []).map((row) => [`${row.size.toLowerCase()}::${row.color.toLowerCase()}`, row]),
+  );
+  const keep = new Set<string>();
+
+  for (const variant of unique) {
+    const key = `${variant.size.toLowerCase()}::${variant.color.toLowerCase()}`;
+    const row = byKey.get(key);
+    if (row) {
+      keep.add(row.id);
+      const { error } = await client
+        .from("halo_variants")
+        .update({ stock: variant.stock, size: variant.size, color: variant.color })
+        .eq("id", row.id);
+      if (error) throw new Error(error.message);
+      continue;
+    }
+    const sku = `hv-${productId.slice(0, 8)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const { error } = await client.from("halo_variants").insert({
+      product_id: productId,
+      size: variant.size,
+      color: variant.color,
+      stock: variant.stock,
+      sku,
+      low_stock_at: 2,
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  for (const row of existing ?? []) {
+    if (keep.has(row.id)) continue;
+    const { error } = await client.from("halo_variants").delete().eq("id", row.id);
+    if (error) {
+      const { error: zeroError } = await client.from("halo_variants").update({ stock: 0 }).eq("id", row.id);
+      if (zeroError) throw new Error(zeroError.message);
+    }
+  }
 }
 
 export async function createCategoryAction(input: {
@@ -90,10 +177,19 @@ export async function saveProductAction(
       hint: String(formData.get("categoryHint") ?? "").trim(),
     });
 
-    productId = id;
+    productId = id.trim();
+    if (!productId) {
+      const { data: existing } = await client
+        .from("halo_products")
+        .select("id")
+        .eq("slug", payload.slug)
+        .maybeSingle();
+      productId = existing?.id ?? "";
+    }
+
     const write = async (category: string) => {
       const row = { ...payload, category };
-      if (id) return client.from("halo_products").update(row).eq("id", id);
+      if (productId) return client.from("halo_products").update(row).eq("id", productId);
       return client.from("halo_products").insert(row).select("id").single();
     };
 
@@ -101,7 +197,7 @@ export async function saveProductAction(
     if (written.error && isCategoryConstraintError(written.error.message)) {
       written = await write("top");
       if (written.error) throw new Error(written.error.message);
-      if (!id) {
+      if (!productId) {
         const inserted = written.data as { id?: string } | null;
         if (!inserted?.id) throw new Error("Insert failed");
         productId = inserted.id;
@@ -110,7 +206,7 @@ export async function saveProductAction(
     } else if (written.error) {
       throw new Error(written.error.message);
     } else {
-      if (!id) {
+      if (!productId) {
         const inserted = written.data as { id?: string } | null;
         if (!inserted?.id) throw new Error("Insert failed");
         productId = inserted.id;
@@ -128,7 +224,16 @@ export async function saveProductAction(
       extras?: string[];
     };
     const cover = imagesPayload.cover?.trim() || imagesPayload.colors?.find((row) => row.url)?.url || "";
-    const colorPhotos = (imagesPayload.colors ?? []).filter((row) => row.name.trim() && row.url);
+    const colorPhotos: Array<{ name: string; url: string }> = [];
+    const colorNames = new Set<string>();
+    for (const row of imagesPayload.colors ?? []) {
+      const name = row.name.trim();
+      if (!name || !row.url) continue;
+      const key = name.toLowerCase();
+      if (colorNames.has(key)) continue;
+      colorNames.add(key);
+      colorPhotos.push({ name, url: row.url });
+    }
     const extras = (imagesPayload.extras ?? []).filter(
       (url) => url && url !== cover && !colorPhotos.some((row) => row.url === url),
     );
@@ -148,9 +253,9 @@ export async function saveProductAction(
       ...colorPhotos.map((row, index) => ({
         product_id: productId,
         url: row.url,
-        alt: `color:${row.name.trim()}`,
+        alt: `color:${row.name}`,
         sort_order: extras.length + index + 1,
-        color: row.name.trim(),
+        color: row.name,
       })),
     ];
     if (imageRows.length) {
@@ -169,28 +274,21 @@ export async function saveProductAction(
 
     const variantsRaw = String(formData.get("variantsJson") ?? "[]");
     const variants = JSON.parse(variantsRaw) as Array<{
-      id?: string;
       size: string;
       color: string;
       stock: number;
     }>;
-    if (!variants.length) {
-      return { error: "Aggiungi almeno una taglia e un colore." };
-    }
-    await client.from("halo_variants").delete().eq("product_id", productId);
-    const { error: variantError } = await client.from("halo_variants").insert(
-      variants.map((variant, index) => ({
-        product_id: productId,
-        size: variant.size,
-        color: variant.color,
-        stock: Number(variant.stock) || 0,
-        sku: `${payload.slug}-${variant.size}-${variant.color}-${index}`
-          .toLowerCase()
-          .replace(/\s+/g, "-"),
-        low_stock_at: 2,
-      })),
+    await syncProductVariants(client, productId, variants);
+
+    const merch = await getCatalogMerch();
+    const badge = String(formData.get("badge") ?? "");
+    await saveCatalogMerch(
+      setProductMerch(merch, productId, {
+        newArrival: formData.get("isNewArrival") === "on" || /nuovo arrivo/i.test(badge),
+        bestseller: formData.get("isBestseller") === "on" || /best seller/i.test(badge),
+        keywords: String(formData.get("searchKeywords") ?? ""),
+      }),
     );
-    if (variantError) throw new Error(variantError.message);
   } catch (error) {
     return { error: saveErrorMessage(error) };
   }
@@ -198,6 +296,7 @@ export async function saveProductAction(
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/catalogo");
+  revalidatePath("/admin/sito");
   redirect(`/admin/catalogo/${productId}?salvato=1`);
 }
 
@@ -206,6 +305,8 @@ export async function togglePublishedAction(id: string, published: boolean) {
   await client.from("halo_products").update({ published, updated_at: new Date().toISOString() }).eq("id", id);
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/admin/catalogo");
+  revalidatePath("/admin/sito");
 }
 
 export async function deleteProductAction(formData: FormData) {
@@ -223,9 +324,13 @@ export async function deleteProductAction(formData: FormData) {
   const { error } = await client.from("halo_products").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
+  const merch = await getCatalogMerch();
+  await saveCatalogMerch(removeProductMerch(merch, id));
+  const appearance = await getSiteAppearance();
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/catalogo");
+  revalidatePath("/admin/sito");
 }
 
 export async function updateOrderAction(formData: FormData) {
@@ -321,6 +426,55 @@ export async function saveSettingsAction(formData: FormData) {
     holdMinutes: Number(formData.get("holdMinutes") ?? 20),
   });
   revalidatePath("/admin/impostazioni");
+}
+
+export async function saveSiteAppearanceAction(formData: FormData) {
+  await requireOwner();
+  const current = await getSiteAppearance();
+  const media = (prefix: keyof Pick<SiteAppearance, "heroDesktop" | "heroMobile" | "interlude">) => {
+    const url = String(formData.get(`${prefix}Url`) ?? "").trim();
+    const kind = String(formData.get(`${prefix}Kind`) ?? "image") === "video" ? "video" : "image";
+    if (!url) return current[prefix];
+    return { url, kind } satisfies SiteMedia;
+  };
+  const catalog = await getAllProductsAdmin();
+  const resolveId = (id: string) => {
+    const product = catalog.find((row) => row.uuid === id || row.id === id);
+    return product ? productKey(product) : id;
+  };
+  const featured = (prefix: string) => {
+    const ids: string[] = [];
+    for (const slot of [1, 2, 3, 4]) {
+      const id = resolveId(String(formData.get(`${prefix}${slot}`) ?? "").trim());
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+    return ids;
+  };
+  const next: SiteAppearance = {
+    heroDesktop: media("heroDesktop"),
+    heroMobile: media("heroMobile"),
+    interlude: media("interlude"),
+    featuredNewIds: featured("featuredNew"),
+    featuredBestIds: featured("featuredBest"),
+  };
+  await saveSiteAppearance(next);
+  revalidatePath("/");
+  revalidatePath("/admin/sito");
+  redirect("/admin/sito?salvato=1");
+}
+
+export async function saveSiteMediaSlotAction(
+  slot: "heroDesktop" | "heroMobile" | "interlude",
+  url: string,
+  kind: "image" | "video",
+) {
+  await requireOwner();
+  if (!url || (slot !== "heroDesktop" && slot !== "heroMobile" && slot !== "interlude")) {
+    throw new Error("Media non valido.");
+  }
+  await patchSiteAppearance({ [slot]: { url, kind } });
+  revalidatePath("/");
+  revalidatePath("/admin/sito");
 }
 
 export async function sendNewsletterAction(formData: FormData) {

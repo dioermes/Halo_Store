@@ -51,6 +51,10 @@ export const storeConfig = {
     display: "+39 331 987 5979",
     href: "tel:+393319875979",
   },
+  support: {
+    email: "ordini@halostore-conversano.it",
+    emailHref: "mailto:ordini@halostore-conversano.it?subject=Reso%20ordine%20Halo%20Store",
+  },
   coordinates: {
     lat: 40.9654381,
     lng: 17.1159334,
