@@ -81,28 +81,23 @@ async function loadOrder(admin: ReturnType<typeof createAdminClient>, sessionId:
   return (data as OrderRow | null) ?? null;
 }
 
-function shippingFromSession(session: Stripe.Checkout.Session) {
-  const shipping =
-    (
-      session as {
-        collected_information?: {
-          shipping_details?: {
-            name?: string | null;
-            address?: {
-              line1?: string | null;
-              line2?: string | null;
-              city?: string | null;
-              postal_code?: string | null;
-              country?: string | null;
-            };
-          };
-        };
-      }
-    ).collected_information?.shipping_details ?? session.shipping_details;
-  return {
-    name: shipping?.name,
-    address: shipping?.address,
+type SessionShipping = {
+  name?: string | null;
+  address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+  } | null;
+};
+
+function shippingFromSession(session: Stripe.Checkout.Session): SessionShipping {
+  const extra = session as Stripe.Checkout.Session & {
+    collected_information?: { shipping_details?: SessionShipping | null };
+    shipping_details?: SessionShipping | null;
   };
+  return extra.collected_information?.shipping_details ?? extra.shipping_details ?? {};
 }
 
 export async function fulfillPaidCheckoutSession(
