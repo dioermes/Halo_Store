@@ -26,6 +26,13 @@ function collectColors(products: Product[]) {
   return [...unique.values()].sort((a, b) => a.localeCompare(b, "it"));
 }
 
+function pricesInCategory(products: Product[], categoryId: string) {
+  const list =
+    categoryId === "tutti" ? products : products.filter((product) => product.category === categoryId);
+  const prices = list.map((product) => product.price);
+  return prices.length ? Math.max(...prices) : 0;
+}
+
 function productHasColor(product: Product, color: string) {
   const key = color.toLowerCase();
   if ((product.colors ?? []).some((name) => name.toLowerCase() === key)) return true;
@@ -152,16 +159,20 @@ function ColorSwatches({
   value,
   onChange,
   align = "end",
+  scroll = false,
 }: {
   colors: string[];
   value: string;
   onChange: (color: string) => void;
   align?: "end" | "start";
+  scroll?: boolean;
 }) {
   if (!colors.length) return null;
   return (
     <div
-      className={`halo-scrollbar flex max-h-16 flex-wrap content-start gap-2 overflow-y-auto py-0.5 pr-1.5 ${align === "end" ? "justify-end" : "justify-start"}`}
+      className={`flex flex-wrap content-start gap-2 ${align === "end" ? "justify-end" : "justify-start"} ${
+        scroll ? "halo-scrollbar max-h-16 overflow-y-auto py-0.5 pr-1.5" : ""
+      }`}
       aria-label="Filtra per colore"
     >
       {colors.map((name) => {
@@ -235,6 +246,7 @@ export function Catalog({
   const [color, setColor] = useState("");
   const [selected, setSelected] = useState<Product | null>(null);
   const ceiling = useRef(0);
+  const categoryRef = useRef(active);
 
   const scoped = useMemo(
     () =>
@@ -247,6 +259,14 @@ export function Catalog({
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
   const colors = useMemo(() => collectColors(scoped), [scoped]);
+
+  const selectCategory = (id: string) => {
+    const nextMax = pricesInCategory(products, id);
+    categoryRef.current = id;
+    ceiling.current = nextMax;
+    setActive(id);
+    setMaxSelected(nextMax);
+  };
 
   useEffect(() => {
     const refresh = () => router.refresh();
@@ -269,12 +289,14 @@ export function Catalog({
 
   useEffect(() => {
     setMaxSelected((current) => {
-      const followed = current >= ceiling.current - 0.5 || current === 0;
+      const categoryChanged = categoryRef.current !== active;
+      categoryRef.current = active;
+      const atCeiling = current >= ceiling.current - 0.5 || current === 0;
       ceiling.current = maxPrice;
-      if (followed) return maxPrice;
+      if (categoryChanged || atCeiling) return maxPrice;
       return Math.min(maxPrice, Math.max(minPrice, current));
     });
-  }, [minPrice, maxPrice, active]);
+  }, [active, minPrice, maxPrice]);
 
   useEffect(() => {
     if (!color) return;
@@ -307,13 +329,13 @@ export function Catalog({
           <CategoryRail
             filters={filters}
             active={active}
-            onChange={setActive}
+            onChange={selectCategory}
             layoutId="filtro-attivo-mobile"
             bleed
           />
           <div className="mt-6 grid grid-cols-2 items-end gap-5">
             <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
-            <ColorSwatches colors={colors} value={color} onChange={setColor} />
+            <ColorSwatches colors={colors} value={color} onChange={setColor} scroll />
           </div>
         </div>
 
@@ -322,7 +344,7 @@ export function Catalog({
           <CategoryRail
             filters={filters}
             active={active}
-            onChange={setActive}
+            onChange={selectCategory}
             layoutId="filtro-attivo"
           />
           <ColorSwatches colors={colors} value={color} onChange={setColor} />
