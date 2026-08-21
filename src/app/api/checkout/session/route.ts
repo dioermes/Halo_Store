@@ -10,6 +10,7 @@ import type { Fulfillment } from "@/lib/orders";
 import { formatPickupSlot, isPickupWithinHours } from "@/lib/opening-hours";
 import { sendOwnerNewOrderEmail, sendPickupReservedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/whatsapp";
+import { settleCustomerPendingPayments, type FulfilledOrder } from "@/lib/fulfill-checkout";
 
 type CartPayload = {
   productId: string;
@@ -19,7 +20,33 @@ type CartPayload = {
   quantity: number;
 };
 
+function sameCart(
+  order: FulfilledOrder,
+  lines: Array<{ size: string; color: string; quantity: number }>,
+) {
+  if (order.items.length !== lines.length) return false;
+  const key = (size: string, color: string, quantity: number) =>
+    `${size}|${color}|${quantity}`;
+  const left = [...order.items.map((item) => key(item.size, item.color, item.quantity))].sort();
+  const right = [...lines.map((line) => key(line.size, line.color, line.quantity))].sort();
+  return left.join() === right.join();
+}
+
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
+  try {
+    return await handleCheckout(req);
+  } catch (error) {
+    console.error("[checkout session]", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Impossibile aprire la cassa." },
+      { status: 500 },
+    );
+  }
+}
+
+async function handleCheckout(req: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Accedi per confermare l'ordine." }, { status: 401 });
 
@@ -70,6 +97,8 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   const customer = await ensureCustomer(user);
 
+  const alreadyPaid = await settleCustomerPendingPayments(customer.id);
+
   const lines: Array<{
     variantId: string;
     productName: string;
@@ -110,6 +139,10 @@ export async function POST(req: Request) {
       quantity: item.quantity,
       unitPriceCents: Math.round(product.price * 100),
     });
+  }
+
+  if (alreadyPaid && sameCart(alreadyPaid, lines)) {
+    return NextResponse.json({ alreadyPaid: true, orderId: alreadyPaid.id });
   }
 
   const subtotal = lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0);
@@ -164,16 +197,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
+  const reserveMinutes =
+    body.fulfillment === "shipping"
+      ? Math.max(30, settings.holdMinutes)
+      : settings.holdMinutes;
+
   const { error: holdError } = await admin.rpc("halo_reserve_stock", {
     p_items: lines.map((line) => ({ variant_id: line.variantId, quantity: line.quantity })),
     p_order_id: order.id,
     p_session_id: null,
-    p_minutes: settings.holdMinutes,
+    p_minutes: reserveMinutes,
   });
   if (holdError) {
+    console.error("[halo_reserve_stock]", holdError.message);
     await admin.from("halo_orders").delete().eq("id", order.id);
+    const insufficient = /insufficient_stock/i.test(holdError.message);
     return NextResponse.json(
-      { error: "Qualcuno ha preso questo capo mentre confermavi. Aggiorna il carrello." },
+      {
+        error: insufficient
+          ? "Questo capo non è disponibile in questa taglia e colore. Se hai appena pagato, apri i tuoi ordini. Altrimenti riprova tra un minuto."
+          : "Non è stato possibile prenotare le scorte. Riprova tra un minuto.",
+      },
       { status: 409 },
     );
   }
@@ -227,49 +271,57 @@ export async function POST(req: Request) {
   }
 
   const stripe = getStripe();
-  const origin = siteUrl();
-  const session = await stripe.checkout.sessions.create({
-    ui_mode: "embedded",
-    mode: "payment",
-    customer_email: customer.email,
-    client_reference_id: order.id,
-    return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    expires_at: Math.floor(Date.now() / 1000) + settings.holdMinutes * 60,
-    integration_identifier: integrationIdentifier(),
-    metadata: {
-      order_id: order.id,
-      clerk_id: user.id,
-      fulfillment: body.fulfillment,
-    },
-    line_items: [
-      ...lines.map((line) => ({
-        quantity: line.quantity,
-        price_data: {
-          currency: "eur",
-          unit_amount: line.unitPriceCents,
-          product_data: {
-            name: line.productName,
-            description: `${line.size} · ${line.color}`,
-          },
-        },
-      })),
-      ...(shippingCents > 0
-        ? [
-            {
-              quantity: 1,
-              price_data: {
-                currency: "eur" as const,
-                unit_amount: shippingCents,
-                product_data: { name: "Spedizione Italia" },
-              },
+  const origin = siteUrl(req);
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded_page",
+      mode: "payment",
+      customer_email: customer.email,
+      client_reference_id: order.id,
+      return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      expires_at: Math.floor(Date.now() / 1000) + reserveMinutes * 60,
+      integration_identifier: integrationIdentifier(),
+      metadata: {
+        order_id: order.id,
+        clerk_id: user.id,
+        fulfillment: body.fulfillment,
+      },
+      line_items: [
+        ...lines.map((line) => ({
+          quantity: line.quantity,
+          price_data: {
+            currency: "eur",
+            unit_amount: line.unitPriceCents,
+            product_data: {
+              name: line.productName,
+              description: `${line.size} · ${line.color}`,
             },
-          ]
-        : []),
-    ],
-    ...(body.fulfillment === "shipping"
-      ? { shipping_address_collection: { allowed_countries: ["IT"] as const } }
-      : {}),
-  });
+          },
+        })),
+        ...(shippingCents > 0
+          ? [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "eur" as const,
+                  unit_amount: shippingCents,
+                  product_data: { name: "Spedizione Italia" },
+                },
+              },
+            ]
+          : []),
+      ],
+      ...(body.fulfillment === "shipping"
+        ? { shipping_address_collection: { allowed_countries: ["IT"] as const } }
+        : {}),
+    });
+  } catch (error) {
+    await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
+    await admin.from("halo_orders").delete().eq("id", order.id);
+    const message = error instanceof Error ? error.message : "Stripe ha rifiutato la sessione.";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 
   await admin
     .from("halo_orders")

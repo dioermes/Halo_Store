@@ -63,7 +63,16 @@ async function send(to: string, subject: string, html: string) {
     console.info("[email skipped]", subject, to);
     return;
   }
-  await resend.emails.send({ from: fromAddress(), to, subject, html });
+  if (!to) {
+    console.error("[email skipped] missing recipient", subject);
+    return;
+  }
+  try {
+    const { error } = await resend.emails.send({ from: fromAddress(), to, subject, html });
+    if (error) console.error("[email]", subject, error);
+  } catch (error) {
+    console.error("[email]", subject, error);
+  }
 }
 
 export async function sendOrderPaidEmail(order: OrderEmail) {

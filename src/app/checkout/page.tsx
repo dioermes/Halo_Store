@@ -83,11 +83,32 @@ export default function CheckoutPage() {
           shipping: fulfillment === "shipping" ? shipping : undefined,
         }),
       });
-      const payload = (await response.json()) as {
+      const raw = await response.text();
+      let payload: {
         clientSecret?: string;
         reserved?: boolean;
+        alreadyPaid?: boolean;
+        orderId?: string;
         error?: string;
-      };
+      } = {};
+      if (raw) {
+        try {
+          payload = JSON.parse(raw) as typeof payload;
+        } catch {
+          throw new Error(
+            response.ok
+              ? "Risposta non valida dalla cassa."
+              : `La cassa non ha risposto (${response.status}). Controlla le variabili su Vercel.`,
+          );
+        }
+      } else if (!response.ok) {
+        throw new Error(`La cassa non ha risposto (${response.status}). Controlla le variabili su Vercel.`);
+      }
+      if (payload.alreadyPaid && payload.orderId) {
+        clear();
+        window.location.assign(`/account/ordini/${payload.orderId}`);
+        return;
+      }
       if (payload.reserved) {
         const when = pickupSlots.find((slot) => slot.value === pickupAt)?.label ?? "";
         clear();
@@ -144,7 +165,7 @@ export default function CheckoutPage() {
       <section className="mx-auto max-w-2xl px-5 py-24">
         <h1 className="font-display text-5xl">Paga su Halo.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
-          Restiamo sul sito. Le scorte restano prenotate per 20 minuti.
+          Restiamo sul sito. Le scorte restano prenotate per almeno 30 minuti.
         </p>
         <div className="overflow-hidden rounded-3xl border border-ink-line bg-ivory p-2">
           <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>

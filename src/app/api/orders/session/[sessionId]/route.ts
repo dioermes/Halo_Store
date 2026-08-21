@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { createAdminClient } from "@/lib/supabase";
 import { ensureCustomer, isOwnerUser } from "@/lib/auth";
+import { fulfillPaidCheckoutSession } from "@/lib/fulfill-checkout";
 
 export async function GET(
   _req: Request,
@@ -11,18 +11,32 @@ export async function GET(
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
   const { sessionId } = await params;
-  const admin = createAdminClient();
-  const customer = await ensureCustomer(user);
-  const { data, error } = await admin
-    .from("halo_orders")
-    .select("id, status, customer_id")
-    .eq("stripe_session_id", sessionId)
-    .maybeSingle();
+  if (!sessionId.startsWith("cs_")) {
+    return NextResponse.json({ error: "Sessione non valida" }, { status: 400 });
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ status: "pending_payment" });
-  if (data.customer_id !== customer.id && !isOwnerUser(user)) {
+  const customer = await ensureCustomer(user);
+  let order;
+  try {
+    order = await fulfillPaidCheckoutSession(sessionId);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Sessione non trovata" },
+      { status: 404 },
+    );
+  }
+
+  if (!order) return NextResponse.json({ status: "pending_payment" });
+  if (order.customerId !== customer.id && !isOwnerUser(user)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
-  return NextResponse.json({ id: data.id, status: data.status });
+
+  return NextResponse.json({
+    id: order.id,
+    status: order.status,
+    fulfillment: order.fulfillment,
+    totalCents: order.totalCents,
+    shippingCents: order.shippingCents,
+    items: order.items,
+  });
 }
