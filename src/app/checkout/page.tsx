@@ -414,11 +414,7 @@ export default function CheckoutPage() {
                 ? "Prenota il ritiro"
                 : "Paga"}
           </button>
-          {fulfillment === "shipping" && (
-            <p className="mt-3 text-center text-xs text-ivory-dim">
-              IVA inclusa. Stripe Tax è spento finché il titolare non registra l&apos;IVA su Stripe.
-            </p>
-          )}
+          <p className="mt-3 text-center text-xs text-ivory-dim">IVA inclusa.</p>
         </div>
       </div>
     </section>
