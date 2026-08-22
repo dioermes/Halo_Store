@@ -23,7 +23,6 @@ const COMMON: Record<string, string[]> = {
   arrivi: ["nuovo", "new"],
   bestseller: ["best", "seller", "piu venduti", "venduti"],
   uomo: ["mens", "man"],
-  donna: ["womens", "woman"],
   nero: ["black"],
   bianco: ["white"],
   beige: ["sabbia", "panna"],

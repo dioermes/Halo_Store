@@ -35,25 +35,25 @@ export function FeaturedRail({
   if (!featured.length && !extra.length) return null;
 
   return (
-    <section id={id} className="relative scroll-mt-24 border-t border-ink-line py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <h2 className="text-center font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
+    <section id={id} className="halo-section relative scroll-mt-28 border-t border-ink-line/45">
+      <div className="halo-shell">
+        <h2 className="halo-display text-center text-[clamp(2.75rem,6.4vw,5rem)]">
           <RevealWords text={title} className="block" />
         </h2>
 
-        <div className="mt-12 grid grid-cols-2 items-stretch gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4">
+        <div className="halo-product-grid mt-16 sm:mt-20">
           {featured.map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} onOpen={setSelected} />
           ))}
         </div>
 
         {extra.length > 0 ? (
-          <div className="mt-12 flex flex-col items-center">
+          <div className="mt-16 flex flex-col items-center sm:mt-20">
             <button
               type="button"
               onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
-              className="group flex flex-col items-center gap-2 text-sm uppercase tracking-[0.28em] text-ivory-dim transition-colors hover:text-halo-bright"
+              className="group flex min-h-11 flex-col items-center gap-3 text-xs uppercase tracking-[0.32em] text-ivory-dim transition-colors duration-500 hover:text-halo-bright sm:text-sm"
             >
               Scopri di più
               <ChevronDown
@@ -70,7 +70,7 @@ export function FeaturedRail({
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   className="w-full overflow-hidden"
                 >
-                  <div className="mt-12 grid grid-cols-2 items-stretch gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4">
+                  <div className="halo-product-grid mt-16">
                     {extra.map((product, index) => (
                       <ProductCard
                         key={product.id}

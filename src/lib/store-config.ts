@@ -37,7 +37,7 @@ const rawWhatsapp = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(
 export const storeConfig = {
   name: "Halo Store",
   legalName: "Halo Store di Buonsante Miriana",
-  tagline: "Abbigliamento uomo e donna",
+  tagline: "Abbigliamento uomo",
   claim: "Capi che non trovi ovunque",
   address: {
     street: "Via Castellana, 18A",
@@ -52,8 +52,8 @@ export const storeConfig = {
     href: "tel:+393319875979",
   },
   support: {
-    email: "ordini@halostore-conversano.it",
-    emailHref: "mailto:ordini@halostore-conversano.it?subject=Reso%20ordine%20Halo%20Store",
+    email: "halo.store18@gmail.com",
+    emailHref: "mailto:halo.store18@gmail.com?subject=Halo%20Store",
   },
   coordinates: {
     lat: 40.9654381,

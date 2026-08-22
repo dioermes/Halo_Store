@@ -9,7 +9,7 @@ export function StructuredData() {
     name: storeConfig.name,
     legalName: storeConfig.legalName,
     description:
-      "Negozio di abbigliamento uomo e donna a Conversano. Capi selezionati, tessuti di qualità e prezzi onesti.",
+      "Negozio di abbigliamento uomo a Conversano. Capi selezionati, tessuti di qualità e prezzi onesti.",
     url: storeConfig.siteUrl,
     image: `${storeConfig.siteUrl}/catalogo/amb-interno.jpg`,
     address: {

@@ -57,7 +57,7 @@ export function SiteNav() {
   }, [menuOpen]);
 
   const iconBtn =
-    "flex h-10 w-10 items-center justify-center rounded-full text-ivory transition-colors hover:bg-ivory/10 hover:text-halo-bright";
+    "flex h-11 w-11 items-center justify-center rounded-full text-ivory transition-colors duration-500 hover:bg-ivory/10 hover:text-halo-bright";
 
   return (
     <>
@@ -71,7 +71,7 @@ export function SiteNav() {
             : "border-b border-ink-line bg-ink md:border-transparent md:bg-ink/40 md:backdrop-blur-md"
         }`}
       >
-        <nav className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-20 sm:px-8">
+        <nav className="mx-auto grid h-16 max-w-[84rem] grid-cols-[1fr_auto_1fr] items-center gap-3 px-5 sm:h-20 sm:px-10">
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -112,7 +112,14 @@ export function SiteNav() {
           </Link>
 
           <div className="flex items-center justify-end gap-1">
-            <AccountMenu open={accountOpen} onOpenChange={setAccountOpen} iconClass={iconBtn} />
+            <AccountMenu
+              open={accountOpen}
+              onOpenChange={(next) => {
+                if (next) setSearchOpen(false);
+                setAccountOpen(next);
+              }}
+              iconClass={iconBtn}
+            />
             <button
               type="button"
               onClick={openBag}
@@ -161,12 +168,12 @@ export function SiteNav() {
             aria-modal="true"
             aria-label="Menu di navigazione"
           >
-            <div className="flex h-16 items-center justify-between px-5 sm:h-20 sm:px-8">
-              <p className="text-xs uppercase tracking-[0.28em] text-ivory-dim">Menu</p>
+            <div className="flex h-16 items-center justify-between px-5 sm:h-20 sm:px-10">
+              <p className="text-xs uppercase tracking-[0.32em] text-ivory-dim">Menu</p>
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-line"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-line"
                 aria-label="Chiudi il menu"
                 autoFocus
               >
@@ -209,6 +216,19 @@ export function SiteNav() {
                     Accedi
                   </Link>
                 </motion.li>
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.36, duration: 0.5 }}
+                >
+                  <Link
+                    href="/sign-up"
+                    onClick={() => setMenuOpen(false)}
+                    className="block border-b border-ink-line py-5 font-display text-4xl"
+                  >
+                    Registrati
+                  </Link>
+                </motion.li>
               </Show>
             </ul>
           </motion.div>
@@ -248,46 +268,46 @@ function AccountMenu({
     };
   }, [open, onOpenChange]);
 
+  const itemClass = "block w-full px-4 py-2.5 text-left text-sm text-ivory hover:bg-ivory/10";
+
   return (
     <div ref={rootRef} className="relative">
-      <Show when="signed-out">
-        <Link href="/sign-in" className={iconClass} aria-label="Accedi">
-          <User className="h-5 w-5" aria-hidden />
-        </Link>
-      </Show>
-      <Show when="signed-in">
-        <button
-          type="button"
-          className={iconClass}
-          aria-label="Account"
-          aria-expanded={open}
-          aria-haspopup="menu"
-          onClick={() => onOpenChange(!open)}
-        >
-          <User className="h-5 w-5" aria-hidden />
-        </button>
-        <AnimatePresence>
-          {open ? (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.2 }}
-              role="menu"
-              className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] min-w-44 overflow-hidden rounded-2xl border border-ink-line bg-ink py-1 shadow-lg"
-            >
-              <Link
-                href="/account"
-                role="menuitem"
-                onClick={() => onOpenChange(false)}
-                className="block px-4 py-2.5 text-sm text-ivory hover:bg-ivory/10"
-              >
+      <button
+        type="button"
+        className={iconClass}
+        aria-label="Account"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => onOpenChange(!open)}
+      >
+        <User className="h-5 w-5" aria-hidden />
+      </button>
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            role="menu"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] min-w-44 overflow-hidden rounded-2xl border border-ink-line bg-ink py-1 shadow-lg"
+          >
+            <Show when="signed-out">
+              <Link href="/sign-in" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
+                Accedi
+              </Link>
+              <Link href="/sign-up" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
+                Registrati
+              </Link>
+            </Show>
+            <Show when="signed-in">
+              <Link href="/account" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
                 Account
               </Link>
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-4 py-2.5 text-left text-sm text-ivory hover:bg-ivory/10"
+                className={itemClass}
                 onClick={() => {
                   onOpenChange(false);
                   void signOut({ redirectUrl: "/" });
@@ -295,10 +315,10 @@ function AccountMenu({
               >
                 Esci
               </button>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </Show>
+            </Show>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

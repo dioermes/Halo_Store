@@ -4,8 +4,9 @@ import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
 import { returnsEmailHtml } from "@/lib/returns";
+import { esc, firstName, haloEmail, orderCode, shortOrderId } from "@/lib/email-layout";
 
-type OrderEmail = {
+export type OrderEmail = {
   id: string;
   email: string;
   name?: string | null;
@@ -21,7 +22,7 @@ type OrderEmail = {
 };
 
 function fromAddress() {
-  return process.env.HALO_FROM_EMAIL || "Halo Store <ordini@halostore-conversano.it>";
+  return process.env.HALO_FROM_EMAIL || `Halo Store <${storeConfig.support.email}>`;
 }
 
 function getResend() {
@@ -30,18 +31,13 @@ function getResend() {
   return new Resend(key);
 }
 
-function wrap(title: string, body: string) {
-  return `<!doctype html>
-<html lang="it">
-<body style="margin:0;background:#C5CEBC;color:#3F1521;font-family:Georgia,serif;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-    <p style="letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:#5C2432;">Halo Store · Conversano</p>
-    <h1 style="font-weight:400;font-size:32px;margin:16px 0 24px;">${title}</h1>
-    ${body}
-    <p style="margin-top:40px;font-size:13px;color:#6B3A45;">${storeConfig.legalName}<br/>${storeConfig.address.street}, ${storeConfig.address.postalCode} ${storeConfig.address.city}</p>
-  </div>
-</body>
-</html>`;
+function hello(name?: string | null) {
+  const first = firstName(name);
+  return first ? `Ciao ${first},` : "Ciao,";
+}
+
+function orderRef(order: OrderEmail) {
+  return `<p style="margin:0 0 18px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5C2432;">Ordine ${shortOrderId(order.id)}</p>`;
 }
 
 function itemsHtml(order: OrderEmail) {
@@ -49,13 +45,36 @@ function itemsHtml(order: OrderEmail) {
     .map(
       (item) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #6B3A45;">${item.name}<br/><span style="color:#6B3A45;font-size:13px;">${item.size} · ${item.color} × ${item.quantity}</span></td>
-          <td style="padding:8px 0;border-bottom:1px solid #6B3A45;text-align:right;">${formatPrice(item.unitPriceCents / 100)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #8A6A72;font-family:Georgia,serif;">
+            ${esc(item.name)}<br/>
+            <span style="color:#6B3A45;font-size:13px;font-family:ui-sans-serif,system-ui,sans-serif;">${esc(item.size)} · ${esc(item.color)} × ${item.quantity}</span>
+          </td>
+          <td style="padding:12px 0;border-bottom:1px solid #8A6A72;text-align:right;white-space:nowrap;font-family:Georgia,serif;">${formatPrice(item.unitPriceCents / 100)}</td>
         </tr>`,
     )
     .join("");
-  return `<table style="width:100%;border-collapse:collapse;">${rows}</table>
-    <p style="text-align:right;margin-top:16px;">Totale ${formatPrice(order.totalCents / 100)}</p>`;
+  const shipping =
+    order.shippingCents > 0
+      ? `<tr>
+          <td style="padding:12px 0;color:#6B3A45;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;">Spedizione</td>
+          <td style="padding:12px 0;text-align:right;font-family:Georgia,serif;">${formatPrice(order.shippingCents / 100)}</td>
+        </tr>`
+      : "";
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 8px;border-collapse:collapse;">
+    ${rows}${shipping}
+    <tr>
+      <td style="padding:16px 0 4px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#6B3A45;">Totale</td>
+      <td style="padding:16px 0 4px;text-align:right;font-family:Georgia,serif;font-size:22px;">${formatPrice(order.totalCents / 100)}</td>
+    </tr>
+  </table>`;
+}
+
+function accountOrderUrl(id: string) {
+  return `${siteUrl()}/account/ordini/${id}`;
+}
+
+function adminOrderUrl(id: string) {
+  return `${siteUrl()}/admin/ordini/${id}`;
 }
 
 async function send(to: string, subject: string, html: string) {
@@ -69,7 +88,13 @@ async function send(to: string, subject: string, html: string) {
     return;
   }
   try {
-    const { error } = await resend.emails.send({ from: fromAddress(), to, subject, html });
+    const { error } = await resend.emails.send({
+      from: fromAddress(),
+      to,
+      replyTo: storeConfig.support.email,
+      subject,
+      html,
+    });
     if (error) console.error("[email]", subject, error);
   } catch (error) {
     console.error("[email]", subject, error);
@@ -77,36 +102,42 @@ async function send(to: string, subject: string, html: string) {
 }
 
 export async function sendOrderPaidEmail(order: OrderEmail) {
-  const pickup =
-    order.fulfillment === "pickup"
-      ? `<p>Puoi ritirarlo in negozio in ${storeConfig.address.street}, ${storeConfig.address.city}. Ti avvisiamo quando è pronto.</p>`
-      : `<p>Prepariamo la spedizione in Italia. Riceverai il tracking appena parte il pacco.</p>`;
+  const pickup = order.fulfillment === "pickup";
   await send(
     order.email,
     `Ordine confermato · ${storeConfig.name}`,
-    wrap(
-      "Grazie, è arrivato.",
-      `<p>Ciao${order.name ? ` ${order.name}` : ""}, il pagamento è andato a buon fine.</p>${pickup}${itemsHtml(order)}
-       <p><a href="${siteUrl()}/account/ordini/${order.id}" style="color:#5C2432;">Vedi l'ordine nel tuo account</a></p>
-       ${returnsEmailHtml(order.fulfillment)}`,
-    ),
+    haloEmail({
+      preheader: pickup
+        ? "Pagamento ricevuto. Ti avvisiamo quando i capi sono pronti in negozio."
+        : "Pagamento ricevuto. Prepariamo la spedizione in Italia.",
+      title: "Grazie, è arrivato.",
+      body: `${orderRef(order)}<p style="margin:0 0 14px;">${hello(order.name)} il pagamento è andato a buon fine.</p>
+        <p style="margin:0;">${
+          pickup
+            ? `Puoi ritirarlo in ${esc(storeConfig.address.street)}, ${esc(storeConfig.address.city)}. Ti scriviamo quando è pronto.`
+            : "Prepariamo la spedizione in Italia. Riceverai il tracking appena parte il pacco."
+        }</p>${itemsHtml(order)}`,
+      cta: { href: accountOrderUrl(order.id), label: "Vedi l'ordine" },
+      extra: returnsEmailHtml(order.fulfillment),
+    }),
   );
 }
 
 export async function sendPickupReservedEmail(order: OrderEmail) {
   const when = order.pickupLabel
-    ? `<p>Ritiro prenotato: <strong>${order.pickupLabel}</strong>.</p>`
+    ? `<p style="margin:14px 0 0;">Ritiro prenotato: <strong>${esc(order.pickupLabel)}</strong>.</p>`
     : "";
   await send(
     order.email,
     `Ritiro prenotato · ${storeConfig.name}`,
-    wrap(
-      "Ti aspettiamo.",
-      `<p>Ciao${order.name ? ` ${order.name}` : ""}, abbiamo messo da parte i capi. Paghi in negozio al ritiro, in ${storeConfig.address.street}, ${storeConfig.address.city}.</p>${when}${itemsHtml(order)}
-       <p style="text-align:right;margin-top:-8px;color:#5C2432;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>
-       <p><a href="${siteUrl()}/account/ordini/${order.id}" style="color:#5C2432;">Vedi l'ordine nel tuo account</a></p>
-       ${returnsEmailHtml("pickup")}`,
-    ),
+    haloEmail({
+      preheader: "Abbiamo messo da parte i capi. Paghi in negozio al ritiro.",
+      title: "Ti aspettiamo.",
+      body: `${orderRef(order)}<p style="margin:0;">${hello(order.name)} abbiamo messo da parte i capi. Paghi in cassa al ritiro, in ${esc(storeConfig.address.street)}, ${esc(storeConfig.address.city)}.</p>${when}${itemsHtml(order)}
+        <p style="margin:8px 0 0;font-family:Georgia,serif;font-size:18px;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>`,
+      cta: { href: accountOrderUrl(order.id), label: "Vedi l'ordine" },
+      extra: returnsEmailHtml("pickup"),
+    }),
   );
 }
 
@@ -117,40 +148,127 @@ export async function sendOwnerNewOrderEmail(order: OrderEmail) {
   await send(
     owner,
     pickup
-      ? `Ritiro da incassare ${order.id.slice(0, 8)} · ${formatPrice(order.totalCents / 100)}`
-      : `Nuovo ordine ${order.id.slice(0, 8)} · ${formatPrice(order.totalCents / 100)}`,
-    wrap(
-      pickup ? "Nuovo ritiro da incassare" : "Nuovo ordine pagato",
-      `<p>${pickup ? "Ritiro in negozio — paga in cassa" : "Spedizione Italia"} · ${order.email}</p>
-       ${order.pickupLabel ? `<p>Quando: ${order.pickupLabel}</p>` : ""}
-       ${order.note ? `<p>${order.note}</p>` : ""}
-       ${itemsHtml(order)}
-       <p><a href="${siteUrl()}/admin/ordini/${order.id}" style="color:#5C2432;">Apri in amministrazione</a></p>`,
-    ),
+      ? `Ritiro da incassare ${orderCode(order.id)} · ${formatPrice(order.totalCents / 100)}`
+      : `Nuovo ordine ${orderCode(order.id)} · ${formatPrice(order.totalCents / 100)}`,
+    haloEmail({
+      audience: "owner",
+      preheader: `${pickup ? "Ritiro in negozio" : "Spedizione"} · ${order.email}`,
+      title: pickup ? "Nuovo ritiro da incassare" : "Nuovo ordine pagato",
+      body: `${orderRef(order)}
+        <p style="margin:0 0 10px;">${pickup ? "Ritiro in negozio — paga in cassa." : "Spedizione in Italia — già pagato."}</p>
+        <p style="margin:0 0 10px;">Cliente: ${esc(order.name || "—")}<br/>${esc(order.email)}</p>
+        ${order.pickupLabel ? `<p style="margin:0 0 10px;">Quando: ${esc(order.pickupLabel)}</p>` : ""}
+        ${order.note ? `<p style="margin:0 0 10px;">Nota: ${esc(order.note)}</p>` : ""}
+        ${itemsHtml(order)}`,
+      cta: { href: adminOrderUrl(order.id), label: "Apri in amministrazione" },
+    }),
   );
 }
 
 export async function sendOrderStatusEmail(order: OrderEmail) {
+  const ref = orderRef(order);
+  const items = itemsHtml(order);
+  const account = { href: accountOrderUrl(order.id), label: "Vedi l'ordine" };
+
+  if (order.status === "preparing") {
+    await send(
+      order.email,
+      `Il tuo ordine è in preparazione · ${storeConfig.name}`,
+      haloEmail({
+        preheader:
+          order.fulfillment === "pickup"
+            ? "Stiamo preparando i capi per il ritiro."
+            : "Stiamo preparando il pacco.",
+        title: "Lo stiamo preparando.",
+        body: `${ref}<p style="margin:0;">${hello(order.name)} ${
+          order.fulfillment === "pickup"
+            ? "stiamo preparando i capi per il ritiro in negozio. Ti avvisiamo appena sono pronti."
+            : "stiamo preparando il pacco. Ti mandiamo il tracking appena parte."
+        }</p>${items}`,
+        cta: account,
+      }),
+    );
+    return;
+  }
+
   if (order.status === "ready_for_pickup") {
     await send(
       order.email,
       `Il tuo ordine è pronto in negozio · ${storeConfig.name}`,
-      wrap(
-        "È pronto.",
-        `<p>Passa in ${storeConfig.address.street}, ${storeConfig.address.city}. Porta un documento. Paghi in cassa al ritiro.</p>${itemsHtml(order)}
-         <p style="text-align:right;margin-top:-8px;color:#5C2432;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>`,
-      ),
+      haloEmail({
+        preheader: `Passa in ${storeConfig.address.street}. Porta un documento.`,
+        title: "È pronto.",
+        body: `${ref}<p style="margin:0;">Passa in ${esc(storeConfig.address.street)}, ${esc(storeConfig.address.city)}. Porta un documento. Paghi in cassa al ritiro.</p>${items}
+          <p style="margin:8px 0 0;font-family:Georgia,serif;font-size:18px;">Da pagare in cassa ${formatPrice(order.totalCents / 100)}</p>`,
+        cta: account,
+      }),
     );
     return;
   }
+
   if (order.status === "shipped") {
     const tracking = order.trackingCode
-      ? `<p>Tracking${order.trackingCarrier ? ` ${order.trackingCarrier}` : ""}: <strong>${order.trackingCode}</strong></p>`
+      ? `<p style="margin:14px 0 0;">Tracking${order.trackingCarrier ? ` ${esc(order.trackingCarrier)}` : ""}: <strong>${esc(order.trackingCode)}</strong></p>`
       : "";
     await send(
       order.email,
       `Il tuo ordine è partito · ${storeConfig.name}`,
-      wrap("Spedito.", `<p>Il pacco è in viaggio.</p>${tracking}${itemsHtml(order)}`),
+      haloEmail({
+        preheader: order.trackingCode
+          ? `Tracking ${order.trackingCode}`
+          : "Il pacco è in viaggio.",
+        title: "Spedito.",
+        body: `${ref}<p style="margin:0;">Il pacco è in viaggio verso di te.</p>${tracking}${items}`,
+        cta: account,
+        extra: returnsEmailHtml("shipping"),
+      }),
+    );
+    return;
+  }
+
+  if (order.status === "completed") {
+    await send(
+      order.email,
+      `Grazie da ${storeConfig.name}`,
+      haloEmail({
+        preheader: "Il tuo ordine è chiuso. Se serve un cambio, scrivici.",
+        title: "Grazie.",
+        body: `${ref}<p style="margin:0;">${hello(order.name)} ${
+          order.fulfillment === "pickup"
+            ? "grazie per essere passato in negozio."
+            : "il tuo ordine è chiuso."
+        } Se un capo non va, scrivici: ti diciamo come procedere.</p>${items}`,
+        cta: account,
+        extra: returnsEmailHtml(order.fulfillment),
+      }),
+    );
+    return;
+  }
+
+  if (order.status === "cancelled") {
+    await send(
+      order.email,
+      `Ordine annullato · ${storeConfig.name}`,
+      haloEmail({
+        preheader: "L'ordine è stato annullato.",
+        title: "Ordine annullato.",
+        body: `${ref}<p style="margin:0;">${hello(order.name)} questo ordine non è più attivo. Se hai già pagato, ti aggiorniamo sul rimborso. Per domande: ${esc(storeConfig.support.email)}.</p>${items}`,
+        cta: account,
+      }),
+    );
+    return;
+  }
+
+  if (order.status === "refunded") {
+    await send(
+      order.email,
+      `Rimborso registrato · ${storeConfig.name}`,
+      haloEmail({
+        preheader: "Il rimborso è stato registrato.",
+        title: "Rimborso in corso.",
+        body: `${ref}<p style="margin:0;">${hello(order.name)} abbiamo registrato il rimborso. I tempi dipendono dalla tua banca o dal metodo di pagamento.</p>${items}`,
+        cta: account,
+      }),
     );
   }
 }
@@ -159,11 +277,26 @@ export async function sendPaymentFailedEmail(email: string, name?: string | null
   await send(
     email,
     `Pagamento non riuscito · ${storeConfig.name}`,
-    wrap(
-      "Il pagamento non è andato a buon fine",
-      `<p>Ciao${name ? ` ${name}` : ""}, le scorte sono di nuovo disponibili. Puoi riprovare dalla cassa quando vuoi.</p>
-       <p><a href="${siteUrl()}/checkout" style="color:#5C2432;">Torna alla cassa</a></p>`,
-    ),
+    haloEmail({
+      preheader: "Il pagamento non è andato a buon fine. Puoi riprovare dalla cassa.",
+      title: "Il pagamento non è andato a buon fine.",
+      body: `<p style="margin:0;">${hello(name)} le scorte sono di nuovo disponibili. Puoi riprovare dalla cassa quando vuoi.</p>`,
+      cta: { href: `${siteUrl()}/checkout`, label: "Torna alla cassa" },
+    }),
+  );
+}
+
+export async function sendWelcomeEmail(email: string, name?: string | null) {
+  await send(
+    email,
+    `Benvenuto in ${storeConfig.name}`,
+    haloEmail({
+      preheader: "Account creato. Da qui puoi ordini, ritiro e novità.",
+      title: "Benvenuto.",
+      body: `<p style="margin:0 0 14px;">${hello(name)} il tuo account è pronto.</p>
+        <p style="margin:0;">Da qui vedi gli ordini, scegli ritiro o spedizione e, se vuoi, le novità del negozio. Niente mail promozionali finché non le accendi tu.</p>`,
+      cta: { href: `${siteUrl()}/account`, label: "Vai al tuo account" },
+    }),
   );
 }
 
@@ -171,12 +304,26 @@ export async function sendMarketingEmail(to: string, subject: string, htmlBody: 
   await send(
     to,
     subject,
-    wrap(subject, `${htmlBody}<p style="font-size:12px;color:#6B3A45;margin-top:32px;">Ricevi questa mail perché hai chiesto le novità di Halo Store. <a href="${unsubUrl}" style="color:#5C2432;">Disiscriviti</a></p>`),
+    haloEmail({
+      eyebrow: "Novità · Halo Store",
+      preheader: subject,
+      title: subject,
+      body: htmlBody,
+      extra: `<p style="margin-top:28px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#6B3A45;">Ricevi questa mail perché hai chiesto le novità di Halo Store. <a href="${esc(unsubUrl)}" style="color:#5C2432;">Disiscriviti</a></p>`,
+    }),
   );
 }
 
 export function statusMailNeeded(status: OrderStatus) {
-  return status === "ready_for_pickup" || status === "shipped" || status === "paid";
+  return (
+    status === "preparing" ||
+    status === "ready_for_pickup" ||
+    status === "shipped" ||
+    status === "completed" ||
+    status === "cancelled" ||
+    status === "refunded" ||
+    status === "paid"
+  );
 }
 
 export { orderStatusLabel };

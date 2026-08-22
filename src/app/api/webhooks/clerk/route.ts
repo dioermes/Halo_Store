@@ -1,5 +1,6 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextRequest, NextResponse } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -42,6 +43,9 @@ export async function POST(req: NextRequest) {
         { customer_id: customer.id, source: "clerk_user.created" },
         { onConflict: "customer_id", ignoreDuplicates: true },
       );
+      if (email) {
+        await sendWelcomeEmail(email, fullName || null);
+      }
     }
   }
 

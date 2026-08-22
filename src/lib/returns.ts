@@ -19,9 +19,9 @@ export function returnsEmailHtml(fulfillment?: "pickup" | "shipping") {
     fulfillment !== "shipping"
       ? `<p>Per il ritiro in negozio: se cambi idea prima di passare, chiamaci e liberiamo i capi. In negozio puoi provarli prima di pagare.</p>`
       : "";
-  return `<div style="margin-top:28px;padding-top:20px;border-top:1px solid #6B3A45;">
-    <p style="letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:#5C2432;">Reso e servizio clienti</p>
+  return `<div style="margin-top:28px;padding-top:22px;border-top:1px solid #8A6A72;">
+    <p style="margin:0 0 12px;font-family:ui-sans-serif,system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:#5C2432;">Reso e servizio clienti</p>
     ${shipping}${pickup}
-    <p>Scrivi a <a href="${storeConfig.support.emailHref}" style="color:#5C2432;">${email}</a> oppure chiama / WhatsApp <a href="${storeConfig.phone.href}" style="color:#5C2432;">${phone}</a>. Indica il numero ordine e cosa vuoi rendere o cambiare.</p>
+    <p style="margin:12px 0 0;">Scrivi a <a href="${storeConfig.support.emailHref}" style="color:#5C2432;text-decoration:none;">${email}</a> oppure chiama / WhatsApp <a href="${storeConfig.phone.href}" style="color:#5C2432;text-decoration:none;">${phone}</a>. Indica il numero ordine e cosa vuoi rendere o cambiare.</p>
   </div>`;
 }

@@ -15,21 +15,21 @@ export function Reviews() {
   return (
     <section
       id="recensioni"
-      className="relative overflow-hidden border-t border-ink-line py-24 sm:py-32"
+      className="halo-section relative overflow-hidden border-t border-ink-line/45"
     >
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[900px] -translate-x-1/2 rounded-full bg-halo/8 blur-3xl"
       />
 
-      <div className="relative mx-auto max-w-4xl px-5 text-center sm:px-8">
+      <div className="relative mx-auto max-w-3xl px-6 text-center sm:px-10">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.34em] text-halo">
+          <p className="text-xs uppercase tracking-[0.38em] text-halo">
             Chi ci è già passato
           </p>
         </Reveal>
 
-        <div className="mt-10 flex flex-col items-center">
+        <div className="mt-14 flex flex-col items-center">
           <div className="flex items-center gap-1.5" aria-hidden>
             {Array.from({ length: 5 }).map((_, index) => (
               <motion.span
@@ -53,7 +53,7 @@ export function Reviews() {
             {storeConfig.rating.count} recensione
           </p>
           <Reveal delay={0.3}>
-            <p className="mt-6 font-display text-7xl leading-none sm:text-8xl">
+            <p className="mt-8 font-display text-7xl leading-none tracking-[-0.04em] sm:text-8xl">
               5,0
             </p>
             <p className="mt-3 text-sm text-ivory-dim">
@@ -63,7 +63,7 @@ export function Reviews() {
           </Reveal>
         </div>
 
-        <blockquote className="mt-16">
+        <blockquote className="mt-20">
           <h2 className="font-display text-[clamp(1.7rem,3.6vw,2.6rem)] leading-snug tracking-tight text-balance-display">
             <RevealWords text="&laquo;Trovi quello che cerchi e non trovi ovunque." />{" "}
             <RevealWords

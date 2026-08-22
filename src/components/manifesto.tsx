@@ -29,7 +29,7 @@ const marqueeItems = [
   "Alta qualità dei tessuti",
   "Prezzi onesti",
   "Consiglio su misura",
-  "Uomo e donna",
+  "Abbigliamento uomo",
   "Via Castellana, Conversano",
 ];
 

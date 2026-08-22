@@ -15,6 +15,10 @@ export default function PrivacyPage() {
       </p>
       <p className="mt-4">
         Per domande:{" "}
+        <a href={storeConfig.support.emailHref} className="text-ivory hover:text-halo-bright">
+          {storeConfig.support.email}
+        </a>
+        {" · "}
         <a href={storeConfig.phone.href} className="text-ivory hover:text-halo-bright">
           {storeConfig.phone.display}
         </a>

@@ -18,7 +18,7 @@ import {
   type SiteMedia,
 } from "@/lib/site";
 import { getAllProductsAdmin } from "@/lib/catalog";
-import { sendMarketingEmail, sendOrderStatusEmail } from "@/lib/email";
+import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 import { getStripe } from "@/lib/stripe";
 import type { OrderStatus } from "@/lib/orders";
@@ -424,7 +424,7 @@ export async function updateOrderAction(formData: FormData) {
     })
     .eq("id", id);
 
-  if (status === "ready_for_pickup" || status === "shipped") {
+  if (statusMailNeeded(status) && status !== "paid") {
     await sendOrderStatusEmail({
       id: current.id,
       email: current.halo_customers?.email ?? "",
@@ -448,7 +448,7 @@ export async function updateOrderAction(formData: FormData) {
   revalidatePath("/admin/ordini");
   revalidatePath(`/admin/ordini/${id}`);
   const query = new URLSearchParams({ ok: "1", stato: status });
-  if (status === "ready_for_pickup" || status === "shipped") {
+  if (statusMailNeeded(status) && status !== "paid") {
     query.set("mail", "1");
   }
   redirect(`/admin/ordini/${id}?${query.toString()}`);

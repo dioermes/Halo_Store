@@ -32,14 +32,31 @@ html::-webkit-scrollbar {
 
 body {
   background-color: var(--color-ink);
+  background-image:
+    radial-gradient(ellipse 90% 48% at 50% -8%, color-mix(in oklab, white 22%, transparent), transparent 58%),
+    radial-gradient(ellipse 55% 42% at 108% 18%, color-mix(in oklab, var(--color-halo) 9%, transparent), transparent 62%),
+    radial-gradient(ellipse 50% 36% at -8% 72%, color-mix(in oklab, var(--color-halo) 7%, transparent), transparent 58%);
+  background-attachment: fixed;
   color: var(--color-ivory);
   font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0.012em;
   overflow-x: hidden;
   scrollbar-width: none;
 }
 
 body::-webkit-scrollbar {
   display: none;
+}
+
+button,
+[role="button"],
+a,
+summary,
+label,
+input[type="range"] {
+  cursor: pointer;
 }
 
 ::selection {
@@ -49,6 +66,38 @@ body::-webkit-scrollbar {
 
 @utility text-balance-display {
   text-wrap: balance;
+}
+
+@utility halo-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 84rem;
+  padding-inline: clamp(1.35rem, 4.2vw, 3.75rem);
+}
+
+@utility halo-section {
+  padding-block: clamp(6rem, 13vw, 9.5rem);
+}
+
+@utility halo-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.028em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+@utility halo-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  column-gap: clamp(1.15rem, 2.6vw, 2.6rem);
+  row-gap: clamp(2.75rem, 5.8vw, 5.25rem);
+}
+
+@media (min-width: 1024px) {
+  .halo-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Riga di lettering usata negli ingressi tipografici.
@@ -196,6 +245,10 @@ body::-webkit-scrollbar {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  body {
+    background-attachment: scroll;
   }
 
   .animate-halo-pulse,

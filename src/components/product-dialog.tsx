@@ -133,7 +133,7 @@ export function ProductDialog({
             transition={{ duration: 0.3 }}
             onClick={onClose}
             aria-label="Chiudi la scheda del capo"
-            className="absolute inset-0 hidden cursor-default bg-ink/80 backdrop-blur-md md:block"
+            className="absolute inset-0 hidden cursor-default bg-ink/55 backdrop-blur-xl md:block"
           />
 
           <motion.div
@@ -141,8 +141,8 @@ export function ProductDialog({
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex h-dvh w-full flex-col overflow-hidden bg-ink-soft md:h-[min(900px,92dvh)] md:max-w-6xl md:rounded-3xl md:border md:border-ink-line lg:flex-row"
+            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+            className="relative flex h-dvh w-full flex-col overflow-hidden bg-ink-soft md:h-[min(900px,90dvh)] md:max-w-6xl md:rounded-[2rem] md:border md:border-ink-line/70 md:shadow-[0_40px_120px_-48px_rgba(63,21,33,0.55)] lg:flex-row"
           >
             <div className="relative h-[46dvh] min-h-[240px] shrink-0 lg:h-auto lg:min-h-0 lg:w-[48%]">
               <div
@@ -198,7 +198,7 @@ export function ProductDialog({
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto px-5 pt-5 pb-4 sm:px-8 sm:pt-8">
+              <div className="flex-1 overflow-y-auto px-6 pt-6 pb-5 [scrollbar-width:none] sm:px-10 sm:pt-10 [&::-webkit-scrollbar]:hidden">
                 {product.badge && (
                   <span className="inline-block rounded-full border border-halo/40 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-halo-bright">
                     {product.badge}

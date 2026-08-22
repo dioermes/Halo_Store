@@ -28,8 +28,8 @@ export function ProductCard({
   const pointerX = useMotionValue(0.5);
   const pointerY = useMotionValue(0.5);
 
-  const rotateX = useSpring(useTransform(pointerY, [0, 1], [4, -4]), spring);
-  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-4, 4]), spring);
+  const rotateX = useSpring(useTransform(pointerY, [0, 1], [7, -7]), spring);
+  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-7, 7]), spring);
   const glowX = useTransform(pointerX, (value) => `${value * 100}%`);
   const glowY = useTransform(pointerY, (value) => `${value * 100}%`);
   const glow = useMotionTemplate`radial-gradient(340px circle at ${glowX} ${glowY}, rgba(63,21,33,0.18), transparent 70%)`;
@@ -56,7 +56,7 @@ export function ProductCard({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="h-full"
-      style={{ perspective: 1200 }}
+      style={{ perspective: 1600 }}
     >
       <motion.button
         ref={cardRef}
@@ -68,14 +68,14 @@ export function ProductCard({
         className="group flex h-full w-full cursor-pointer flex-col text-left"
         aria-label={`Apri la scheda di ${product.name}, ${product.subtitle}, ${formatPrice(product.price)}`}
       >
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-ink-line bg-ink-soft">
-          <div className="absolute inset-0">
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-ink-line/70 bg-ink-soft shadow-[0_24px_60px_-36px_rgba(63,21,33,0.45)]">
+          <div className="absolute inset-0" style={{ transform: "translateZ(28px)" }}>
             <Image
               src={product.image}
               alt={`${product.name}, ${product.subtitle}`}
               fill
               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
-              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+              className="object-cover transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
             />
           </div>
 
@@ -90,28 +90,28 @@ export function ProductCard({
           )}
 
           {product.badge && (
-            <span className="absolute left-4 top-4 rounded-full border border-halo/40 bg-ink/80 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-halo backdrop-blur">
+            <span className="absolute left-5 top-5 rounded-full border border-halo/40 bg-ink/80 px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-halo backdrop-blur">
               {product.badge}
             </span>
           )}
 
           {lastOne && (
-            <span className="absolute right-4 top-4 rounded-full bg-ivory px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-ink">
+            <span className="absolute right-5 top-5 rounded-full bg-ivory px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-ink">
               Ultimo pezzo
             </span>
           )}
 
-          <div className="pointer-events-none absolute inset-x-4 bottom-4 translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden">
-            <span className="flex items-center justify-center rounded-full bg-ivory/95 py-3 text-sm font-medium text-ink backdrop-blur">
+          <div className="pointer-events-none absolute inset-x-5 bottom-5 translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden">
+            <span className="flex min-h-11 items-center justify-center rounded-full bg-ivory/95 py-3 text-sm font-medium text-ink backdrop-blur">
               Guarda e acquista
             </span>
           </div>
         </div>
 
-        <div className="mt-4 flex min-h-[4.25rem] items-start justify-between gap-2 sm:min-h-[4.75rem] sm:gap-3">
+        <div className="mt-5 flex min-h-[4.75rem] items-start justify-between gap-3 sm:mt-6 sm:min-h-[5.25rem] sm:gap-4">
           <div className="min-w-0">
-            <p className="font-display text-xl leading-none sm:text-2xl">{product.name}</p>
-            <p className="mt-2 line-clamp-2 text-xs text-ivory-dim sm:text-sm">{product.subtitle}</p>
+            <p className="font-display text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">{product.name}</p>
+            <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-ivory-dim">{product.subtitle}</p>
           </div>
           <div className="shrink-0 pt-0.5 text-right">
             {product.compareAt ? (

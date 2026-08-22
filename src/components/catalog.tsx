@@ -103,7 +103,7 @@ function CategoryRail({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => onChange(category.id)}
-                  className={`relative shrink-0 rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
+                  className={`relative min-h-11 shrink-0 rounded-full px-5 py-2.5 text-sm transition-colors duration-500 ${
                     isActive ? "text-ink" : "text-ivory-dim hover:text-ivory"
                   }`}
                 >
@@ -185,11 +185,14 @@ function ColorSwatches({
             title={name}
             aria-pressed={isActive}
             onClick={() => onChange(isActive ? "" : name)}
-            className={`h-4 w-4 shrink-0 rounded-full border ${
-              isActive ? "scale-110 border-ivory" : "border-ink-line/80"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+              isActive ? "ring-1 ring-ivory ring-offset-2 ring-offset-ink" : ""
             }`}
-            style={{ backgroundColor: look.hex }}
           >
+            <span
+              className="h-3.5 w-3.5 rounded-full border border-ink-line/80"
+              style={{ backgroundColor: look.hex }}
+            />
             <span className="sr-only">{name}</span>
           </button>
         );
@@ -211,13 +214,13 @@ function PriceFilter({
 }) {
   if (maxPrice <= minPrice) {
     return (
-      <p className="text-[11px] uppercase tracking-[0.22em] text-ivory-dim">
+      <p className="text-xs uppercase tracking-[0.22em] text-ivory-dim">
         {formatPrice(maxPrice || minPrice)}
       </p>
     );
   }
   return (
-    <label className="block text-[11px] uppercase tracking-[0.22em] text-ivory-dim">
+    <label className="block text-xs uppercase tracking-[0.22em] text-ivory-dim">
       Fino a {formatPrice(value)}
       <input
         type="range"
@@ -316,16 +319,16 @@ export function Catalog({
   return (
     <section
       id="catalogo"
-      className="relative scroll-mt-24 border-t border-ink-line py-24 sm:py-32"
+      className="halo-section relative scroll-mt-28 border-t border-ink-line/45"
     >
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+      <div className="halo-shell">
         <div className="text-center">
-          <h2 className="font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
+          <h2 className="halo-display text-[clamp(2.75rem,6.4vw,5rem)]">
             <RevealWords text="Il catalogo" className="block" />
           </h2>
         </div>
 
-        <div className="mt-10 lg:hidden">
+        <div className="mt-14 lg:hidden">
           <CategoryRail
             filters={filters}
             active={active}
@@ -333,13 +336,13 @@ export function Catalog({
             layoutId="filtro-attivo-mobile"
             bleed
           />
-          <div className="mt-6 grid grid-cols-2 items-end gap-5">
+          <div className="mt-8 grid grid-cols-2 items-end gap-8">
             <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
             <ColorSwatches colors={colors} value={color} onChange={setColor} scroll />
           </div>
         </div>
 
-        <div className="mt-14 hidden items-center gap-8 lg:grid lg:grid-cols-[minmax(9rem,14rem)_minmax(0,1fr)_minmax(9rem,14rem)]">
+        <div className="mt-16 hidden items-center gap-10 lg:grid lg:grid-cols-[minmax(10rem,15rem)_minmax(0,1fr)_minmax(10rem,15rem)]">
           <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
           <CategoryRail
             filters={filters}
@@ -350,14 +353,14 @@ export function Catalog({
           <ColorSwatches colors={colors} value={color} onChange={setColor} />
         </div>
 
-        <p className="mt-8 text-center text-[11px] uppercase tracking-[0.22em] text-ivory-dim">
+        <p className="mt-10 text-center text-xs uppercase tracking-[0.24em] text-ivory-dim">
           {visible.length} {visible.length === 1 ? "capo" : "capi"}
         </p>
 
         {visible.length === 0 ? (
           <p className="mt-16 text-center text-sm text-ivory-dim">Nessun capo con questi filtri.</p>
         ) : (
-          <motion.div className="mt-10 grid grid-cols-2 items-stretch gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:mt-12 lg:grid-cols-4">
+          <motion.div className="halo-product-grid mt-14 lg:mt-16">
             <AnimatePresence mode="popLayout">
               {visible.map((product, index) => (
                 <ProductCard

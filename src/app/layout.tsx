@@ -30,7 +30,7 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(storeConfig.siteUrl),
   title: {
-    default: "Halo Store Conversano · Abbigliamento uomo e donna",
+    default: `Halo Store Conversano · ${storeConfig.tagline}`,
     template: "%s · Halo Store Conversano",
   },
   description:
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "it_IT",
-    title: "Halo Store Conversano · Abbigliamento uomo e donna",
+    title: `Halo Store Conversano · ${storeConfig.tagline}`,
     description:
       "Capi che non trovi ovunque. Acquista online, ritira in negozio o fatti spedire in Italia.",
     siteName: "Halo Store",

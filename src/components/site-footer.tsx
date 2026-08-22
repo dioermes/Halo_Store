@@ -11,13 +11,12 @@ export function SiteFooter() {
         aria-hidden
         className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[min(900px,90vw)] -translate-x-1/2 rounded-full bg-halo/10 blur-3xl"
       />
-      <div className="relative mx-auto max-w-7xl px-5 pt-16 pb-32 sm:px-8 md:pb-16">
-        <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
+      <div className="halo-shell relative pt-20 pb-32 md:pb-20">
+        <div className="flex flex-col gap-16 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
             <HaloLogo className="h-16 text-ivory" />
-            <p className="mt-4 text-sm leading-relaxed text-ivory-dim">
-              {storeConfig.claim}. Abbigliamento uomo e donna a Conversano,
-              scelto capo per capo.
+            <p className="mt-6 text-sm leading-relaxed text-ivory-dim">
+              {storeConfig.claim}. {storeConfig.tagline} a Conversano, scelto capo per capo.
             </p>
           </div>
 
@@ -65,9 +64,9 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-ink-line pt-6 text-xs text-ivory-dim sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-20 flex flex-col gap-4 border-t border-ink-line/45 pt-8 text-xs text-ivory-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
-            {storeConfig.legalName} · {storeConfig.address.city} (
+            {storeConfig.name} · {storeConfig.address.city} (
             {storeConfig.address.province})
           </p>
           <p className="flex flex-wrap gap-x-4 gap-y-1">

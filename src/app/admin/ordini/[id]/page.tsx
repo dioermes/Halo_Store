@@ -6,6 +6,7 @@ import { nextStatuses, orderStatusLabel, type Fulfillment, type OrderStatus } fr
 import { updateOrderAction } from "@/app/admin/actions";
 import { OrderStatusSelect } from "@/components/order-status-select";
 import { OrderUpdatedNotice, UpdateOrderButton } from "@/components/update-order-feedback";
+import { markAdminOrderSeen } from "@/lib/admin-orders";
 
 type OrderItem = {
   id: string;
@@ -33,6 +34,8 @@ export default async function AdminOrderDetail({
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
+
+  await markAdminOrderSeen(order.id);
 
   const options = nextStatuses(order.status as OrderStatus, order.fulfillment as Fulfillment);
   const items = (order.halo_order_items ?? []) as OrderItem[];

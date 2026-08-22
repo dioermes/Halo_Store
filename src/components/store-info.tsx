@@ -18,17 +18,17 @@ export function StoreInfo() {
   return (
     <section
       id="dove-siamo"
-      className="relative scroll-mt-24 border-t border-ink-line py-24 sm:py-32"
+      className="halo-section relative scroll-mt-28 border-t border-ink-line/45"
     >
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
+      <div className="halo-shell">
+        <div className="grid gap-16 lg:grid-cols-[1fr_1.05fr] lg:gap-24">
           <div>
             <Reveal>
-              <p className="text-xs uppercase tracking-[0.34em] text-halo">
+              <p className="text-xs uppercase tracking-[0.38em] text-halo">
                 Dove siamo
               </p>
             </Reveal>
-            <h2 className="mt-6 font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[0.95] tracking-tight">
+            <h2 className="halo-display mt-7 text-[clamp(2.75rem,6.4vw,5rem)]">
               <RevealWords text="Ti aspettiamo" className="block" />
               <RevealWords
                 text="in Via Castellana"
@@ -38,7 +38,7 @@ export function StoreInfo() {
             </h2>
 
             <Reveal delay={0.2}>
-              <div className="mt-10 space-y-6">
+              <div className="mt-12 space-y-7">
                 <a
                   href={storeConfig.maps.place}
                   target="_blank"
@@ -71,7 +71,7 @@ export function StoreInfo() {
                   return (
                     <li
                       key={entry.day}
-                      className={`flex items-baseline justify-between gap-6 py-3 text-sm transition-colors ${
+                      className={`flex items-baseline justify-between gap-6 py-3.5 text-sm transition-colors ${
                         isToday ? "text-ivory" : "text-ivory-dim"
                       }`}
                     >
