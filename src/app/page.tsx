@@ -5,10 +5,11 @@ import { Reviews } from "@/components/reviews";
 import { StoreInfo } from "@/components/store-info";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getSiteAppearance, pickFeatured, productKey, productsForHomeSection } from "@/lib/site";
+import type { Product } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
-function restOf(tagged: { uuid?: string; id: string }[], featured: { uuid?: string; id: string }[]) {
+function restOf(tagged: Product[], featured: Product[]) {
   if (tagged.length <= 4) return [];
   return tagged.filter(
     (product) => !featured.some((row) => productKey(row) === productKey(product)),
