@@ -19,7 +19,11 @@ export const clerkAppearance = {
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
   },
   elements: {
-    card: "bg-ink-soft shadow-none",
+    card: {
+      border: visibleBorder,
+      backgroundColor: sageSoft,
+      boxShadow: "none",
+    },
     headerTitle: "font-display text-ivory",
     headerSubtitle: "text-ivory-dim",
     socialButtonsBlockButton: {

@@ -1,5 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { SignUpPanel } from "@/components/clerk-auth-panel";
 
 export default function SignUpPage() {
   return (
@@ -11,7 +10,7 @@ export default function SignUpPage() {
           Serve per confermare il ritiro o la spedizione e seguire gli ordini.
           Le offerte arrivano solo se ti iscrivi alla newsletter, dal popup in vetrina.
         </p>
-        <SignUp appearance={clerkAppearance} />
+        <SignUpPanel />
       </div>
     </section>
   );

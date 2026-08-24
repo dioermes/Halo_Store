@@ -90,7 +90,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           } as CSSProperties
         }
       >
-        <ClerkProvider appearance={clerkAppearance} localization={itIT}>
+        <ClerkProvider
+          appearance={clerkAppearance}
+          localization={itIT}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          signInFallbackRedirectUrl="/account"
+          signUpFallbackRedirectUrl="/account"
+        >
           <StructuredData />
           <ReservationProvider products={products}>
             <HaloCursor />

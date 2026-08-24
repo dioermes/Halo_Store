@@ -1,5 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { SignInPanel } from "@/components/clerk-auth-panel";
 
 export default function SignInPage() {
   return (
@@ -10,7 +9,7 @@ export default function SignInPage() {
         <p className="mt-3 mb-8 text-ivory-dim">
           Accedi per confermare ritiro o spedizione e vedere gli ordini.
         </p>
-        <SignIn appearance={clerkAppearance} />
+        <SignInPanel />
       </div>
     </section>
   );
