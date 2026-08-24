@@ -188,7 +188,8 @@ export default function CheckoutPage() {
       <section className="mx-auto max-w-2xl px-5 py-24">
         <h1 className="font-display text-5xl">Paga su Halo.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
-          Restiamo sul sito. Le scorte restano prenotate per almeno 30 minuti.
+          Questa sessione scadrà tra 30 minuti. Una volta scaduta, l&apos;articolo
+          tornerà disponibile in store.
         </p>
         <div className="overflow-hidden rounded-3xl border border-ink-line bg-ink p-2">
           <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>

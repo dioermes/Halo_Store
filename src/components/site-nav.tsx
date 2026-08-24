@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-react";
-import { Show, useClerk } from "@clerk/nextjs";
+import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
 import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
 import { SiteSearch } from "@/components/site-search";
@@ -37,6 +37,7 @@ export function SiteNav({
   const [accountOpen, setAccountOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const { count, openBag, lastAdded } = useReservation();
+  const { isSignedIn } = useAuth();
   const { scrollY } = useScroll();
 
   useEffect(() => {
@@ -286,7 +287,8 @@ export function SiteNav({
                   </Link>
                 </motion.li>
               ) : null}
-              <Show when="signed-out">
+              {!inAdmin && !isSignedIn ? (
+                <>
                 <motion.li
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -313,7 +315,8 @@ export function SiteNav({
                     Registrati
                   </Link>
                 </motion.li>
-              </Show>
+                </>
+              ) : null}
             </ul>
           </motion.div>
         )}
@@ -334,6 +337,7 @@ function AccountMenu({
   iconClass: string;
 }) {
   const { signOut } = useClerk();
+  const { isSignedIn } = useAuth();
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -376,30 +380,33 @@ function AccountMenu({
             role="menu"
             className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] min-w-44 overflow-hidden rounded-2xl border border-ink-line bg-ink py-1 shadow-lg"
           >
-            <Show when="signed-out">
-              <Link href="/sign-in" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                Accedi
-              </Link>
-              <Link href="/sign-up" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                Registrati
-              </Link>
-            </Show>
-            <Show when="signed-in">
-              <Link href="/account" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                Account
-              </Link>
-              <button
-                type="button"
-                role="menuitem"
-                className={itemClass}
-                onClick={() => {
-                  onOpenChange(false);
-                  void signOut({ redirectUrl: "/" });
-                }}
-              >
-                Esci
-              </button>
-            </Show>
+            {!isSignedIn ? (
+              <>
+                <Link href="/sign-in" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
+                  Accedi
+                </Link>
+                <Link href="/sign-up" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
+                  Registrati
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/account" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
+                  Account
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={itemClass}
+                  onClick={() => {
+                    onOpenChange(false);
+                    void signOut({ redirectUrl: "/" });
+                  }}
+                >
+                  Esci
+                </button>
+              </>
+            )}
           </motion.div>
         ) : null}
       </AnimatePresence>

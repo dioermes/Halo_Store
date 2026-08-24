@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Show, SignInButton } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "motion/react";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useCart } from "@/components/reservation-provider";
@@ -28,6 +28,7 @@ export function ReservationBag() {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -240,7 +241,7 @@ export function ReservationBag() {
 
               {count > 0 && (
                 <div className="border-t border-ink-line px-6 py-5">
-                  <Show when="signed-in">
+                  {isSignedIn ? (
                     <button
                       type="button"
                       onClick={goCheckout}
@@ -248,8 +249,7 @@ export function ReservationBag() {
                     >
                       Vai alla cassa
                     </button>
-                  </Show>
-                  <Show when="signed-out">
+                  ) : (
                     <SignInButton mode="modal" forceRedirectUrl="/checkout">
                       <button
                         type="button"
@@ -258,7 +258,7 @@ export function ReservationBag() {
                         Accedi per continuare
                       </button>
                     </SignInButton>
-                  </Show>
+                  )}
                   <p className="mt-3 text-center text-xs text-ivory-dim">
                     Ritiro: prenoti e paghi in cassa. Spedizione: paghi sul sito.
                   </p>
