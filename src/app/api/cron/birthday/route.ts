@@ -46,14 +46,14 @@ export async function GET(req: Request) {
 
   let sent = 0;
   for (const row of due) {
-    const sent = await sendBirthdayPromoEmail({
+    const result = await sendBirthdayPromoEmail({
       email: row.email,
       code: settings.birthdayCode,
       percent: settings.birthdayDiscountPercent,
       validDays: settings.birthdayValidDays,
     });
-    if (!sent.ok) {
-      console.error("[birthday cron send]", row.email, sent.reason);
+    if (!result.ok) {
+      console.error("[birthday cron send]", row.email, result.reason);
       continue;
     }
     const { error: markError } = await admin

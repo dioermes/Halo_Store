@@ -215,7 +215,7 @@ export function NewsletterPopup() {
                 </label>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-ivory-dim">
-                Lo usiamo solo per l&apos;augurio. Non lo mostriamo a nessuno.
+                Lo usiamo solo per l&apos;augurio e il codice sconto del compleanno.
               </p>
             </fieldset>
             {error && <p className="mt-3 text-sm text-halo">{error}</p>}
