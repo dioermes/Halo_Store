@@ -10,7 +10,8 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
-import { formatPrice, type Product } from "@/lib/products";
+import { SoldOutLabel } from "@/components/sold-out-label";
+import { formatPrice, isProductSoldOut, type Product } from "@/lib/products";
 
 const spring = { stiffness: 220, damping: 26, mass: 0.5 };
 
@@ -47,7 +48,7 @@ export function ProductCard({
     pointerY.set(0.5);
   };
 
-  const lastOne = product.stock <= 1;
+  const soldOut = isProductSoldOut(product);
 
   return (
     <motion.div
@@ -89,17 +90,7 @@ export function ProductCard({
             />
           )}
 
-          {product.badge && (
-            <span className="absolute left-5 top-5 rounded-full border border-halo/40 bg-ink/80 px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-halo backdrop-blur">
-              {product.badge}
-            </span>
-          )}
-
-          {lastOne && (
-            <span className="absolute right-5 top-5 rounded-full bg-ivory px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-ink">
-              Ultimo pezzo
-            </span>
-          )}
+          {soldOut ? <SoldOutLabel className="absolute left-5 top-5" /> : null}
 
           <div className="pointer-events-none absolute inset-x-5 bottom-5 translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden">
             <span className="flex min-h-11 items-center justify-center rounded-full bg-ivory/95 py-3 text-sm font-medium text-ink backdrop-blur">

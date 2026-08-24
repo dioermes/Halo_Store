@@ -40,6 +40,9 @@ export type Product = {
   badge?: string;
   isNewArrival?: boolean;
   isBestseller?: boolean;
+  isOnSale?: boolean;
+  customTagIds?: string[];
+  customTags?: { id: string; label: string }[];
   searchKeywords?: string;
   /** Pezzi realmente disponibili in negozio: alimenta il senso di urgenza */
   stock: number;
@@ -377,6 +380,10 @@ export function stockBySize(product: Product) {
   return rows.map(([size, qty]) => `${qty} ${size}`);
 }
 
+export function isPricedOnSale(price: number, compareAt?: number) {
+  return Boolean(compareAt && compareAt > price);
+}
+
 export function getProduct(id: string) {
   return products.find((product) => product.id === id);
 }
@@ -391,6 +398,15 @@ export function variantAvailable(product: Product, size: string, color: string) 
   const variant = findVariant(product, size, color);
   if (variant) return variant.stock;
   return product.stock;
+}
+
+/** True solo se non resta nessun pezzo su nessuna taglia/colore. */
+export function isProductSoldOut(product: Product) {
+  const variants = product.variants ?? [];
+  if (variants.length > 0) {
+    return variants.every((variant) => variant.stock <= 0);
+  }
+  return product.stock <= 0;
 }
 
 const CATEGORY_GALLERY: Record<string, string[]> = {

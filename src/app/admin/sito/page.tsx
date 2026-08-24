@@ -1,6 +1,6 @@
 import { SiteEditor } from "@/components/site-editor";
 import { getAllProductsAdmin } from "@/lib/catalog";
-import { getSiteAppearance } from "@/lib/site";
+import { getCatalogMerch, getSiteAppearance } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,11 @@ export default async function AdminSitePage({
   searchParams: Promise<{ salvato?: string }>;
 }) {
   const query = await searchParams;
-  const [appearance, products] = await Promise.all([getSiteAppearance(), getAllProductsAdmin()]);
+  const [appearance, products, merch] = await Promise.all([
+    getSiteAppearance(),
+    getAllProductsAdmin(),
+    getCatalogMerch(),
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -19,7 +23,7 @@ export default async function AdminSitePage({
           Sito salvato. Apri la home e fai un refresh se vedi ancora il media precedente.
         </p>
       ) : null}
-      <SiteEditor appearance={appearance} products={products} />
+      <SiteEditor appearance={appearance} products={products} tags={merch.tags} />
     </div>
   );
 }

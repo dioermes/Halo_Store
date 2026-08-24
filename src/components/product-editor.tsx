@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, CircleAlert, Eye, ImagePlus, Move, Plus, Save, Trash2, Upload, X } from "lucide-react";
-import { saveProductAction, type SaveProductState } from "@/app/admin/actions";
+import { createCatalogTagAction, saveProductAction, type SaveProductState } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { PhotoCropper } from "@/components/photo-cropper";
 import { CategoryPicker } from "@/components/category-picker";
@@ -12,10 +12,12 @@ import {
   fallbackCategories,
   formatPrice,
   getColorLook,
+  isPricedOnSale,
   type Product,
   type StoreCategory,
 } from "@/lib/products";
 import { slugify } from "@/lib/slug";
+import type { CatalogTag } from "@/lib/site";
 
 type ColorDraft = {
   key: string;
@@ -250,11 +252,13 @@ export function ProductEditor({
   productId,
   saved = false,
   categories: initialCategories,
+  tags: initialTags = [],
 }: {
   product?: Product;
   productId?: string;
   saved?: boolean;
   categories?: StoreCategory[];
+  tags?: CatalogTag[];
 }) {
   const router = useRouter();
   const [saveState, formAction, saving] = useActionState(saveProductAction, { error: "" } satisfies SaveProductState);
@@ -283,6 +287,11 @@ export function ProductEditor({
   const [published, setPublished] = useState(product?.published !== false);
   const [isNewArrival, setIsNewArrival] = useState(Boolean(product?.isNewArrival));
   const [isBestseller, setIsBestseller] = useState(Boolean(product?.isBestseller));
+  const [isOnSale, setIsOnSale] = useState(Boolean(product?.isOnSale));
+  const [catalogTags, setCatalogTags] = useState<CatalogTag[]>(initialTags);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(product?.customTagIds ?? []);
+  const [newTagLabel, setNewTagLabel] = useState("");
+  const [tagBusy, setTagBusy] = useState(false);
   const [searchKeywords, setSearchKeywords] = useState(product?.searchKeywords ?? "");
   const [cover, setCover] = useState(initial.cover);
   const [sizes, setSizes] = useState(initial.sizes);
@@ -332,6 +341,15 @@ export function ProductEditor({
   useEffect(() => {
     if (!slugTouched) setSlug(slugify(name));
   }, [name, slugTouched]);
+
+  const discounted = isPricedOnSale(
+    typeof price === "number" ? price : 0,
+    typeof compareAt === "number" ? compareAt : undefined,
+  );
+
+  useEffect(() => {
+    if (discounted) setIsOnSale(true);
+  }, [discounted]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -462,6 +480,14 @@ export function ProductEditor({
         {published ? <input type="hidden" name="published" value="on" /> : null}
         {isNewArrival ? <input type="hidden" name="isNewArrival" value="on" /> : null}
         {isBestseller ? <input type="hidden" name="isBestseller" value="on" /> : null}
+        {isOnSale ||
+        isPricedOnSale(
+          typeof price === "number" ? price : 0,
+          typeof compareAt === "number" ? compareAt : undefined,
+        ) ? (
+          <input type="hidden" name="isOnSale" value="on" />
+        ) : null}
+        <input type="hidden" name="customTagIds" value={JSON.stringify(selectedTagIds)} />
         <input type="hidden" name="searchKeywords" value={searchKeywords} />
         <input type="hidden" name="variantsJson" value={JSON.stringify(variants)} />
         <input
@@ -618,6 +644,93 @@ export function ProductEditor({
             />
             Best seller
           </label>
+          <label className="flex items-center gap-3 text-sm text-ivory">
+            <input
+              type="checkbox"
+              checked={discounted || isOnSale}
+              disabled={discounted}
+              onChange={(event) => setIsOnSale(event.target.checked)}
+              className="accent-halo"
+            />
+            In saldo
+          </label>
+          {discounted ? (
+            <p className="text-sm text-ivory-dim">
+              Si attiva da solo perché il prezzo pieno è più alto di quello di vendita.
+            </p>
+          ) : null}
+
+          <div className="grid gap-3 rounded-xl border border-ink-line bg-ink/40 p-4">
+            <p className="font-display text-xl">Tag per la home</p>
+            <p className="text-sm text-ivory-dim">
+              Oltre a nuovi arrivi, best seller e saldi puoi creare tag tuoi, per esempio
+              «Collezione estate», e poi usare quel tag in una sezione della home.
+            </p>
+            {catalogTags.length ? (
+              <ul className="grid gap-2">
+                {catalogTags.map((tag) => {
+                  const checked = selectedTagIds.includes(tag.id);
+                  return (
+                    <li key={tag.id}>
+                      <label className="flex items-center gap-3 text-sm text-ivory">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(event) =>
+                            setSelectedTagIds((current) =>
+                              event.target.checked
+                                ? [...current, tag.id]
+                                : current.filter((id) => id !== tag.id),
+                            )
+                          }
+                          className="accent-halo"
+                        />
+                        {tag.label}
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-ivory-dim">Nessun tag extra. Creane uno sotto.</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={newTagLabel}
+                onChange={(event) => setNewTagLabel(event.target.value)}
+                placeholder="Nome tag, es. Collezione estate"
+                className={`${fieldClass} mt-0 min-w-[12rem] flex-1`}
+              />
+              <button
+                type="button"
+                disabled={tagBusy || !newTagLabel.trim()}
+                onClick={async () => {
+                  const label = newTagLabel.trim();
+                  if (!label) return;
+                  setTagBusy(true);
+                  setError("");
+                  try {
+                    const tag = await createCatalogTagAction(label);
+                    setCatalogTags((current) =>
+                      current.some((row) => row.id === tag.id) ? current : [...current, tag],
+                    );
+                    setSelectedTagIds((current) =>
+                      current.includes(tag.id) ? current : [...current, tag.id],
+                    );
+                    setNewTagLabel("");
+                  } catch (caught) {
+                    setError(caught instanceof Error ? caught.message : "Tag non creato");
+                  } finally {
+                    setTagBusy(false);
+                  }
+                }}
+                className="rounded-full border border-ink-line px-4 py-2 text-sm text-ivory disabled:opacity-40"
+              >
+                {tagBusy ? "Creo…" : "Crea tag"}
+              </button>
+            </div>
+          </div>
+
           <label className="text-sm text-ivory-dim">
             Parole chiave ricerca
             <input
@@ -631,6 +744,9 @@ export function ProductEditor({
 
         <section className="grid gap-4 rounded-2xl border border-ink-line bg-ink/40 p-5">
           <h3 className="font-display text-2xl">Prezzo</h3>
+          <p className="text-sm text-ivory-dim">
+            Se il prezzo pieno è più alto di quello di vendita, il capo va da solo nei saldi.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm text-ivory-dim">
               Prezzo di vendita (€)

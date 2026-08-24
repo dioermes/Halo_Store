@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { itIT } from "@clerk/localizations";
@@ -13,6 +14,8 @@ import { CookieBanner } from "@/components/cookie-banner";
 import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
+import { getStoreCategories } from "@/lib/categories";
+import { getSiteAppearance } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,19 +69,37 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const products = await getPublishedProducts();
+  const [products, categories, appearance] = await Promise.all([
+    getPublishedProducts(),
+    getStoreCategories(),
+    getSiteAppearance(),
+  ]);
 
   return (
     <html
       lang="it"
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body
+        className="min-h-full"
+        style={
+          {
+            "--sold-out-bg": appearance.soldOutBadgeBg,
+            "--sold-out-fg": appearance.soldOutBadgeFg,
+          } as CSSProperties
+        }
+      >
         <ClerkProvider appearance={clerkAppearance} localization={itIT}>
           <StructuredData />
           <ReservationProvider products={products}>
             <HaloCursor />
-            <SiteNav />
+            <SiteNav
+              categories={categories}
+              homeLinks={appearance.homeSections.map((section) => ({
+                href: `/#${section.id}`,
+                label: section.title,
+              }))}
+            />
             <main id="top">{children}</main>
             <SiteFooter />
             <ReservationBag />

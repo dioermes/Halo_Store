@@ -62,6 +62,10 @@ export function labelFromCategoryId(id: string, list: StoreCategory[] = fallback
       .join(" ");
 }
 
+export function catalogPath(categoryId = "tutti") {
+  return !categoryId || categoryId === "tutti" ? "/catalogo" : `/catalogo/${categoryId}`;
+}
+
 export function catalogFilters(list: StoreCategory[], productCount: number): StoreCategory[] {
   return [
     {

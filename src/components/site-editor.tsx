@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { saveSiteAppearanceAction, saveSiteMediaSlotAction } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
-import { merchKindFromFile, type SiteAppearance } from "@/lib/site";
+import { merchKindFromFile, type CatalogTag, type SiteAppearance } from "@/lib/site";
+import { HomeSectionsEditor } from "@/components/home-sections-editor";
 import type { Product } from "@/lib/products";
 
 const fieldClass =
@@ -20,7 +21,7 @@ function MediaFields({
   hint,
   appearance,
 }: {
-  prefix: "heroDesktop" | "heroMobile" | "interlude";
+  prefix: "heroDesktop" | "heroMobile";
   label: string;
   hint: string;
   appearance: SiteAppearance;
@@ -104,92 +105,63 @@ function MediaFields({
   );
 }
 
-function FeatureSlots({
+function ColorField({
   name,
   label,
-  products = [],
-  selected = [],
-  tag,
+  value,
+  onChange,
 }: {
   name: string;
   label: string;
-  products?: Product[];
-  selected?: string[];
-  tag: "nuovo arrivo" | "best seller";
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const list = Array.isArray(products) ? products : [];
-  const tagged = list.filter((product) =>
-    tag === "nuovo arrivo" ? product.isNewArrival : product.isBestseller,
-  );
-  const optionId = (product: Product) => product.uuid || product.id;
-  const matches = (product: Product, id: string) =>
-    Boolean(id) && (product.uuid === id || product.id === id);
-  const initial = [0, 1, 2, 3].map((index) => {
-    const wanted = selected[index] ?? "";
-    const hit = tagged.find((product) => matches(product, wanted));
-    return hit ? optionId(hit) : "";
-  });
-  const [slots, setSlots] = useState(() => {
-    const unique: string[] = [];
-    for (const id of initial) {
-      if (id && !unique.includes(id)) unique.push(id);
-    }
-    return [0, 1, 2, 3].map((index) => unique[index] ?? "");
-  });
-
-  const choose = (index: number, value: string) => {
-    setSlots((current) =>
-      current.map((slot, slotIndex) => {
-        if (slotIndex === index) return value;
-        if (value && slot === value) return "";
-        return slot;
-      }),
-    );
-  };
+  const pickerValue = /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000";
 
   return (
-    <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
-      <legend className="px-1 font-display text-2xl">{label}</legend>
+    <label className="text-sm text-ivory-dim">
+      {label}
+      <span className="mt-2 flex items-center gap-3">
+        <input
+          type="color"
+          value={pickerValue}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-11 w-14 cursor-pointer rounded-lg border border-ink-line bg-ink/60 p-1"
+        />
+        <input
+          name={name}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${fieldClass} mt-0`}
+          pattern="^#([0-9A-Fa-f]{6})$"
+          placeholder="#dc2626"
+        />
+      </span>
+    </label>
+  );
+}
+
+function SoldOutColorFields({ appearance }: { appearance: SiteAppearance }) {
+  const [bg, setBg] = useState(appearance.soldOutBadgeBg);
+  const [fg, setFg] = useState(appearance.soldOutBadgeFg);
+
+  return (
+    <fieldset className="grid gap-4 rounded-2xl border border-ink-line bg-ink/40 p-5">
+      <legend className="px-1 font-display text-2xl">Etichetta Sold out</legend>
       <p className="text-sm text-ivory-dim">
-        Solo i capi con il tag {tag}. Scegli fino a quattro per la home, ciascuno una sola volta, oppure
-        lascia vuoto per l&apos;ordine del catalogo.
+        Colori della scritta che compare sulle card quando un capo è esaurito.
       </p>
-      {tagged.length === 0 ? (
-        <>
-          {[0, 1, 2, 3].map((index) => (
-            <input key={index} type="hidden" name={`${name}${index + 1}`} value={selected[index] ?? ""} />
-          ))}
-          <p className="rounded-xl border border-ink-line bg-ink/50 px-4 py-3 text-sm text-ivory-dim">
-            Nessun capo con questo tag. Aprilo nel catalogo, spunta {tag} e salva: poi ricompare qui.
-          </p>
-        </>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[0, 1, 2, 3].map((index) => (
-            <label key={index} className="text-sm text-ivory-dim">
-              Posto {index + 1}
-              <input type="hidden" name={`${name}${index + 1}`} value={slots[index]} />
-              <select
-                value={slots[index]}
-                onChange={(event) => choose(index, event.target.value)}
-                className={fieldClass}
-              >
-                <option value="">Nessuno</option>
-                {tagged.map((product) => {
-                  const id = optionId(product);
-                  const taken = slots.some((slot, slotIndex) => slotIndex !== index && slot === id);
-                  if (taken) return null;
-                  return (
-                    <option key={id} value={id}>
-                      {product.name}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center gap-3">
+        <span
+          className="rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.16em]"
+          style={{ backgroundColor: bg, color: fg }}
+        >
+          Sold out
+        </span>
+        <span className="text-xs text-ivory-dim">Anteprima</span>
+      </div>
+      <ColorField name="soldOutBadgeBg" label="Sfondo" value={bg} onChange={setBg} />
+      <ColorField name="soldOutBadgeFg" label="Testo" value={fg} onChange={setFg} />
     </fieldset>
   );
 }
@@ -197,17 +169,18 @@ function FeatureSlots({
 export function SiteEditor({
   appearance,
   products = [],
+  tags = [],
 }: {
   appearance: SiteAppearance;
   products?: Product[];
+  tags?: CatalogTag[];
 }) {
   return (
     <form action={saveSiteAppearanceAction} className="grid max-w-2xl gap-10">
       <div>
         <h2 className="font-display text-3xl">Modifica sito</h2>
         <p className="mt-3 text-sm leading-relaxed text-ivory-dim">
-          Qui si cambiano hero, il passaggio visivo e i quattro capi in evidenza.
-          Altre impostazioni di vetrina arriveranno in questa stessa pagina.
+          Qui si cambiano hero, le sezioni della home e i colori dell&apos;etichetta Sold out.
         </p>
       </div>
 
@@ -223,26 +196,9 @@ export function SiteEditor({
         hint="Formato verticale, a tutto schermo sul telefono."
         appearance={appearance}
       />
-      <MediaFields
-        prefix="interlude"
-        label="Passaggio visivo"
-        hint="Tra i nuovi arrivi e i best seller."
-        appearance={appearance}
-      />
-      <FeatureSlots
-        name="featuredNew"
-        label="Nuovi arrivi in evidenza"
-        products={products}
-        selected={appearance.featuredNewIds}
-        tag="nuovo arrivo"
-      />
-      <FeatureSlots
-        name="featuredBest"
-        label="Best seller in evidenza"
-        products={products}
-        selected={appearance.featuredBestIds}
-        tag="best seller"
-      />
+      <HomeSectionsEditor sections={appearance.homeSections} products={products} tags={tags} />
+
+      <SoldOutColorFields appearance={appearance} />
 
       <button type="submit" className="rounded-full bg-ivory py-3 text-sm font-medium text-ink">
         Salva il sito

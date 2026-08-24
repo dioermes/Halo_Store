@@ -4,28 +4,38 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
-import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-react";
 import { Show, useClerk } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
 import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
 import { SiteSearch } from "@/components/site-search";
 import { adminNav, isAdminNavActive } from "@/lib/admin-nav";
+import { catalogPath } from "@/lib/categories";
+import type { StoreCategory } from "@/lib/products";
 
-const storefrontLinks = [
-  { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
-  { href: "/#best-seller", label: "Best seller" },
-  { href: "/#catalogo", label: "Catalogo" },
-  { href: "/#dove-siamo", label: "Dove siamo" },
-];
-
-export function SiteNav() {
+export function SiteNav({
+  categories = [],
+  homeLinks,
+}: {
+  categories?: StoreCategory[];
+  homeLinks?: { href: string; label: string }[];
+}) {
   const pathname = usePathname();
   const inAdmin = pathname.startsWith("/admin");
+  const storefrontLinks =
+    homeLinks && homeLinks.length > 0
+      ? homeLinks
+      : [
+          { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
+          { href: "/#best-seller", label: "Best seller" },
+          { href: "/#saldi", label: "Saldi" },
+        ];
   const links = inAdmin ? adminNav : storefrontLinks;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const { count, openBag, lastAdded } = useReservation();
   const { scrollY } = useScroll();
 
@@ -47,6 +57,7 @@ export function SiteNav() {
     setMenuOpen(false);
     setSearchOpen(false);
     setAccountOpen(false);
+    setCatalogOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -180,7 +191,7 @@ export function SiteNav() {
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            <ul className="flex flex-col gap-2 px-6 pt-6 sm:px-10">
+            <ul className="flex max-h-[calc(100dvh-5rem)] flex-col gap-2 overflow-y-auto px-6 pt-6 sm:px-10">
               {links.map((link, index) => {
                 const active = inAdmin && isAdminNavActive(link.href, pathname);
                 return (
@@ -202,6 +213,79 @@ export function SiteNav() {
                   </motion.li>
                 );
               })}
+              {!inAdmin ? (
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.24, duration: 0.5 }}
+                >
+                  <button
+                    type="button"
+                    aria-expanded={catalogOpen}
+                    onClick={() => setCatalogOpen((open) => !open)}
+                    className="flex w-full items-center justify-between border-b border-ink-line py-5 text-left font-display text-4xl"
+                  >
+                    Catalogo
+                    <ChevronDown
+                      className={`h-8 w-8 transition-transform duration-300 ${catalogOpen ? "rotate-180" : ""}`}
+                      aria-hidden
+                    />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {catalogOpen ? (
+                      <motion.ul
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <li>
+                          <Link
+                            href={catalogPath()}
+                            onClick={() => setMenuOpen(false)}
+                            className={`block border-b border-ink-line/60 py-4 pl-1 font-display text-2xl ${
+                              pathname === "/catalogo" ? "text-halo-bright" : "text-ivory-dim"
+                            }`}
+                          >
+                            Tutto il negozio
+                          </Link>
+                        </li>
+                        {categories.map((category) => (
+                          <li key={category.id}>
+                            <Link
+                              href={catalogPath(category.id)}
+                              onClick={() => setMenuOpen(false)}
+                              className={`block border-b border-ink-line/60 py-4 pl-1 font-display text-2xl ${
+                                pathname === catalogPath(category.id)
+                                  ? "text-halo-bright"
+                                  : "text-ivory-dim"
+                              }`}
+                            >
+                              {category.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </motion.ul>
+                    ) : null}
+                  </AnimatePresence>
+                </motion.li>
+              ) : null}
+              {!inAdmin ? (
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <Link
+                    href="/#dove-siamo"
+                    onClick={() => setMenuOpen(false)}
+                    className="block border-b border-ink-line py-5 font-display text-4xl"
+                  >
+                    Dove siamo
+                  </Link>
+                </motion.li>
+              ) : null}
               <Show when="signed-out">
                 <motion.li
                   initial={{ opacity: 0, y: 24 }}

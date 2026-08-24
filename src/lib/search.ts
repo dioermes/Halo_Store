@@ -59,6 +59,8 @@ export function productSearchText(product: Product) {
     ...(product.sizes ?? []),
     product.isNewArrival ? "nuovo arrivo nuovi arrivi new" : "",
     product.isBestseller ? "best seller bestseller piu venduti" : "",
+    product.isOnSale ? "saldi sconto promozione" : "",
+    ...(product.customTags ?? []).map((tag) => tag.label),
   ];
   const base = fold(parts.filter(Boolean).join(" "));
   const tokens = new Set(base.split(/\s+/).filter(Boolean));

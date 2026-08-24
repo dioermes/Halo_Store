@@ -92,7 +92,7 @@ export function HowItWorks() {
         <Reveal delay={0.3}>
           <div className="mt-16 flex flex-wrap items-center gap-4">
             <a
-              href="#catalogo"
+              href="/catalogo"
               className="rounded-full bg-ivory px-7 py-4 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
             >
               Scegli i tuoi capi

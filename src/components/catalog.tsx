@@ -7,7 +7,7 @@ import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
 import { ProductDialog } from "@/components/product-dialog";
 import { formatPrice, getColorLook, type Product, type StoreCategory } from "@/lib/products";
-import { catalogFilters } from "@/lib/categories";
+import { catalogFilters, catalogPath } from "@/lib/categories";
 
 function collectColors(products: Product[]) {
   const unique = new Map<string, string>();
@@ -238,13 +238,15 @@ function PriceFilter({
 export function Catalog({
   products,
   categories,
+  initialCategory = "tutti",
 }: {
   products: Product[];
   categories: StoreCategory[];
+  initialCategory?: string;
 }) {
   const router = useRouter();
   const filters = catalogFilters(categories, products.length);
-  const [active, setActive] = useState("tutti");
+  const [active, setActive] = useState(initialCategory);
   const [maxSelected, setMaxSelected] = useState(0);
   const [color, setColor] = useState("");
   const [selected, setSelected] = useState<Product | null>(null);
@@ -269,7 +271,13 @@ export function Catalog({
     ceiling.current = nextMax;
     setActive(id);
     setMaxSelected(nextMax);
+    router.replace(catalogPath(id), { scroll: false });
   };
+
+  useEffect(() => {
+    categoryRef.current = initialCategory;
+    setActive(initialCategory);
+  }, [initialCategory]);
 
   useEffect(() => {
     const refresh = () => router.refresh();

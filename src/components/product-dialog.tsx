@@ -11,10 +11,12 @@ import {
   findVariant,
   productImageForColor,
   variantAvailable,
+  isProductSoldOut,
   type Product,
 } from "@/lib/products";
 import { useCart } from "@/components/reservation-provider";
 import { ProductGallery } from "@/components/product-gallery";
+import { SoldOutLabel } from "@/components/sold-out-label";
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -199,11 +201,7 @@ export function ProductDialog({
 
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex-1 overflow-y-auto px-6 pt-6 pb-5 [scrollbar-width:none] sm:px-10 sm:pt-10 [&::-webkit-scrollbar]:hidden">
-                {product.badge && (
-                  <span className="inline-block rounded-full border border-halo/40 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-halo-bright">
-                    {product.badge}
-                  </span>
-                )}
+                {isProductSoldOut(product) ? <SoldOutLabel className="inline-block" /> : null}
 
                 <h3
                   id="dettaglio-capo-titolo"

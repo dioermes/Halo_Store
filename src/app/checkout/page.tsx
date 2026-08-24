@@ -131,7 +131,7 @@ export default function CheckoutPage() {
     return (
       <section className="mx-auto max-w-xl px-5 py-28 text-center">
         <h1 className="font-display text-5xl">Il carrello è vuoto.</h1>
-        <Link href="/#catalogo" className="mt-8 inline-block text-halo-bright underline underline-offset-4">
+        <Link href="/catalogo" className="mt-8 inline-block text-halo-bright underline underline-offset-4">
           Torna al catalogo
         </Link>
       </section>

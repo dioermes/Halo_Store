@@ -7,15 +7,22 @@ import { createAdminClient } from "@/lib/supabase";
 import { saveStoreSettings } from "@/lib/settings";
 import {
   getCatalogMerch,
+  addCatalogTag,
+  asHexColor,
+  dropProductFromHomeSections,
   getSiteAppearance,
+  parseHomeSectionsPayload,
   patchSiteAppearance,
   productKey,
   removeProductMerch,
   saveCatalogMerch,
   saveSiteAppearance,
+  sanitizeHomeSections,
   setProductMerch,
+  type HomeSection,
   type SiteAppearance,
   type SiteMedia,
+  type SiteMediaSlot,
 } from "@/lib/site";
 import { getAllProductsAdmin } from "@/lib/catalog";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
@@ -312,11 +319,26 @@ export async function saveProductAction(
 
     const merch = await getCatalogMerch();
     const badge = String(formData.get("badge") ?? "");
+    const price = Number(formData.get("price") ?? 0);
+    const compareRaw = String(formData.get("compareAt") ?? "").trim();
+    const compareAt = compareRaw === "" ? 0 : Number(compareRaw);
+    const discounted = Boolean(compareAt && compareAt > price);
+    let customTagIds: string[] = [];
+    try {
+      const parsed = JSON.parse(String(formData.get("customTagIds") ?? "[]"));
+      customTagIds = Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === "string" && id.length > 0)
+        : [];
+    } catch {
+      customTagIds = [];
+    }
     await saveCatalogMerch(
       setProductMerch(merch, productId, {
         newArrival: formData.get("isNewArrival") === "on" || /nuovo arrivo/i.test(badge),
         bestseller: formData.get("isBestseller") === "on" || /best seller/i.test(badge),
+        sale: discounted || formData.get("isOnSale") === "on" || /saldi|sconto/i.test(badge),
         keywords: String(formData.get("searchKeywords") ?? ""),
+        customTagIds,
       }),
     );
   } catch (error) {
@@ -324,10 +346,22 @@ export async function saveProductAction(
   }
 
   revalidatePath("/");
+  revalidatePath("/catalogo");
   revalidatePath("/admin");
   revalidatePath("/admin/catalogo");
   revalidatePath("/admin/sito");
   redirect(`/admin/catalogo/${productId}?salvato=1`);
+}
+
+export async function createCatalogTagAction(label: string) {
+  await requireOwner();
+  const merch = await getCatalogMerch();
+  const next = addCatalogTag(merch, label);
+  await saveCatalogMerch(next.merch);
+  revalidatePath("/admin/catalogo");
+  revalidatePath("/admin/sito");
+  revalidatePath("/");
+  return next.tag;
 }
 
 export async function togglePublishedAction(id: string, published: boolean) {
@@ -363,6 +397,10 @@ export async function deleteProductAction(formData: FormData) {
   const merch = await getCatalogMerch();
   await saveCatalogMerch(removeProductMerch(merch, id));
   const appearance = await getSiteAppearance();
+  await saveSiteAppearance({
+    ...appearance,
+    homeSections: dropProductFromHomeSections(appearance.homeSections, id),
+  });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/catalogo");
@@ -467,48 +505,61 @@ export async function saveSettingsAction(formData: FormData) {
 export async function saveSiteAppearanceAction(formData: FormData) {
   await requireOwner();
   const current = await getSiteAppearance();
-  const media = (prefix: keyof Pick<SiteAppearance, "heroDesktop" | "heroMobile" | "interlude">) => {
+  const media = (prefix: SiteMediaSlot) => {
     const url = String(formData.get(`${prefix}Url`) ?? "").trim();
     const kind = String(formData.get(`${prefix}Kind`) ?? "image") === "video" ? "video" : "image";
     if (!url) return current[prefix];
     return { url, kind } satisfies SiteMedia;
   };
   const catalog = await getAllProductsAdmin();
-  const resolveId = (id: string) => {
-    const product = catalog.find((row) => row.uuid === id || row.id === id);
-    return product ? productKey(product) : id;
-  };
-  const featured = (prefix: string) => {
-    const ids: string[] = [];
-    for (const slot of [1, 2, 3, 4]) {
-      const id = resolveId(String(formData.get(`${prefix}${slot}`) ?? "").trim());
-      if (id && !ids.includes(id)) ids.push(id);
-    }
-    return ids;
-  };
+  let parsed: unknown = current.homeSections;
+  try {
+    parsed = JSON.parse(String(formData.get("homeSections") ?? "[]"));
+  } catch {
+    parsed = current.homeSections;
+  }
   const next: SiteAppearance = {
     heroDesktop: media("heroDesktop"),
     heroMobile: media("heroMobile"),
-    interlude: media("interlude"),
-    featuredNewIds: featured("featuredNew"),
-    featuredBestIds: featured("featuredBest"),
+    homeSections: sanitizeHomeSections(parseHomeSectionsPayload(parsed), catalog),
+    soldOutBadgeBg: asHexColor(formData.get("soldOutBadgeBg"), current.soldOutBadgeBg),
+    soldOutBadgeFg: asHexColor(formData.get("soldOutBadgeFg"), current.soldOutBadgeFg),
   };
   await saveSiteAppearance(next);
   revalidatePath("/");
+  revalidatePath("/catalogo");
   revalidatePath("/admin/sito");
   redirect("/admin/sito?salvato=1");
 }
 
 export async function saveSiteMediaSlotAction(
-  slot: "heroDesktop" | "heroMobile" | "interlude",
+  slot: SiteMediaSlot,
   url: string,
   kind: "image" | "video",
 ) {
   await requireOwner();
-  if (!url || (slot !== "heroDesktop" && slot !== "heroMobile" && slot !== "interlude")) {
+  const slots: SiteMediaSlot[] = ["heroDesktop", "heroMobile"];
+  if (!url || !slots.includes(slot)) {
     throw new Error("Media non valido.");
   }
   await patchSiteAppearance({ [slot]: { url, kind } });
+  revalidatePath("/");
+  revalidatePath("/admin/sito");
+}
+
+export async function saveHomeSectionInterludeAction(
+  sectionId: string,
+  url: string,
+  kind: "image" | "video",
+) {
+  await requireOwner();
+  if (!url || !sectionId) throw new Error("Media non valido.");
+  const current = await getSiteAppearance();
+  if (!current.homeSections.some((section) => section.id === sectionId)) return;
+  const homeSections: HomeSection[] = current.homeSections.map((section) =>
+    section.id === sectionId ? { ...section, interlude: { url, kind } } : section,
+  );
+  await saveSiteAppearance({ ...current, homeSections });
   revalidatePath("/");
   revalidatePath("/admin/sito");
 }
