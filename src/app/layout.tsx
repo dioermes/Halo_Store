@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ReservationBag } from "@/components/reservation-bag";
 import { StructuredData } from "@/components/structured-data";
 import { CookieBanner } from "@/components/cookie-banner";
+import { NewsletterPopup } from "@/components/newsletter-popup";
 import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
@@ -104,6 +105,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <SiteFooter />
             <ReservationBag />
             <CookieBanner />
+            <NewsletterPopup />
           </ReservationProvider>
         </ClerkProvider>
       </body>

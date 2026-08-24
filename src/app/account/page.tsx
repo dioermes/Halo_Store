@@ -5,7 +5,6 @@ import { createAdminClient } from "@/lib/supabase";
 import { ensureCustomer, isOwnerUser } from "@/lib/auth";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
-import { MarketingOptIn } from "@/components/marketing-opt-in";
 
 export default async function AccountPage() {
   const user = await currentUser();
@@ -20,7 +19,6 @@ export default async function AccountPage() {
     created_at: string;
     tracking_code: string | null;
   }> = [];
-  let emailMarketing = false;
 
   try {
     customer = await ensureCustomer(user);
@@ -32,12 +30,6 @@ export default async function AccountPage() {
       .neq("status", "pending_payment")
       .order("created_at", { ascending: false });
     orders = data ?? [];
-    const { data: consent } = await admin
-      .from("halo_consents")
-      .select("email_marketing")
-      .eq("customer_id", customer.id)
-      .maybeSingle();
-    emailMarketing = Boolean(consent?.email_marketing);
   } catch {
     return (
       <section className="mx-auto max-w-xl px-5 py-28">
@@ -60,11 +52,11 @@ export default async function AccountPage() {
           Apri il pannello titolare
         </Link>
       )}
-
-      <div className="mt-12 rounded-3xl border border-ink-line p-6">
-        <h2 className="font-display text-3xl">Email</h2>
-        <MarketingOptIn initial={emailMarketing} />
-      </div>
+      <p className="mt-4">
+        <Link href="/account/preferenze" className="text-sm text-halo-bright underline underline-offset-4">
+          Newsletter e preferenze
+        </Link>
+      </p>
 
       <h2 className="mt-16 font-display text-4xl">Ordini</h2>
       <ul className="mt-6 space-y-4">

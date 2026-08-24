@@ -29,8 +29,8 @@ export function ProductCard({
   const pointerX = useMotionValue(0.5);
   const pointerY = useMotionValue(0.5);
 
-  const rotateX = useSpring(useTransform(pointerY, [0, 1], [7, -7]), spring);
-  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-7, 7]), spring);
+  const rotateX = useSpring(useTransform(pointerY, [0, 1], [3.5, -3.5]), spring);
+  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-3.5, 3.5]), spring);
   const glowX = useTransform(pointerX, (value) => `${value * 100}%`);
   const glowY = useTransform(pointerY, (value) => `${value * 100}%`);
   const glow = useMotionTemplate`radial-gradient(340px circle at ${glowX} ${glowY}, rgba(63,21,33,0.18), transparent 70%)`;
@@ -69,31 +69,28 @@ export function ProductCard({
         className="group flex h-full w-full cursor-pointer flex-col text-left"
         aria-label={`Apri la scheda di ${product.name}, ${product.subtitle}, ${formatPrice(product.price)}`}
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-ink-line/70 bg-ink-soft shadow-[0_24px_60px_-36px_rgba(63,21,33,0.45)]">
-          <div className="absolute inset-0" style={{ transform: "translateZ(28px)" }}>
-            <Image
-              src={product.image}
-              alt={`${product.name}, ${product.subtitle}`}
-              fill
-              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
-              className="object-cover transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
-            />
-          </div>
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent" />
+        <div className="relative aspect-[3/4] w-full overflow-hidden">
+          <Image
+            src={product.image}
+            alt={`${product.name}, ${product.subtitle}`}
+            fill
+            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
+            className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
+          />
+          <div aria-hidden className="halo-card-wash pointer-events-none absolute inset-0" />
 
           {!reduceMotion && (
             <motion.div
               aria-hidden
               style={{ background: glow }}
-              className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              className="pointer-events-none absolute inset-0 opacity-0 mix-blend-soft-light transition-opacity duration-500 group-hover:opacity-100"
             />
           )}
 
-          {soldOut ? <SoldOutLabel className="absolute left-5 top-5" /> : null}
+          {soldOut ? <SoldOutLabel className="absolute left-4 top-4 sm:left-5 sm:top-5" /> : null}
 
-          <div className="pointer-events-none absolute inset-x-5 bottom-5 translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden">
-            <span className="flex min-h-11 items-center justify-center rounded-full bg-ivory/95 py-3 text-sm font-medium text-ink backdrop-blur">
+          <div className="pointer-events-none absolute inset-x-4 bottom-[18%] translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(hover:none)]:hidden sm:inset-x-5">
+            <span className="flex min-h-11 items-center justify-center rounded-full bg-ivory/80 py-3 text-sm font-medium text-ink backdrop-blur-md">
               Guarda e acquista
             </span>
           </div>

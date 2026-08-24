@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase";
 import { getStripe } from "@/lib/stripe";
 import { fulfillPaidCheckoutSession } from "@/lib/fulfill-checkout";
 import { sendPaymentFailedEmail } from "@/lib/email";
+import { releasePromoForOrder } from "@/lib/promo";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       const order = await loadOrder(admin, session.id, session.metadata?.order_id);
       if (order && order.status === "pending_payment") {
         await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
+        await releasePromoForOrder(order.id);
         await admin
           .from("halo_orders")
           .update({ status: "cancelled", updated_at: new Date().toISOString() })

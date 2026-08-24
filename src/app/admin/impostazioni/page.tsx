@@ -36,6 +36,62 @@ export default async function AdminSettingsPage() {
             className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
           />
         </label>
+
+        <h2 className="mt-8 font-display text-3xl">Codici sconto newsletter</h2>
+        <p className="text-sm text-ivory-dim">
+          Stesso codice per tutti gli iscritti, utilizzabile una volta a persona. Lo
+          sconto si applica sul subtotale dei capi, non sulla spedizione. I due
+          codici non si sommano nello stesso ordine.
+        </p>
+        <label className="text-sm text-ivory-dim">
+          Codice benvenuto
+          <input
+            name="newsletterCode"
+            defaultValue={settings.newsletterCode}
+            className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 uppercase text-ivory"
+          />
+        </label>
+        <label className="text-sm text-ivory-dim">
+          Sconto benvenuto (%)
+          <input
+            name="newsletterPercent"
+            type="number"
+            min={0}
+            max={80}
+            defaultValue={settings.newsletterDiscountPercent}
+            className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
+          />
+        </label>
+        <label className="text-sm text-ivory-dim">
+          Codice compleanno
+          <input
+            name="birthdayCode"
+            defaultValue={settings.birthdayCode}
+            className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 uppercase text-ivory"
+          />
+        </label>
+        <label className="text-sm text-ivory-dim">
+          Sconto compleanno (%)
+          <input
+            name="birthdayPercent"
+            type="number"
+            min={0}
+            max={80}
+            defaultValue={settings.birthdayDiscountPercent}
+            className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
+          />
+        </label>
+        <label className="text-sm text-ivory-dim">
+          Giorni di validità del codice compleanno
+          <input
+            name="birthdayValidDays"
+            type="number"
+            min={1}
+            max={60}
+            defaultValue={settings.birthdayValidDays}
+            className="mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
+          />
+        </label>
         <button type="submit" className="rounded-full bg-ivory py-3 text-sm font-medium text-ink">
           Salva impostazioni
         </button>
@@ -44,8 +100,8 @@ export default async function AdminSettingsPage() {
       <form action={sendNewsletterAction} className="grid gap-4">
         <h2 className="font-display text-3xl">Newsletter</h2>
         <p className="text-sm text-ivory-dim">
-          Parte solo a chi ha spuntato l&apos;opt-in esplicito. Chi non l&apos;ha fatto non viene
-          toccato.
+          Parte solo a chi si è iscritto dal popup o dalle preferenze. Chi ha detto
+          no, o si è disiscritto, non viene toccato.
         </p>
         <input name="subject" placeholder="Oggetto" className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3" />
         <textarea name="body" rows={6} placeholder="Testo" className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3" />

@@ -26,9 +26,10 @@ import {
 } from "@/lib/site";
 import { getAllProductsAdmin } from "@/lib/catalog";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
-import { siteUrl } from "@/lib/stripe";
 import { getStripe } from "@/lib/stripe";
 import type { OrderStatus } from "@/lib/orders";
+import { releasePromoForOrder } from "@/lib/promo";
+import { unsubscribeUrl } from "@/lib/unsubscribe";
 import {
   BUILTIN_CATEGORY_IDS,
   deleteStoreCategory,
@@ -37,7 +38,6 @@ import {
   updateStoreCategory,
 } from "@/lib/categories";
 import type { StoreCategory } from "@/lib/products";
-import { createHmac } from "node:crypto";
 
 async function admin() {
   await requireOwner();
@@ -421,11 +421,15 @@ export async function updateOrderAction(formData: FormData) {
     .single();
   if (!current) throw new Error("Ordine non trovato");
 
-  if (status === "refunded" && current.stripe_payment_intent && current.status !== "refunded") {
-    const stripe = getStripe();
-    await stripe.refunds.create({ payment_intent: current.stripe_payment_intent });
+  if (status === "refunded" && current.status !== "refunded") {
+    await releasePromoForOrder(id);
+    if (current.stripe_payment_intent) {
+      const stripe = getStripe();
+      await stripe.refunds.create({ payment_intent: current.stripe_payment_intent });
+    }
   }
   if (status === "cancelled" && current.status !== "cancelled") {
+    await releasePromoForOrder(id);
     if (current.status === "pending_payment") {
       await client.rpc("halo_release_order_holds", { p_order_id: id });
     } else if (
@@ -494,10 +498,27 @@ export async function updateOrderAction(formData: FormData) {
 
 export async function saveSettingsAction(formData: FormData) {
   await requireOwner();
+  const clampPercent = (value: unknown, fallback: number) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(80, Math.max(0, Math.round(n)));
+  };
+  const code = (value: unknown, fallback: string) => {
+    const next = String(value ?? "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "");
+    return next || fallback;
+  };
   await saveStoreSettings({
     shippingItalyCents: Math.round(Number(formData.get("shipping")) * 100),
     lowStockAt: Number(formData.get("lowStockAt") ?? 2),
     holdMinutes: Number(formData.get("holdMinutes") ?? 20),
+    newsletterDiscountPercent: clampPercent(formData.get("newsletterPercent"), 10),
+    newsletterCode: code(formData.get("newsletterCode"), "HALO10"),
+    birthdayDiscountPercent: clampPercent(formData.get("birthdayPercent"), 15),
+    birthdayCode: code(formData.get("birthdayCode"), "COMPLEANNO"),
+    birthdayValidDays: Math.min(60, Math.max(1, Number(formData.get("birthdayValidDays") ?? 14))),
   });
   revalidatePath("/admin/impostazioni");
 }
@@ -570,18 +591,29 @@ export async function sendNewsletterAction(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   if (!subject || !body) throw new Error("Oggetto e testo obbligatori");
 
+  const emails = new Set<string>();
+
   const { data: rows } = await client
     .from("halo_consents")
     .select("email_marketing, halo_customers(email)")
     .eq("email_marketing", true);
 
-  const secret = process.env.CLERK_SECRET_KEY || "halo-unsub";
   for (const row of rows ?? []) {
     const customer = row.halo_customers as { email?: string } | { email?: string }[] | null;
     const email = Array.isArray(customer) ? customer[0]?.email : customer?.email;
-    if (!email) continue;
-    const token = createHmac("sha256", secret).update(email.toLowerCase()).digest("hex").slice(0, 24);
-    const unsub = `${siteUrl()}/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+    if (email) emails.add(email.toLowerCase());
+  }
+
+  const { data: subscribers } = await client
+    .from("halo_subscribers")
+    .select("email")
+    .eq("marketing_opt_in", true);
+  for (const row of subscribers ?? []) {
+    if (row.email) emails.add(String(row.email).toLowerCase());
+  }
+
+  for (const email of emails) {
+    const unsub = unsubscribeUrl(email);
     await sendMarketingEmail(email, subject, `<p style="white-space:pre-wrap">${body}</p>`, unsub);
   }
   revalidatePath("/admin/impostazioni");

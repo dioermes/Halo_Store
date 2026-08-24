@@ -44,12 +44,21 @@ export default function CheckoutPage() {
   });
   const [terms, setTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promo, setPromo] = useState<{
+    code: string;
+    percent: number;
+    discountCents: number;
+  } | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reserved, setReserved] = useState<{ when: string; name: string } | null>(null);
 
   const shippingCents = 700;
-  const grandTotal = fulfillment === "shipping" ? total + shippingCents / 100 : total;
+  const discountEuro = promo ? promo.discountCents / 100 : 0;
+  const grandTotal =
+    (fulfillment === "shipping" ? total + shippingCents / 100 : total) - discountEuro;
 
   const canPay = useMemo(() => {
     if (!terms || count === 0) return false;
@@ -82,6 +91,7 @@ export default function CheckoutPage() {
           pickupAt: fulfillment === "pickup" ? pickupAt : undefined,
           pickupName: fulfillment === "pickup" ? pickupName : undefined,
           shipping: fulfillment === "shipping" ? shipping : undefined,
+          promoCode: promo?.code,
         }),
       });
       const raw = await response.text();
@@ -327,6 +337,62 @@ export default function CheckoutPage() {
           className="mt-6 w-full resize-none rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm"
         />
 
+        <div className="mt-6">
+          <p className="text-sm text-ivory-dim">Codice sconto newsletter o compleanno</p>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={promoCode}
+              onChange={(event) => {
+                setPromoCode(event.target.value);
+                setPromo(null);
+              }}
+              placeholder="HALO10"
+              className="w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm uppercase"
+            />
+            <button
+              type="button"
+              disabled={promoBusy || !promoCode.trim()}
+              onClick={async () => {
+                setPromoBusy(true);
+                setError(null);
+                try {
+                  const response = await fetch("/api/checkout/quote", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      code: promoCode,
+                      fulfillment,
+                      items,
+                    }),
+                  });
+                  const payload = (await response.json()) as {
+                    error?: string;
+                    code?: string;
+                    percent?: number;
+                    discountCents?: number;
+                  };
+                  if (!response.ok || !payload.code || payload.discountCents == null) {
+                    setPromo(null);
+                    throw new Error(payload.error ?? "Codice non valido.");
+                  }
+                  setPromo({
+                    code: payload.code,
+                    percent: payload.percent ?? 0,
+                    discountCents: payload.discountCents,
+                  });
+                } catch (err) {
+                  setError((err as Error).message);
+                } finally {
+                  setPromoBusy(false);
+                }
+              }}
+              className="shrink-0 rounded-full border border-ink-line px-4 text-sm disabled:opacity-40"
+            >
+              {promoBusy ? "…" : "Applica"}
+            </button>
+          </div>
+        </div>
+
         <label className="mt-6 flex items-start gap-3 text-sm text-ivory-dim">
           <input
             type="checkbox"
@@ -374,6 +440,14 @@ export default function CheckoutPage() {
             <span>Spedizione</span>
             <span>{fulfillment === "pickup" ? "Gratis" : formatPrice(shippingCents / 100)}</span>
           </p>
+          {promo && (
+            <p className="mt-2 flex justify-between text-sm text-halo-bright">
+              <span>
+                Sconto {promo.code} · {promo.percent}%
+              </span>
+              <span>−{formatPrice(promo.discountCents / 100)}</span>
+            </p>
+          )}
           {fulfillment === "pickup" && pickupAt && (
             <p className="mt-2 text-sm text-ivory-dim">
               Ritiro: {pickupSlots.find((slot) => slot.value === pickupAt)?.label}

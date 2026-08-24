@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 export function MarketingOptIn({ initial }: { initial: boolean }) {
   const [on, setOn] = useState(initial);
@@ -36,11 +35,9 @@ export function MarketingOptIn({ initial }: { initial: boolean }) {
           className="mt-1 accent-halo"
         />
         <span>
-          Voglio ricevere email su offerte, nuovi capi e scorte in esaurimento.
-          Non è spuntata di default: è un consenso a parte dai cookie.{" "}
-          <Link href="/account/preferenze" className="text-halo-bright underline underline-offset-4">
-            Preferenze
-          </Link>
+          Voglio ricevere email su offerte, nuovi capi, scorte in esaurimento e
+          i codici sconto (benvenuto e compleanno). È un consenso a parte dai
+          cookie.
         </span>
       </label>
       {saved && <p className="mt-2 text-xs text-halo-bright">Preferenza salvata.</p>}

@@ -6,10 +6,10 @@ const isProtectedRoute = createRouteMatcher([
   "/admin(.*)",
 ]);
 
-const isWebhookRoute = createRouteMatcher(["/api/webhooks(.*)"]);
+const isPublicApi = createRouteMatcher(["/api/webhooks(.*)", "/api/cron(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isWebhookRoute(req)) return;
+  if (isPublicApi(req)) return;
   if (isProtectedRoute(req)) await auth.protect();
 });
 

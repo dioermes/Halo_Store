@@ -34,5 +34,16 @@ export async function POST(req: Request) {
     onConflict: "customer_id",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (typeof body.email_marketing === "boolean" && customer.email) {
+    await admin
+      .from("halo_subscribers")
+      .update({
+        marketing_opt_in: body.email_marketing,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("email", customer.email.trim().toLowerCase());
+  }
+
   return NextResponse.json({ ok: true });
 }

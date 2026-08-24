@@ -9,7 +9,7 @@ export default function SignUpPage() {
         <h1 className="mt-4 font-display text-5xl">Crea il tuo spazio.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
           Serve per confermare il ritiro o la spedizione e seguire gli ordini.
-          Le email promozionali restano spente finché non le accendi tu.
+          Le offerte arrivano solo se ti iscrivi alla newsletter, dal popup in vetrina.
         </p>
         <SignUp appearance={clerkAppearance} />
       </div>

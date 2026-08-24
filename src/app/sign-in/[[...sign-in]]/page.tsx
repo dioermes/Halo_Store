@@ -8,8 +8,7 @@ export default function SignInPage() {
         <p className="text-xs uppercase tracking-[0.34em] text-halo">Account</p>
         <h1 className="mt-4 font-display text-5xl">Bentornato.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
-          Accedi per confermare ritiro o spedizione, vedere gli ordini e
-          scegliere se ricevere le novità.
+          Accedi per confermare ritiro o spedizione e vedere gli ordini.
         </p>
         <SignIn appearance={clerkAppearance} />
       </div>

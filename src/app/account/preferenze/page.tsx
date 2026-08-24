@@ -21,8 +21,9 @@ export default async function PreferencesPage() {
       <p className="text-xs uppercase tracking-[0.34em] text-halo">Preferenze</p>
       <h1 className="mt-4 font-display text-5xl">Cosa vuoi sentire da noi.</h1>
       <p className="mt-4 text-ivory-dim">
-        Le conferme d&apos;ordine arrivano sempre: sono parte del contratto. Offerte e
-        nuovi arrivi solo se le chiedi tu.
+        Le conferme d&apos;ordine arrivano sempre: sono parte del contratto. La
+        newsletter si chiede al primo ingresso in vetrina. Da qui puoi solo
+        disiscriverti o iscriverti di nuovo.
       </p>
       <div className="mt-10 rounded-3xl border border-ink-line p-6">
         <MarketingOptIn initial={Boolean(consent?.email_marketing)} />

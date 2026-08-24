@@ -10,8 +10,9 @@ export default function PrivacyPage() {
         titolare: questa pagina è il contenitore del sito.
       </p>
       <p className="mt-4">
-        Le email promozionali partono solo con opt-in esplicito, separato dai
-        cookie. Puoi disiscriverti da ogni mail o da Account → Preferenze.
+        Le email promozionali partono solo se ti iscrivi alla newsletter (popup
+        al primo ingresso, con email e compleanno), separato dai cookie. Puoi
+        disiscriverti da ogni mail o da Account → Preferenze.
       </p>
       <p className="mt-4">
         Per domande:{" "}

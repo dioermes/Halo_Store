@@ -59,7 +59,7 @@ export function CookieBanner() {
           I cookie tecnici (sessione, carrello, sicurezza) restano sempre attivi.
           Analytics e pubblicità solo se li accendi tu. Questa scelta{" "}
           <strong className="font-medium text-ivory">non iscrive</strong> alla
-          newsletter: quella sta in account, a parte.{" "}
+          newsletter: quella si chiede al primo ingresso, a parte.{" "}
           <Link href="/cookie" className="text-halo-bright underline underline-offset-4">
             Informativa cookie
           </Link>

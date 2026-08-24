@@ -5,6 +5,7 @@ import { orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orde
 import { siteUrl } from "@/lib/stripe";
 import { returnsEmailHtml } from "@/lib/returns";
 import { esc, firstName, haloEmail, orderCode, shortOrderId } from "@/lib/email-layout";
+import { unsubscribeUrl } from "@/lib/unsubscribe";
 
 export type OrderEmail = {
   id: string;
@@ -294,8 +295,60 @@ export async function sendWelcomeEmail(email: string, name?: string | null) {
       preheader: "Account creato. Da qui puoi ordini, ritiro e novità.",
       title: "Benvenuto.",
       body: `<p style="margin:0 0 14px;">${hello(name)} il tuo account è pronto.</p>
-        <p style="margin:0;">Da qui vedi gli ordini, scegli ritiro o spedizione e, se vuoi, le novità del negozio. Niente mail promozionali finché non le accendi tu.</p>`,
+        <p style="margin:0;">Da qui vedi gli ordini e scegli ritiro o spedizione. Per le offerte del negozio, iscriviti alla newsletter dal popup in vetrina: è un consenso a parte, e arriva un codice sconto da usare una volta.</p>`,
       cta: { href: `${siteUrl()}/account`, label: "Vai al tuo account" },
+    }),
+  );
+}
+
+function promoUnsub(email: string) {
+  return `<p style="margin-top:28px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#6B3A45;">Ricevi questa mail perché ti sei iscritto alla newsletter di Halo Store. <a href="${esc(unsubscribeUrl(email))}" style="color:#5C2432;">Disiscriviti</a></p>`;
+}
+
+export async function sendNewsletterWelcomeEmail(opts: {
+  email: string;
+  code: string;
+  percent: number;
+  birthdayPercent: number;
+  birthdayCode: string;
+}) {
+  await send(
+    opts.email,
+    `Il tuo codice ${opts.code} · ${storeConfig.name}`,
+    haloEmail({
+      preheader: `Iscrizione confermata. Codice ${opts.code}: ${opts.percent}% una volta sola.`,
+      title: "Sei dei nostri.",
+      body: `<p style="margin:0 0 14px;">Grazie per esserti iscritto alla newsletter di Halo Store.</p>
+        <p style="margin:0 0 18px;">Ecco il codice da usare in cassa, una volta sola, su un ordine:</p>
+        <p style="margin:0 0 8px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5C2432;">Codice benvenuto</p>
+        <p style="margin:0 0 18px;font-family:Georgia,serif;font-size:32px;letter-spacing:.08em;">${esc(opts.code)}</p>
+        <p style="margin:0 0 14px;">Sconto <strong>${opts.percent}%</strong> sul subtotale dei capi. Lo stesso codice vale per tutti gli iscritti, ma ciascuno lo può usare una volta.</p>
+        <p style="margin:0;">Il giorno del compleanno ti scriviamo di nuovo: codice <strong>${esc(opts.birthdayCode)}</strong>, ${opts.birthdayPercent}% una volta sola, nei giorni intorno alla data che ci hai lasciato.</p>`,
+      cta: { href: `${siteUrl()}/catalogo`, label: "Vai al catalogo" },
+      extra: promoUnsub(opts.email),
+    }),
+  );
+}
+
+export async function sendBirthdayPromoEmail(opts: {
+  email: string;
+  code: string;
+  percent: number;
+  validDays: number;
+}) {
+  await send(
+    opts.email,
+    `Buon compleanno · codice ${opts.code}`,
+    haloEmail({
+      preheader: `Un ${opts.percent}% da usare una volta, valido ${opts.validDays} giorni.`,
+      title: "Buon compleanno.",
+      body: `<p style="margin:0 0 14px;">Da Halo Store, un capo in più per il tuo giorno.</p>
+        <p style="margin:0 0 18px;">Questo codice vale ${opts.percent}% sul subtotale, una volta sola, per ${opts.validDays} giorni dal compleanno:</p>
+        <p style="margin:0 0 8px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5C2432;">Codice compleanno</p>
+        <p style="margin:0 0 18px;font-family:Georgia,serif;font-size:32px;letter-spacing:.08em;">${esc(opts.code)}</p>
+        <p style="margin:0;">Inseriscilo in cassa, in ritiro o in spedizione. Non si somma al codice di benvenuto: uno per ordine.</p>`,
+      cta: { href: `${siteUrl()}/catalogo`, label: "Scegli un capo" },
+      extra: promoUnsub(opts.email),
     }),
   );
 }

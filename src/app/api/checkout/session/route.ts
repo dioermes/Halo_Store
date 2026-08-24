@@ -11,6 +11,7 @@ import { formatPickupSlot, isPickupWithinHours } from "@/lib/opening-hours";
 import { sendOwnerNewOrderEmail, sendPickupReservedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/whatsapp";
 import { settleCustomerPendingPayments, type FulfilledOrder } from "@/lib/fulfill-checkout";
+import { releasePromoForOrder, reservePromo, resolvePromo } from "@/lib/promo";
 
 type CartPayload = {
   productId: string;
@@ -64,6 +65,7 @@ async function handleCheckout(req: Request) {
       postalCode: string;
       province: string;
     };
+    promoCode?: string;
   };
 
   if (!body.items?.length) {
@@ -147,7 +149,28 @@ async function handleCheckout(req: Request) {
 
   const subtotal = lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0);
   const shippingCents = body.fulfillment === "shipping" ? settings.shippingItalyCents : 0;
-  const total = subtotal + shippingCents;
+  let discountCents = 0;
+  let discountCode: string | null = null;
+  let discountKind: "newsletter" | "birthday" | null = null;
+
+  if (body.promoCode?.trim()) {
+    const resolved = await resolvePromo({
+      email: customer.email,
+      code: body.promoCode,
+      subtotalCents: subtotal,
+      shippingCents,
+      paidOnline: body.fulfillment === "shipping",
+      settings,
+    });
+    if (!resolved.ok) {
+      return NextResponse.json({ error: resolved.error }, { status: 400 });
+    }
+    discountCents = resolved.quote.discountCents;
+    discountCode = resolved.quote.code;
+    discountKind = resolved.quote.kind;
+  }
+
+  const total = subtotal + shippingCents - discountCents;
 
   const pickupNote =
     body.fulfillment === "pickup" && body.pickupAt
@@ -163,6 +186,9 @@ async function handleCheckout(req: Request) {
       fulfillment: body.fulfillment,
       subtotal_cents: subtotal,
       shipping_cents: shippingCents,
+      discount_cents: discountCents,
+      discount_code: discountCode,
+      discount_kind: discountKind,
       total_cents: total,
       customer_note: customerNote,
       shipping_phone: body.phone?.trim() || customer.phone,
@@ -180,6 +206,12 @@ async function handleCheckout(req: Request) {
     return NextResponse.json({ error: orderError?.message ?? "Ordine non creato." }, { status: 500 });
   }
 
+  const abortOrder = async () => {
+    await releasePromoForOrder(order.id);
+    await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
+    await admin.from("halo_orders").delete().eq("id", order.id);
+  };
+
   const { error: itemsError } = await admin.from("halo_order_items").insert(
     lines.map((line) => ({
       order_id: order.id,
@@ -193,7 +225,7 @@ async function handleCheckout(req: Request) {
     })),
   );
   if (itemsError) {
-    await admin.from("halo_orders").delete().eq("id", order.id);
+    await abortOrder();
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
@@ -210,7 +242,7 @@ async function handleCheckout(req: Request) {
   });
   if (holdError) {
     console.error("[halo_reserve_stock]", holdError.message);
-    await admin.from("halo_orders").delete().eq("id", order.id);
+    await abortOrder();
     const insufficient = /insufficient_stock/i.test(holdError.message);
     return NextResponse.json(
       {
@@ -222,11 +254,22 @@ async function handleCheckout(req: Request) {
     );
   }
 
+  if (discountKind) {
+    try {
+      await reservePromo(customer.email, discountKind, order.id);
+    } catch (error) {
+      await abortOrder();
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Codice sconto non disponibile." },
+        { status: 409 },
+      );
+    }
+  }
+
   if (body.fulfillment === "pickup") {
     const { error: confirmError } = await admin.rpc("halo_confirm_holds", { p_order_id: order.id });
     if (confirmError) {
-      await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
-      await admin.from("halo_orders").delete().eq("id", order.id);
+      await abortOrder();
       return NextResponse.json({ error: "Impossibile confermare il ritiro." }, { status: 500 });
     }
 
@@ -274,6 +317,15 @@ async function handleCheckout(req: Request) {
   const origin = siteUrl(req);
   let session;
   try {
+    const coupon =
+      discountCents > 0
+        ? await stripe.coupons.create({
+            amount_off: discountCents,
+            currency: "eur",
+            duration: "once",
+            name: discountCode ?? "Sconto Halo",
+          })
+        : null;
     session = await stripe.checkout.sessions.create({
       ui_mode: "embedded_page",
       mode: "payment",
@@ -286,7 +338,9 @@ async function handleCheckout(req: Request) {
         order_id: order.id,
         clerk_id: user.id,
         fulfillment: body.fulfillment,
+        discount_code: discountCode ?? "",
       },
+      ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
       line_items: [
         ...lines.map((line) => ({
           quantity: line.quantity,
@@ -317,8 +371,7 @@ async function handleCheckout(req: Request) {
         : {}),
     });
   } catch (error) {
-    await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
-    await admin.from("halo_orders").delete().eq("id", order.id);
+    await abortOrder();
     const message = error instanceof Error ? error.message : "Stripe ha rifiutato la sessione.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

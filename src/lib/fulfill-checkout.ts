@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { sendOrderPaidEmail, sendOwnerNewOrderEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/whatsapp";
+import { releasePromoForOrder } from "@/lib/promo";
 
 export type FulfilledOrder = {
   id: string;
@@ -208,6 +209,7 @@ export async function settleCustomerPendingPayments(customerId: string): Promise
       p_order_id: row.id,
     });
     if (releaseError) console.error("[halo_release_order_holds]", releaseError.message);
+    await releasePromoForOrder(row.id);
 
     await admin
       .from("halo_orders")
