@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const KEY = "halo-newsletter-popup-v1";
+export const HALO_NEWSLETTER_EVENT = "halo-open-newsletter";
+
+export function requestNewsletterPopup() {
+  window.dispatchEvent(new Event(HALO_NEWSLETTER_EVENT));
+}
 const fieldClass =
   "mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-3 py-3 text-ivory";
 
@@ -51,16 +56,34 @@ export function NewsletterPopup() {
     pathname.startsWith("/sign-up");
 
   useEffect(() => {
-    if (hidden || alreadySeen()) return;
+    const loadOffer = () => {
+      void fetch("/api/newsletter/subscribe")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data: { newsletterPercent?: number; birthdayPercent?: number } | null) => {
+          if (typeof data?.newsletterPercent === "number") setPercent(data.newsletterPercent);
+          if (typeof data?.birthdayPercent === "number") setBirthdayPercent(data.birthdayPercent);
+        })
+        .catch(() => undefined);
+    };
+
+    const openForced = () => {
+      setDone(false);
+      setError("");
+      setOpen(true);
+      loadOffer();
+    };
+
+    window.addEventListener(HALO_NEWSLETTER_EVENT, openForced);
+
+    if (hidden || alreadySeen()) {
+      return () => window.removeEventListener(HALO_NEWSLETTER_EVENT, openForced);
+    }
     const timer = window.setTimeout(() => setOpen(true), 700);
-    void fetch("/api/newsletter/subscribe")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { newsletterPercent?: number; birthdayPercent?: number } | null) => {
-        if (typeof data?.newsletterPercent === "number") setPercent(data.newsletterPercent);
-        if (typeof data?.birthdayPercent === "number") setBirthdayPercent(data.birthdayPercent);
-      })
-      .catch(() => undefined);
-    return () => window.clearTimeout(timer);
+    loadOffer();
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(HALO_NEWSLETTER_EVENT, openForced);
+    };
   }, [hidden]);
 
   if (hidden || !open) return null;

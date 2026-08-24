@@ -163,7 +163,10 @@ async function handleCheckout(req: Request) {
       settings,
     });
     if (!resolved.ok) {
-      return NextResponse.json({ error: resolved.error }, { status: 400 });
+      return NextResponse.json(
+        { error: resolved.error, needNewsletter: Boolean(resolved.needNewsletter) },
+        { status: 400 },
+      );
     }
     discountCents = resolved.quote.discountCents;
     discountCode = resolved.quote.code;

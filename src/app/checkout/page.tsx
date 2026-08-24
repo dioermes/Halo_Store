@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/products";
 import { storeConfig } from "@/lib/store-config";
 import { getPickupSlotsWithinHours } from "@/lib/opening-hours";
 import { ReturnsNotice } from "@/components/returns-notice";
+import { requestNewsletterPopup } from "@/components/newsletter-popup";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -51,9 +52,19 @@ export default function CheckoutPage() {
     discountCents: number;
   } | null>(null);
   const [promoBusy, setPromoBusy] = useState(false);
+  const [suggestedCode, setSuggestedCode] = useState("HALO10");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reserved, setReserved] = useState<{ when: string; name: string } | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/newsletter/subscribe")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { newsletterCode?: string } | null) => {
+        if (data?.newsletterCode) setSuggestedCode(data.newsletterCode);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const shippingCents = 700;
   const discountEuro = promo ? promo.discountCents / 100 : 0;
@@ -346,7 +357,7 @@ export default function CheckoutPage() {
                 setPromoCode(event.target.value);
                 setPromo(null);
               }}
-              placeholder="HALO10"
+              placeholder={suggestedCode}
               className="w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm uppercase"
             />
             <button
@@ -367,12 +378,14 @@ export default function CheckoutPage() {
                   });
                   const payload = (await response.json()) as {
                     error?: string;
+                    needNewsletter?: boolean;
                     code?: string;
                     percent?: number;
                     discountCents?: number;
                   };
                   if (!response.ok || !payload.code || payload.discountCents == null) {
                     setPromo(null);
+                    if (payload.needNewsletter) requestNewsletterPopup();
                     throw new Error(payload.error ?? "Codice non valido.");
                   }
                   setPromo({
@@ -391,6 +404,9 @@ export default function CheckoutPage() {
               {promoBusy ? "…" : "Applica"}
             </button>
           </div>
+          <p className="mt-2 text-xs text-ivory-dim">
+            Suggerimento: {suggestedCode} dopo l&apos;iscrizione alla newsletter.
+          </p>
         </div>
 
         <label className="mt-6 flex items-start gap-3 text-sm text-ivory-dim">

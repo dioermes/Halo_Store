@@ -45,7 +45,12 @@ export async function POST(req: Request) {
     paidOnline: body.fulfillment === "shipping",
     settings,
   });
-  if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: 400 });
+  if (!resolved.ok) {
+    return NextResponse.json(
+      { error: resolved.error, needNewsletter: Boolean(resolved.needNewsletter) },
+      { status: 400 },
+    );
+  }
 
   return NextResponse.json({
     ...resolved.quote,

@@ -16,6 +16,7 @@ export async function GET() {
   return NextResponse.json({
     newsletterPercent: settings.newsletterDiscountPercent,
     birthdayPercent: settings.birthdayDiscountPercent,
+    newsletterCode: settings.newsletterCode,
   });
 }
 
@@ -103,24 +104,29 @@ export async function POST(req: Request) {
     }
   }
 
-  const shouldSendWelcome = !existing?.welcome_email_sent_at;
-  if (shouldSendWelcome) {
-    await sendNewsletterWelcomeEmail({
-      email,
-      code: settings.newsletterCode,
-      percent: settings.newsletterDiscountPercent,
-      birthdayCode: settings.birthdayCode,
-      birthdayPercent: settings.birthdayDiscountPercent,
-    });
-    await admin
-      .from("halo_subscribers")
-      .update({ welcome_email_sent_at: now, updated_at: now })
-      .eq("email", email);
+  const sent = await sendNewsletterWelcomeEmail({
+    email,
+    code: settings.newsletterCode,
+    percent: settings.newsletterDiscountPercent,
+    birthdayCode: settings.birthdayCode,
+    birthdayPercent: settings.birthdayDiscountPercent,
+  });
+  if (!sent.ok) {
+    return NextResponse.json(
+      {
+        error: sent.reason,
+      },
+      { status: 503 },
+    );
   }
+  await admin
+    .from("halo_subscribers")
+    .update({ welcome_email_sent_at: now, updated_at: now })
+    .eq("email", email);
 
   return NextResponse.json({
     ok: true,
     already: Boolean(existing?.marketing_opt_in),
-    emailed: shouldSendWelcome,
+    emailed: true,
   });
 }

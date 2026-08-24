@@ -46,12 +46,16 @@ export async function GET(req: Request) {
 
   let sent = 0;
   for (const row of due) {
-    await sendBirthdayPromoEmail({
+    const sent = await sendBirthdayPromoEmail({
       email: row.email,
       code: settings.birthdayCode,
       percent: settings.birthdayDiscountPercent,
       validDays: settings.birthdayValidDays,
     });
+    if (!sent.ok) {
+      console.error("[birthday cron send]", row.email, sent.reason);
+      continue;
+    }
     const { error: markError } = await admin
       .from("halo_subscribers")
       .update({

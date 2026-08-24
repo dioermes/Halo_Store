@@ -22,14 +22,65 @@ export type OrderEmail = {
   items: Array<{ name: string; size: string; color: string; quantity: number; unitPriceCents: number }>;
 };
 
+function extractEmail(raw: string) {
+  const match = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  return match?.[0] ?? null;
+}
+
 function fromAddress() {
-  return process.env.HALO_FROM_EMAIL || `Halo Store <${storeConfig.support.email}>`;
+  const email = extractEmail(process.env.HALO_FROM_EMAIL ?? "");
+  if (email && !/@(gmail|googlemail)\.com$/i.test(email)) {
+    return `Halo Store <${email}>`;
+  }
+  return "Halo Store <beth.t@example.com>";
+}
+
+function mailboxOf(address: string) {
+  return extractEmail(address) ?? address;
 }
 
 function getResend() {
-  const key = process.env.RESEND_API_KEY;
+  const key = process.env.RESEND_API_KEY?.trim();
   if (!key) return null;
   return new Resend(key);
+}
+
+export type SendEmailResult = { ok: true } | { ok: false; reason: string };
+
+async function send(to: string, subject: string, html: string): Promise<SendEmailResult> {
+  const resend = getResend();
+  if (!resend) {
+    console.error("[email skipped] RESEND_API_KEY mancante", subject, to);
+    return {
+      ok: false,
+      reason: "Manca RESEND_API_KEY. Senza quella chiave le mail non partono.",
+    };
+  }
+  if (!to) {
+    console.error("[email skipped] missing recipient", subject);
+    return { ok: false, reason: "Destinatario mancante." };
+  }
+  try {
+    const from = fromAddress();
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      replyTo: mailboxOf(from),
+      subject,
+      html,
+    });
+    if (error) {
+      const reason = "message" in error && error.message ? String(error.message) : JSON.stringify(error);
+      console.error("[email]", subject, { from, to, error });
+      return { ok: false, reason };
+    }
+    console.info("[email sent]", subject, to, data?.id ?? "");
+    return { ok: true };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Invio mail non riuscito.";
+    console.error("[email]", subject, error);
+    return { ok: false, reason };
+  }
 }
 
 function hello(name?: string | null) {
@@ -76,30 +127,6 @@ function accountOrderUrl(id: string) {
 
 function adminOrderUrl(id: string) {
   return `${siteUrl()}/admin/ordini/${id}`;
-}
-
-async function send(to: string, subject: string, html: string) {
-  const resend = getResend();
-  if (!resend) {
-    console.info("[email skipped]", subject, to);
-    return;
-  }
-  if (!to) {
-    console.error("[email skipped] missing recipient", subject);
-    return;
-  }
-  try {
-    const { error } = await resend.emails.send({
-      from: fromAddress(),
-      to,
-      replyTo: storeConfig.support.email,
-      subject,
-      html,
-    });
-    if (error) console.error("[email]", subject, error);
-  } catch (error) {
-    console.error("[email]", subject, error);
-  }
 }
 
 export async function sendOrderPaidEmail(order: OrderEmail) {
@@ -311,8 +338,8 @@ export async function sendNewsletterWelcomeEmail(opts: {
   percent: number;
   birthdayPercent: number;
   birthdayCode: string;
-}) {
-  await send(
+}): Promise<SendEmailResult> {
+  return send(
     opts.email,
     `Il tuo codice ${opts.code} · ${storeConfig.name}`,
     haloEmail({
@@ -335,8 +362,8 @@ export async function sendBirthdayPromoEmail(opts: {
   code: string;
   percent: number;
   validDays: number;
-}) {
-  await send(
+}): Promise<SendEmailResult> {
+  return send(
     opts.email,
     `Buon compleanno · codice ${opts.code}`,
     haloEmail({

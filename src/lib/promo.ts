@@ -132,17 +132,23 @@ export async function resolvePromo(opts: {
   shippingCents: number;
   paidOnline: boolean;
   settings?: StoreSettings;
-}): Promise<{ ok: true; quote: PromoQuote } | { ok: false; error: string }> {
+}): Promise<{ ok: true; quote: PromoQuote } | { ok: false; error: string; needNewsletter?: boolean }> {
   const code = normalizePromoCode(opts.code);
   if (!code) return { ok: false, error: "Inserisci un codice sconto." };
   const settings = opts.settings ?? (await getStoreSettings());
-  const subscriber = await getSubscriber(opts.email);
-  if (!subscriber || !subscriber.marketing_opt_in) {
-    return { ok: false, error: "Questo codice è per chi è iscritto alla newsletter." };
-  }
-
   const newsletterCode = normalizePromoCode(settings.newsletterCode);
   const birthdayCode = normalizePromoCode(settings.birthdayCode);
+  const subscriber = await getSubscriber(opts.email);
+  if (!subscriber || !subscriber.marketing_opt_in) {
+    if (code === newsletterCode) {
+      return {
+        ok: false,
+        needNewsletter: true,
+        error: "Questo codice è il benvenuto della newsletter. Iscriviti per usarlo.",
+      };
+    }
+    return { ok: false, error: "Questo codice è per chi è iscritto alla newsletter." };
+  }
 
   if (code === newsletterCode) {
     if (subscriber.welcome_redeemed_at) {
