@@ -16,6 +16,7 @@ export async function GET() {
   return NextResponse.json({
     newsletterPercent: settings.newsletterDiscountPercent,
     birthdayPercent: settings.birthdayDiscountPercent,
+    birthdayValidDays: settings.birthdayValidDays,
     newsletterCode: settings.newsletterCode,
   });
 }
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
   if (existingError) {
     console.error("[newsletter subscribe]", existingError.message);
     return NextResponse.json(
-      { error: "Manca la tabella iscritti su Supabase. Esegui la migration newsletter." },
+      { error: "Iscrizione non disponibile in questo momento." },
       { status: 503 },
     );
   }
@@ -65,7 +66,8 @@ export async function POST(req: Request) {
     { onConflict: "email" },
   );
   if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    console.error("[newsletter subscribe]", upsertError.message);
+    return NextResponse.json({ error: "Iscrizione non disponibile in questo momento." }, { status: 500 });
   }
 
   const { data: customer } = await admin.from("halo_customers").select("id").ilike("email", email).maybeSingle();
@@ -112,10 +114,9 @@ export async function POST(req: Request) {
     birthdayPercent: settings.birthdayDiscountPercent,
   });
   if (!sent.ok) {
+    console.error("[newsletter welcome]", sent.reason);
     return NextResponse.json(
-      {
-        error: sent.reason,
-      },
+      { error: "Non siamo riusciti a inviarti la mail. Riprova tra poco." },
       { status: 503 },
     );
   }

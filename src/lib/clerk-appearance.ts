@@ -36,6 +36,10 @@ export const clerkAppearance = {
       backgroundColor: sage,
       color: wine,
     },
+    socialButtonsBlockButton__apple: { display: "none" },
+    socialButtonsBlockButton__facebook: { display: "none" },
+    socialButtonsIconButton__apple: { display: "none" },
+    socialButtonsIconButton__facebook: { display: "none" },
     alternativeMethodsBlockButton: {
       border: visibleBorder,
       backgroundColor: sage,

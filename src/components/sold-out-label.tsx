@@ -7,7 +7,7 @@ export function SoldOutLabel({ className = "" }: { className?: string }) {
         color: "var(--sold-out-fg, #ffffff)",
       }}
     >
-      Sold out
+      Esaurito
     </span>
   );
 }

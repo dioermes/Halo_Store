@@ -271,6 +271,18 @@ input[type="range"] {
   border-radius: 2px;
 }
 
+/* Clerk: solo Google + email. Apple/Facebook restano nascosti anche in modal. */
+.cl-socialButtonsIconButton__apple,
+.cl-socialButtonsIconButton__facebook,
+.cl-socialButtonsBlockButton__apple,
+.cl-socialButtonsBlockButton__facebook,
+.cl-button[data-provider="apple"],
+.cl-button[data-provider="facebook"],
+.cl-button[data-provider="oauth_apple"],
+.cl-button[data-provider="oauth_facebook"] {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

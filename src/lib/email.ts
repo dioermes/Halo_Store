@@ -138,11 +138,11 @@ export async function sendOrderPaidEmail(order: OrderEmail) {
       preheader: pickup
         ? "Pagamento ricevuto. Ti avvisiamo quando i capi sono pronti in negozio."
         : "Pagamento ricevuto. Prepariamo la spedizione in Italia.",
-      title: "Grazie, è arrivato.",
+      title: "Grazie, abbiamo ricevuto il pagamento.",
       body: `${orderRef(order)}<p style="margin:0 0 14px;">${hello(order.name)} il pagamento è andato a buon fine.</p>
         <p style="margin:0;">${
           pickup
-            ? `Puoi ritirarlo in ${esc(storeConfig.address.street)}, ${esc(storeConfig.address.city)}. Ti scriviamo quando è pronto.`
+            ? `Puoi ritirare i capi in ${esc(storeConfig.address.street)}, ${esc(storeConfig.address.city)}. Ti scriviamo quando sono pronti.`
             : "Prepariamo la spedizione in Italia. Riceverai il tracking appena parte il pacco."
         }</p>${itemsHtml(order)}`,
       cta: { href: accountOrderUrl(order.id), label: "Vedi l'ordine" },
@@ -193,13 +193,13 @@ export async function sendOwnerNewOrderEmail(order: OrderEmail) {
   );
 }
 
-export async function sendOrderStatusEmail(order: OrderEmail) {
+export async function sendOrderStatusEmail(order: OrderEmail): Promise<SendEmailResult> {
   const ref = orderRef(order);
   const items = itemsHtml(order);
   const account = { href: accountOrderUrl(order.id), label: "Vedi l'ordine" };
 
   if (order.status === "preparing") {
-    await send(
+    return send(
       order.email,
       `Il tuo ordine è in preparazione · ${storeConfig.name}`,
       haloEmail({
@@ -216,11 +216,10 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
         cta: account,
       }),
     );
-    return;
   }
 
   if (order.status === "ready_for_pickup") {
-    await send(
+    return send(
       order.email,
       `Il tuo ordine è pronto in negozio · ${storeConfig.name}`,
       haloEmail({
@@ -231,14 +230,13 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
         cta: account,
       }),
     );
-    return;
   }
 
   if (order.status === "shipped") {
     const tracking = order.trackingCode
       ? `<p style="margin:14px 0 0;">Tracking${order.trackingCarrier ? ` ${esc(order.trackingCarrier)}` : ""}: <strong>${esc(order.trackingCode)}</strong></p>`
       : "";
-    await send(
+    return send(
       order.email,
       `Il tuo ordine è partito · ${storeConfig.name}`,
       haloEmail({
@@ -246,16 +244,15 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
           ? `Tracking ${order.trackingCode}`
           : "Il pacco è in viaggio.",
         title: "Spedito.",
-        body: `${ref}<p style="margin:0;">Il pacco è in viaggio verso di te.</p>${tracking}${items}`,
+        body: `${ref}<p style="margin:0;">${hello(order.name)} il pacco è in viaggio verso di te.</p>${tracking}${items}`,
         cta: account,
         extra: returnsEmailHtml("shipping"),
       }),
     );
-    return;
   }
 
   if (order.status === "completed") {
-    await send(
+    return send(
       order.email,
       `Grazie da ${storeConfig.name}`,
       haloEmail({
@@ -270,11 +267,10 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
         extra: returnsEmailHtml(order.fulfillment),
       }),
     );
-    return;
   }
 
   if (order.status === "cancelled") {
-    await send(
+    return send(
       order.email,
       `Ordine annullato · ${storeConfig.name}`,
       haloEmail({
@@ -284,11 +280,10 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
         cta: account,
       }),
     );
-    return;
   }
 
   if (order.status === "refunded") {
-    await send(
+    return send(
       order.email,
       `Rimborso registrato · ${storeConfig.name}`,
       haloEmail({
@@ -299,6 +294,8 @@ export async function sendOrderStatusEmail(order: OrderEmail) {
       }),
     );
   }
+
+  return { ok: true };
 }
 
 export async function sendPaymentFailedEmail(email: string, name?: string | null) {
@@ -319,7 +316,7 @@ export async function sendWelcomeEmail(email: string, name?: string | null) {
     email,
     `Benvenuto in ${storeConfig.name}`,
     haloEmail({
-      preheader: "Account creato. Da qui puoi ordini, ritiro e novità.",
+      preheader: "Account creato. Da qui vedi gli ordini, il ritiro e le novità.",
       title: "Benvenuto.",
       body: `<p style="margin:0 0 14px;">${hello(name)} il tuo account è pronto.</p>
         <p style="margin:0;">Da qui vedi gli ordini e scegli ritiro o spedizione. Per le offerte del negozio, iscriviti alla newsletter dal popup in vetrina: è un consenso a parte, e arriva un codice sconto da usare una volta.</p>`,

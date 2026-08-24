@@ -46,6 +46,7 @@ export default async function AdminOrderDetail({
         <OrderUpdatedNotice
           status={query.stato as OrderStatus}
           mailed={query.mail === "1"}
+          mailFailed={query.mail === "0"}
         />
       ) : null}
 
@@ -125,6 +126,10 @@ export default async function AdminOrderDetail({
               placeholder="Tracking"
               className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3"
             />
+            <p className="text-xs text-ivory-dim">
+              Quando segni Spedito, parte una mail al cliente. Se inserisci il tracking, lo
+              includiamo nel messaggio.
+            </p>
           </>
         )}
         <UpdateOrderButton />

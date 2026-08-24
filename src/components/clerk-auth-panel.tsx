@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ClerkFailed, ClerkLoaded, ClerkLoading, SignIn, SignUp } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
+import { storeConfig } from "@/lib/store-config";
 
 function ClerkHint() {
   const [stuck, setStuck] = useState(false);
@@ -16,13 +17,27 @@ function ClerkHint() {
       <p>Apro l&apos;accesso…</p>
       {stuck ? (
         <p className="mt-3">
-          Se resta così, in Clerk apri l&apos;istanza <strong className="text-ivory">Production</strong>{" "}
-          → Configure → Domains e aggiungi l&apos;URL esatto del sito (con o senza www). Su Vercel le
-          chiavi devono essere <code className="text-ivory">pk_live_</code> e{" "}
-          <code className="text-ivory">sk_live_</code>, poi un nuovo deploy.
+          L&apos;accesso sta impiegando più del solito. Riprova tra un attimo oppure
+          scrivici a{" "}
+          <a href={storeConfig.support.emailHref} className="text-ivory underline underline-offset-4">
+            {storeConfig.support.email}
+          </a>
+          .
         </p>
       ) : null}
     </div>
+  );
+}
+
+function ClerkFail() {
+  return (
+    <p className="rounded-2xl border border-ink-line p-5 text-sm leading-relaxed text-ivory-dim">
+      L&apos;accesso non si è aperto. Riprova tra poco oppure scrivici a{" "}
+      <a href={storeConfig.support.emailHref} className="text-ivory underline underline-offset-4">
+        {storeConfig.support.email}
+      </a>
+      .
+    </p>
   );
 }
 
@@ -33,10 +48,7 @@ export function SignInPanel() {
         <ClerkHint />
       </ClerkLoading>
       <ClerkFailed>
-        <p className="rounded-2xl border border-ink-line p-5 text-sm leading-relaxed text-ivory-dim">
-          Clerk non si avvia su questo dominio. Istanza Production → Domains: stesso host del sito.
-          Vercel: chiavi live, poi redeploy.
-        </p>
+        <ClerkFail />
       </ClerkFailed>
       <ClerkLoaded>
         <SignIn
@@ -59,10 +71,7 @@ export function SignUpPanel() {
         <ClerkHint />
       </ClerkLoading>
       <ClerkFailed>
-        <p className="rounded-2xl border border-ink-line p-5 text-sm leading-relaxed text-ivory-dim">
-          Clerk non si avvia su questo dominio. Istanza Production → Domains: stesso host del sito.
-          Vercel: chiavi live, poi redeploy.
-        </p>
+        <ClerkFail />
       </ClerkFailed>
       <ClerkLoaded>
         <SignUp

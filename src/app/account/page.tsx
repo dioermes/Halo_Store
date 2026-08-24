@@ -35,8 +35,8 @@ export default async function AccountPage() {
       <section className="mx-auto max-w-xl px-5 py-28">
         <h1 className="font-display text-5xl">Account quasi pronto.</h1>
         <p className="mt-4 text-ivory-dim">
-          Manca SUPABASE_SERVICE_ROLE_KEY in ambiente. Il catalogo è già pubblico;
-          ordini e preferenze si sbloccano con quella chiave.
+          In questo momento non riusciamo a mostrare ordini e preferenze. Il
+          catalogo resta disponibile: riprova tra poco o scrivici.
         </p>
       </section>
     );

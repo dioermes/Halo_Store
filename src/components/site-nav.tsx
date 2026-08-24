@@ -27,7 +27,7 @@ export function SiteNav({
       ? homeLinks
       : [
           { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
-          { href: "/#best-seller", label: "Best seller" },
+          { href: "/#best-seller", label: "I più venduti" },
           { href: "/#saldi", label: "Saldi" },
         ];
   const links = inAdmin ? adminNav : storefrontLinks;

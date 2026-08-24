@@ -69,7 +69,7 @@ export function CookieBanner() {
         <div className="mt-5 space-y-3 text-sm">
           <label className="flex items-start gap-3 text-ivory-dim">
             <input type="checkbox" checked disabled className="mt-1 accent-halo" />
-            Necessari — sempre on
+            Necessari — sempre attivi
           </label>
           <label className="flex items-start gap-3">
             <input
@@ -92,7 +92,7 @@ export function CookieBanner() {
             />
             <span>
               Marketing
-              <span className="block text-ivory-dim">Annunci e retargeting. Off di default.</span>
+              <span className="block text-ivory-dim">Annunci e retargeting. Spento di default.</span>
             </span>
           </label>
         </div>

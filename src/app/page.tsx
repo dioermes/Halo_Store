@@ -4,7 +4,13 @@ import { StoryBreak } from "@/components/story-break";
 import { Reviews } from "@/components/reviews";
 import { StoreInfo } from "@/components/store-info";
 import { getPublishedProducts } from "@/lib/catalog";
-import { getSiteAppearance, pickFeatured, productKey, productsForHomeSection } from "@/lib/site";
+import {
+  displayHomeSectionTitle,
+  getSiteAppearance,
+  pickFeatured,
+  productKey,
+  productsForHomeSection,
+} from "@/lib/site";
 import type { Product } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +38,7 @@ export default async function Home() {
           <div key={section.id} className="contents">
             <FeaturedRail
               id={section.id}
-              title={section.title}
+              title={displayHomeSectionTitle(section.title)}
               featured={featured}
               rest={restOf(tagged, featured)}
             />

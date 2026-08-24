@@ -120,11 +120,11 @@ export default function CheckoutPage() {
           throw new Error(
             response.ok
               ? "Risposta non valida dalla cassa."
-              : `La cassa non ha risposto (${response.status}). Controlla le variabili su Vercel.`,
+              : "La cassa non si è aperta. Riprova tra poco o scrivici.",
           );
         }
       } else if (!response.ok) {
-        throw new Error(`La cassa non ha risposto (${response.status}). Controlla le variabili su Vercel.`);
+        throw new Error("La cassa non si è aperta. Riprova tra poco o scrivici.");
       }
       if (payload.alreadyPaid && payload.orderId) {
         clear();
@@ -188,8 +188,8 @@ export default function CheckoutPage() {
       <section className="mx-auto max-w-2xl px-5 py-24">
         <h1 className="font-display text-5xl">Paga su Halo.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
-          Questa sessione scadrà tra 30 minuti. Una volta scaduta, l&apos;articolo
-          tornerà disponibile in store.
+          Questa sessione scadrà tra 30 minuti. Una volta scaduta, i capi
+          tornano disponibili in vetrina.
         </p>
         <div className="overflow-hidden rounded-3xl border border-ink-line bg-ink p-2">
           <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>

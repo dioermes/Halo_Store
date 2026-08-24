@@ -54,8 +54,8 @@ export const homeSectionSourceOptions: { id: HomeSectionSource; label: string; h
   },
   {
     id: "bestseller",
-    label: "Best seller",
-    hint: "Mostra i capi con il tag best seller nel catalogo.",
+    label: "I più venduti",
+    hint: "Mostra i capi con il tag dei più venduti nel catalogo.",
   },
   {
     id: "sale",
@@ -93,7 +93,7 @@ function defaultHomeSections(legacy: {
     },
     {
       id: "best-seller",
-      title: "Best seller",
+      title: "I più venduti",
       source: "bestseller",
       tagId: "",
       productIds: [],
@@ -160,6 +160,11 @@ export function asHexColor(value: unknown, fallback: string) {
   if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw.toLowerCase();
   if (/^[0-9a-fA-F]{6}$/.test(raw)) return `#${raw.toLowerCase()}`;
   return fallback;
+}
+
+export function displayHomeSectionTitle(title: string) {
+  if (/^best seller$/i.test(title.trim())) return "I più venduti";
+  return title;
 }
 
 export function slugifyHomeSection(value: string) {
@@ -403,7 +408,7 @@ export function applyCatalogMerch(products: Product[], merch: CatalogMerch): Pro
       isBestseller:
         inList(merch.bestsellerIds) ||
         Boolean(product.isBestseller) ||
-        /best seller/i.test(product.badge ?? ""),
+        /best seller|piu venduti|più venduti/i.test(product.badge ?? ""),
       isOnSale:
         inList(merch.saleIds) ||
         Boolean(product.isOnSale) ||

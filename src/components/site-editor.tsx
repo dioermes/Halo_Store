@@ -147,7 +147,7 @@ function SoldOutColorFields({ appearance }: { appearance: SiteAppearance }) {
 
   return (
     <fieldset className="grid gap-4 rounded-2xl border border-ink-line bg-ink/40 p-5">
-      <legend className="px-1 font-display text-2xl">Etichetta Sold out</legend>
+      <legend className="px-1 font-display text-2xl">Etichetta Esaurito</legend>
       <p className="text-sm text-ivory-dim">
         Colori della scritta che compare sulle card quando un capo è esaurito.
       </p>
@@ -156,7 +156,7 @@ function SoldOutColorFields({ appearance }: { appearance: SiteAppearance }) {
           className="rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.16em]"
           style={{ backgroundColor: bg, color: fg }}
         >
-          Sold out
+          Esaurito
         </span>
         <span className="text-xs text-ivory-dim">Anteprima</span>
       </div>
@@ -180,7 +180,7 @@ export function SiteEditor({
       <div>
         <h2 className="font-display text-3xl">Modifica sito</h2>
         <p className="mt-3 text-sm leading-relaxed text-ivory-dim">
-          Qui si cambiano hero, le sezioni della home e i colori dell&apos;etichetta Sold out.
+          Qui si cambiano hero, le sezioni della home e i colori dell&apos;etichetta Esaurito.
         </p>
       </div>
 

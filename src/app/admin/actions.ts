@@ -466,8 +466,9 @@ export async function updateOrderAction(formData: FormData) {
     })
     .eq("id", id);
 
+  let mailed = false;
   if (statusMailNeeded(status) && status !== "paid") {
-    await sendOrderStatusEmail({
+    const mail = await sendOrderStatusEmail({
       id: current.id,
       email: current.halo_customers?.email ?? "",
       name: current.halo_customers?.full_name,
@@ -485,13 +486,17 @@ export async function updateOrderAction(formData: FormData) {
         unitPriceCents: item.unit_price_cents,
       })),
     });
+    mailed = mail.ok;
+    if (!mail.ok) {
+      console.error("[order status email]", status, current.id, mail.reason);
+    }
   }
 
   revalidatePath("/admin/ordini");
   revalidatePath(`/admin/ordini/${id}`);
   const query = new URLSearchParams({ ok: "1", stato: status });
   if (statusMailNeeded(status) && status !== "paid") {
-    query.set("mail", "1");
+    query.set("mail", mailed ? "1" : "0");
   }
   redirect(`/admin/ordini/${id}?${query.toString()}`);
 }

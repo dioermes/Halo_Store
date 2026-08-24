@@ -16,7 +16,7 @@ import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
-import { getSiteAppearance } from "@/lib/site";
+import { displayHomeSectionTitle, getSiteAppearance } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,7 +105,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               categories={categories}
               homeLinks={appearance.homeSections.map((section) => ({
                 href: `/#${section.id}`,
-                label: section.title,
+                label: displayHomeSectionTitle(section.title),
               }))}
             />
             <main id="top">{children}</main>

@@ -46,6 +46,7 @@ export function NewsletterPopup() {
   const [year, setYear] = useState("");
   const [percent, setPercent] = useState(10);
   const [birthdayPercent, setBirthdayPercent] = useState(15);
+  const [birthdayValidDays, setBirthdayValidDays] = useState(14);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -59,10 +60,17 @@ export function NewsletterPopup() {
     const loadOffer = () => {
       void fetch("/api/newsletter/subscribe")
         .then((response) => (response.ok ? response.json() : null))
-        .then((data: { newsletterPercent?: number; birthdayPercent?: number } | null) => {
-          if (typeof data?.newsletterPercent === "number") setPercent(data.newsletterPercent);
-          if (typeof data?.birthdayPercent === "number") setBirthdayPercent(data.birthdayPercent);
-        })
+        .then(
+          (data: {
+            newsletterPercent?: number;
+            birthdayPercent?: number;
+            birthdayValidDays?: number;
+          } | null) => {
+            if (typeof data?.newsletterPercent === "number") setPercent(data.newsletterPercent);
+            if (typeof data?.birthdayPercent === "number") setBirthdayPercent(data.birthdayPercent);
+            if (typeof data?.birthdayValidDays === "number") setBirthdayValidDays(data.birthdayValidDays);
+          },
+        )
         .catch(() => undefined);
     };
 
@@ -149,12 +157,13 @@ export function NewsletterPopup() {
           <form onSubmit={(event) => void submit(event)}>
             <p className="text-xs uppercase tracking-[0.28em] text-halo">Halo Newsletter</p>
             <h2 id="halo-newsletter-title" className="mt-3 font-display text-4xl leading-none">
-              Resta aggiornato con le nostre novità,per te un codice sconto iniziale.
+              Resta aggiornato sulle novità. Per te, un codice sconto di benvenuto.
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-ivory-dim">
-              Iscriviti e ricevi: {percent}% sul primo ordine e se inserisci la data del tuo
-              compleanno il regalo te lo facciamo noi! Riceverai un&apos;ulteriore codice sconto
-              del {birthdayPercent}%, da utilizzare entro 14 giorni dal rilascio.
+              Iscriviti e ricevi il {percent}% da usare una volta in cassa. Se lasci la data di
+              compleanno, il giorno del tuo compleanno ti mandiamo un ulteriore codice del{" "}
+              {birthdayPercent}%, da usare entro {birthdayValidDays}{" "}
+              {birthdayValidDays === 1 ? "giorno" : "giorni"}.
             </p>
             <label className="mt-6 block text-sm text-ivory-dim">
               Email

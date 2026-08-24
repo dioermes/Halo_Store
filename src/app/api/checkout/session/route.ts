@@ -89,7 +89,7 @@ async function handleCheckout(req: Request) {
     }
   } else if (!isStripeConfigured()) {
     return NextResponse.json(
-      { error: "Pagamenti non ancora collegati. Manca la chiave Stripe." },
+      { error: "I pagamenti non sono disponibili in questo momento. Riprova o scrivici." },
       { status: 503 },
     );
   }

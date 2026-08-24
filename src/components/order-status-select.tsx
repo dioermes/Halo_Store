@@ -7,7 +7,7 @@ import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
 const hints: Partial<Record<OrderStatus, string>> = {
   preparing: "Stai mettendo da parte i capi.",
   ready_for_pickup: "Il cliente può venire in negozio.",
-  shipped: "Il pacco è partito. Metti il tracking sotto.",
+  shipped: "Il pacco è partito. Inserisci il tracking: il cliente riceve una mail.",
   completed: "Ordine chiuso.",
   cancelled: "Annulla questo ordine.",
   refunded: "Segna il rimborso.",

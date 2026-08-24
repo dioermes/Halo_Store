@@ -10,9 +10,11 @@ import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
 export function OrderUpdatedNotice({
   status,
   mailed,
+  mailFailed,
 }: {
   status: OrderStatus;
   mailed: boolean;
+  mailFailed: boolean;
 }) {
   const [visible, setVisible] = useState(true);
   const router = useRouter();
@@ -44,7 +46,11 @@ export function OrderUpdatedNotice({
             <p className="font-display text-2xl leading-none">Ordine aggiornato</p>
             <p className="mt-2 text-sm text-ivory-dim">
               Stato: {orderStatusLabel[status]}.
-              {mailed ? " Abbiamo avvisato il cliente via email." : ""}
+              {mailed
+                ? " Abbiamo avvisato il cliente via email."
+                : mailFailed
+                  ? " Lo stato è salvato, ma la mail al cliente non è partita. Controlla l'invio email e riprova."
+                  : ""}
             </p>
           </div>
         </motion.div>

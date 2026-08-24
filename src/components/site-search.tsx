@@ -80,7 +80,7 @@ export function SiteSearch({
             <div className="mx-auto max-h-[calc(100svh-8rem)] max-w-7xl overflow-y-auto px-5 py-10 sm:px-8">
               {query.trim().length < 2 ? (
                 <p className="text-sm text-ivory-dim">
-                  Prova parole come jeans, maglietta, bomber, nero, nuovo, best seller.
+                  Prova parole come jeans, maglietta, bomber, nero, nuovo, più venduti.
                 </p>
               ) : results.length === 0 ? (
                 <p className="text-ivory-dim">Nessun capo per “{query.trim()}”.</p>
