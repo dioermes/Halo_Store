@@ -28,6 +28,7 @@ import { getAllProductsAdmin } from "@/lib/catalog";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
 import { notifyStockAlerts } from "@/lib/stock-alerts";
 import { getStripe } from "@/lib/stripe";
+import { resolveDisplayFont } from "@/lib/display-fonts";
 import type { OrderStatus } from "@/lib/orders";
 import { releasePromoForOrder } from "@/lib/promo";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
@@ -558,6 +559,7 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     homeSections: sanitizeHomeSections(parseHomeSectionsPayload(parsed), catalog),
     soldOutBadgeBg: asHexColor(formData.get("soldOutBadgeBg"), current.soldOutBadgeBg),
     soldOutBadgeFg: asHexColor(formData.get("soldOutBadgeFg"), current.soldOutBadgeFg),
+    displayFont: resolveDisplayFont(formData.get("displayFont")).id,
   };
   await saveSiteAppearance(next);
   revalidatePath("/");

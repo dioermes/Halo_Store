@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
 import { ProductDialog } from "@/components/product-dialog";
 import { formatPrice, getColorLook, type Product, type StoreCategory } from "@/lib/products";
 import { catalogFilters, catalogPath } from "@/lib/categories";
+
+function categoryFromPath(pathname: string) {
+  const match = pathname.match(/^\/catalogo\/([^/]+)\/?$/);
+  return match?.[1] || "tutti";
+}
+
+function setCatalogUrl(id: string) {
+  const next = catalogPath(id);
+  if (window.location.pathname === next) return;
+  window.history.replaceState(window.history.state, "", next);
+}
 
 function collectColors(products: Product[]) {
   const unique = new Map<string, string>();
@@ -244,7 +254,6 @@ export function Catalog({
   categories: StoreCategory[];
   initialCategory?: string;
 }) {
-  const router = useRouter();
   const filters = catalogFilters(categories, products.length);
   const [active, setActive] = useState(initialCategory);
   const [maxSelected, setMaxSelected] = useState(0);
@@ -266,31 +275,27 @@ export function Catalog({
   const colors = useMemo(() => collectColors(scoped), [scoped]);
 
   const selectCategory = (id: string) => {
+    if (id === active) return;
     const nextMax = pricesInCategory(products, id);
     categoryRef.current = id;
     ceiling.current = nextMax;
     setActive(id);
     setMaxSelected(nextMax);
-    router.replace(catalogPath(id), { scroll: false });
+    setCatalogUrl(id);
   };
 
   useEffect(() => {
-    categoryRef.current = initialCategory;
-    setActive(initialCategory);
-  }, [initialCategory]);
-
-  useEffect(() => {
-    const refresh = () => router.refresh();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") refresh();
+    const onPop = () => {
+      const id = categoryFromPath(window.location.pathname);
+      const nextMax = pricesInCategory(products, id);
+      categoryRef.current = id;
+      ceiling.current = nextMax;
+      setActive(id);
+      setMaxSelected(nextMax);
     };
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [router]);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [products]);
 
   useEffect(() => {
     if (active !== "tutti" && !categories.some((category) => category.id === active)) {
@@ -372,17 +377,21 @@ export function Catalog({
               : "Nessun capo con questi filtri."}
           </p>
         ) : (
-          <motion.div className="halo-product-grid mt-14 lg:mt-16">
-            <AnimatePresence mode="popLayout">
-              {visible.map((product, index) => (
-                <ProductCard
-                  key={product.uuid ?? product.id}
-                  product={product}
-                  index={index}
-                  onOpen={setSelected}
-                />
-              ))}
-            </AnimatePresence>
+          <motion.div
+            key={active}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="halo-product-grid mt-14 lg:mt-16"
+          >
+            {visible.map((product, index) => (
+              <ProductCard
+                key={product.uuid ?? product.id}
+                product={product}
+                index={index}
+                onOpen={setSelected}
+              />
+            ))}
           </motion.div>
         )}
       </div>

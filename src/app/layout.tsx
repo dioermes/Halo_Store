@@ -17,6 +17,7 @@ import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 import { displayHomeSectionTitle, getSiteAppearance } from "@/lib/site";
+import { displayFontStack, googleFontHref } from "@/lib/display-fonts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -76,11 +77,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     getSiteAppearance(),
   ]);
 
+  const displayHref = googleFontHref(appearance.displayFont);
+
   return (
     <html
       lang="it"
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
+      style={{ "--font-display": displayFontStack(appearance.displayFont) } as CSSProperties}
     >
+      {displayHref ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link rel="stylesheet" href={displayHref} />
+        </>
+      ) : null}
       <body
         className="min-h-full"
         style={

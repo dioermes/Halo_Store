@@ -3,13 +3,35 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const KEY = "halo-cookie-consent-v2";
+const STORAGE_KEYS = ["halo-cookie-consent-v1", "halo-cookie-consent-v2"] as const;
+const COOKIE = "halo_cookie_ok";
+const YEAR = 60 * 60 * 24 * 365;
+
+function readCookie(name: string) {
+  return document.cookie.split(";").some((part) => part.trim().startsWith(`${name}=`));
+}
 
 function hasDecision() {
   try {
-    return Boolean(window.localStorage.getItem(KEY));
+    if (STORAGE_KEYS.some((key) => window.localStorage.getItem(key))) return true;
+    if (readCookie(COOKIE)) return true;
   } catch {
     return true;
+  }
+  return false;
+}
+
+function remember() {
+  const payload = JSON.stringify({ necessary: true, decidedAt: new Date().toISOString() });
+  try {
+    for (const key of STORAGE_KEYS) window.localStorage.setItem(key, payload);
+  } catch {
+    // ignore
+  }
+  try {
+    document.cookie = `${COOKIE}=1; Max-Age=${YEAR}; Path=/; SameSite=Lax`;
+  } catch {
+    // ignore
   }
 }
 
@@ -17,20 +39,18 @@ export function CookieBanner() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(!hasDecision());
+    if (hasDecision()) {
+      remember();
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
   }, []);
 
   if (!open) return null;
 
   const accept = () => {
-    try {
-      window.localStorage.setItem(
-        KEY,
-        JSON.stringify({ necessary: true, decidedAt: new Date().toISOString() }),
-      );
-    } catch {
-      // ignore
-    }
+    remember();
     setOpen(false);
   };
 

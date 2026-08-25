@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveSiteAppearanceAction, saveSiteMediaSlotAction } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { merchKindFromFile, type CatalogTag, type SiteAppearance } from "@/lib/site";
+import { DisplayFontPicker } from "@/components/display-font-picker";
 import { HomeSectionsEditor } from "@/components/home-sections-editor";
 import type { Product } from "@/lib/products";
 
@@ -180,7 +181,8 @@ export function SiteEditor({
       <div>
         <h2 className="font-display text-3xl">Modifica sito</h2>
         <p className="mt-3 text-sm leading-relaxed text-ivory-dim">
-          Qui si cambiano hero, le sezioni della home e i colori dell&apos;etichetta Esaurito.
+          Qui si cambiano hero, il carattere dei titoli, le sezioni della home e i colori
+          dell&apos;etichetta Esaurito.
         </p>
       </div>
 
@@ -196,6 +198,7 @@ export function SiteEditor({
         hint="Formato verticale, a tutto schermo sul telefono."
         appearance={appearance}
       />
+      <DisplayFontPicker initialId={appearance.displayFont} />
       <HomeSectionsEditor sections={appearance.homeSections} products={products} tags={tags} />
 
       <SoldOutColorFields appearance={appearance} />

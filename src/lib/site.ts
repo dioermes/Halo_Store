@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { deleteCatalogObjects } from "@/lib/catalog-bucket";
 import { createAdminClient, createPublicClient, isAdminConfigured, isSupabaseConfigured } from "@/lib/supabase";
 import { ambientImages, type Product } from "@/lib/products";
+import { DEFAULT_DISPLAY_FONT, resolveDisplayFont } from "@/lib/display-fonts";
 
 export type SiteMedia = {
   url: string;
@@ -28,6 +29,7 @@ export type SiteAppearance = {
   homeSections: HomeSection[];
   soldOutBadgeBg: string;
   soldOutBadgeFg: string;
+  displayFont: string;
 };
 
 export type CatalogTag = {
@@ -118,6 +120,7 @@ const appearanceDefaults: SiteAppearance = {
   homeSections: defaultHomeSections({}),
   soldOutBadgeBg: "#dc2626",
   soldOutBadgeFg: "#ffffff",
+  displayFont: DEFAULT_DISPLAY_FONT,
 };
 
 const merchDefaults: CatalogMerch = {
@@ -249,6 +252,7 @@ function parseAppearance(value: unknown): SiteAppearance {
       migrateSoldOutColor(row.soldOutBadgeFg, "#c5cebc", appearanceDefaults.soldOutBadgeFg),
       appearanceDefaults.soldOutBadgeFg,
     ),
+    displayFont: resolveDisplayFont(row.displayFont).id,
   };
 }
 
