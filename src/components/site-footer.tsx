@@ -1,10 +1,11 @@
 import { MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import { InstagramGlyph } from "@/components/icons";
-import { HaloLogo } from "@/components/halo-logo";
-import { fullAddress, storeConfig } from "@/lib/store-config";
+import { HaloLogoOriginal } from "@/components/halo-logo";
+import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
 
 export function SiteFooter() {
+  const fiscal = fiscalLine();
   return (
     <footer className="relative overflow-hidden border-t border-ink-line">
       <div
@@ -14,7 +15,7 @@ export function SiteFooter() {
       <div className="halo-shell relative pt-20 pb-32 md:pb-20">
         <div className="flex flex-col gap-16 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
-            <HaloLogo className="h-16 text-ivory" />
+            <HaloLogoOriginal className="h-20 w-auto sm:h-24" />
             <p className="mt-6 text-sm leading-relaxed text-ivory-dim">
               {storeConfig.claim}. {storeConfig.tagline} a Conversano, scelto capo per capo.
             </p>
@@ -66,7 +67,8 @@ export function SiteFooter() {
 
         <div className="mt-20 flex flex-col gap-4 border-t border-ink-line/45 pt-8 text-xs text-ivory-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
-            {storeConfig.name} · {storeConfig.address.city} (
+            {storeConfig.legalName}
+            {fiscal ? ` · ${fiscal}` : ""} · {storeConfig.address.city} (
             {storeConfig.address.province})
           </p>
           <p className="flex flex-wrap gap-x-4 gap-y-1">

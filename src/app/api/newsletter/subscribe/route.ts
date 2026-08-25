@@ -18,6 +18,7 @@ export async function GET() {
     birthdayPercent: settings.birthdayDiscountPercent,
     birthdayValidDays: settings.birthdayValidDays,
     newsletterCode: settings.newsletterCode,
+    shippingItalyCents: settings.shippingItalyCents,
   });
 }
 

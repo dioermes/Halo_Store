@@ -1,16 +1,23 @@
-import { storeConfig } from "@/lib/store-config";
+import { fiscalLine, storeConfig } from "@/lib/store-config";
 import { whatsappReturnsHref } from "@/lib/returns";
 
 export default function TermsPage() {
   const whatsapp = whatsappReturnsHref();
+  const fiscal = fiscalLine();
 
   return (
     <article className="mx-auto max-w-2xl px-5 py-24 leading-relaxed text-ivory-dim">
       <h1 className="font-display text-5xl text-ivory">Vendite e recesso</h1>
       <p className="mt-6">
         {storeConfig.legalName}, {storeConfig.address.street}, {storeConfig.address.postalCode}{" "}
-        {storeConfig.address.city}.
+        {storeConfig.address.city}
+        {fiscal ? `. ${fiscal}` : ""}.
       </p>
+      {!fiscal ? (
+        <p className="mt-4">
+          Per P.IVA e codice fiscale di fatturazione scrivi a {storeConfig.support.email}.
+        </p>
+      ) : null}
 
       <h2 className="mt-10 font-display text-3xl text-ivory">Spedizione</h2>
       <p className="mt-4">

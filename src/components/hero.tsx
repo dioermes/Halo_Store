@@ -18,11 +18,11 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate min-h-[100svh] overflow-hidden bg-ink pt-16 sm:pt-20 md:pt-0"
+      className="relative isolate min-h-[100svh] overflow-hidden bg-ink"
       aria-label="Halo Store"
     >
       <h1 className="sr-only">Halo Store</h1>
-      <motion.div style={{ y: mediaY }} className="absolute inset-x-0 bottom-0 top-16 sm:top-20 md:inset-0">
+      <motion.div style={{ y: mediaY }} className="absolute inset-0">
         <div className="absolute inset-0 hidden md:block">
           <SiteMediaView
             key={appearance.heroDesktop.url}

@@ -125,16 +125,22 @@ export async function getPublishedProducts(): Promise<Product[]> {
       .select(select)
       .eq("published", true)
       .order("sort_order");
-    if (error || !data?.length) return fallbackProducts;
+    if (error) {
+      console.error("[catalogo]", error.message);
+      return fallbackProducts;
+    }
+    const rows = (data as ProductRow[] | null) ?? [];
+    if (!rows.length) return fallbackProducts;
     const [overrides, merch] = await Promise.all([
       getProductCategoryOverrides(),
       getCatalogMerch(),
     ]);
     return applyCatalogMerch(
-      (data as ProductRow[]).map((row) => mapProductRow(row, overrides)),
+      rows.map((row) => mapProductRow(row, overrides)),
       merch,
     );
-  } catch {
+  } catch (error) {
+    console.error("[catalogo]", error);
     return fallbackProducts;
   }
 }

@@ -26,6 +26,7 @@ import {
 } from "@/lib/site";
 import { getAllProductsAdmin } from "@/lib/catalog";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
+import { notifyStockAlerts } from "@/lib/stock-alerts";
 import { getStripe } from "@/lib/stripe";
 import type { OrderStatus } from "@/lib/orders";
 import { releasePromoForOrder } from "@/lib/promo";
@@ -90,7 +91,7 @@ async function syncProductVariants(
 
   const { data: existing, error: readError } = await client
     .from("halo_variants")
-    .select("id, size, color")
+    .select("id, size, color, stock")
     .eq("product_id", productId);
   if (readError) throw new Error(readError.message);
 
@@ -98,6 +99,7 @@ async function syncProductVariants(
     (existing ?? []).map((row) => [`${row.size.toLowerCase()}::${row.color.toLowerCase()}`, row]),
   );
   const keep = new Set<string>();
+  const maybeNotify: string[] = [];
 
   for (const variant of unique) {
     const key = `${variant.size.toLowerCase()}::${variant.color.toLowerCase()}`;
@@ -109,6 +111,7 @@ async function syncProductVariants(
         .update({ stock: variant.stock, size: variant.size, color: variant.color })
         .eq("id", row.id);
       if (error) throw new Error(error.message);
+      if (variant.stock > 0) maybeNotify.push(row.id);
       continue;
     }
     const sku = `hv-${productId.slice(0, 8)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -131,6 +134,8 @@ async function syncProductVariants(
       if (zeroError) throw new Error(zeroError.message);
     }
   }
+
+  await notifyStockAlerts(client, maybeNotify);
 }
 
 export async function createCategoryAction(input: {
@@ -436,6 +441,7 @@ export async function updateOrderAction(formData: FormData) {
       current.fulfillment === "pickup" &&
       (current.status === "preparing" || current.status === "ready_for_pickup")
     ) {
+      const restocked: string[] = [];
       for (const item of current.halo_order_items as Array<{
         variant_id: string | null;
         quantity: number;
@@ -451,8 +457,10 @@ export async function updateOrderAction(formData: FormData) {
             .from("halo_variants")
             .update({ stock: variant.stock + item.quantity })
             .eq("id", variant.id);
+          restocked.push(variant.id);
         }
       }
+      await notifyStockAlerts(client, restocked);
     }
   }
 

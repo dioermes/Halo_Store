@@ -366,7 +366,11 @@ export function Catalog({
         </p>
 
         {visible.length === 0 ? (
-          <p className="mt-16 text-center text-sm text-ivory-dim">Nessun capo con questi filtri.</p>
+          <p className="mt-16 text-center text-sm text-ivory-dim">
+            {products.length === 0
+              ? "Al momento non ci sono capi in vetrina."
+              : "Nessun capo con questi filtri."}
+          </p>
         ) : (
           <motion.div className="halo-product-grid mt-14 lg:mt-16">
             <AnimatePresence mode="popLayout">

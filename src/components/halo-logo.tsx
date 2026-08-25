@@ -39,7 +39,7 @@ export function HaloLogoOriginal({ className }: { className?: string }) {
     <img
       src="/logo-halo-originale.png"
       alt="Halo Store"
-      className={`block h-full w-auto object-contain ${className ?? ""}`}
+      className={`block w-auto object-contain ${className ?? ""}`}
     />
   );
 }

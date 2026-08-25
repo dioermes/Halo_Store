@@ -17,6 +17,7 @@ import {
 import { useCart } from "@/components/reservation-provider";
 import { ProductGallery } from "@/components/product-gallery";
 import { SoldOutLabel } from "@/components/sold-out-label";
+import { useAuth } from "@clerk/nextjs";
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -33,11 +34,15 @@ export function ProductDialog({
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
   const { add, has, openBag } = useCart();
+  const { isSignedIn } = useAuth();
   const [size, setSize] = useState<string | null>(null);
   const [color, setColor] = useState<string>("");
   const [justAdded, setJustAdded] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [alertSent, setAlertSent] = useState(false);
+  const [alertEmail, setAlertEmail] = useState("");
+  const [alertError, setAlertError] = useState("");
+  const [alertBusy, setAlertBusy] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -46,6 +51,8 @@ export function ProductDialog({
     setJustAdded(false);
     setGalleryOpen(false);
     setAlertSent(false);
+    setAlertError("");
+    setAlertBusy(false);
   }, [product]);
 
   useEffect(() => {
@@ -354,20 +361,71 @@ export function ProductDialog({
                 </button>
 
                 {soldOut && variant?.id && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await fetch("/api/stock-alert", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ variantId: variant.id }),
-                      });
-                      setAlertSent(true);
-                    }}
-                    className="mt-3 w-full rounded-full border border-ink-line px-6 py-4 text-sm"
-                  >
-                    {alertSent ? "Ti avvisiamo noi" : "Avvisami quando torna"}
-                  </button>
+                  <div className="mt-3">
+                    {alertSent ? (
+                      <p className="rounded-full border border-ink-line px-6 py-4 text-center text-sm">
+                        Ti avvisiamo noi
+                      </p>
+                    ) : (
+                      <>
+                        {!isSignedIn ? (
+                          <label className="block">
+                            <span className="sr-only">Email per l&apos;avviso</span>
+                            <input
+                              type="email"
+                              autoComplete="email"
+                              placeholder="La tua email"
+                              value={alertEmail}
+                              onChange={(event) => {
+                                setAlertEmail(event.target.value);
+                                setAlertError("");
+                              }}
+                              className="mb-3 w-full rounded-full border border-ink-line bg-transparent px-6 py-4 text-sm outline-none placeholder:text-ivory-dim focus:border-halo/60"
+                            />
+                          </label>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={alertBusy}
+                          onClick={async () => {
+                            setAlertBusy(true);
+                            setAlertError("");
+                            const response = await fetch("/api/stock-alert", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                variantId: variant.id,
+                                ...(!isSignedIn ? { email: alertEmail } : {}),
+                              }),
+                            });
+                            setAlertBusy(false);
+                            if (!response.ok) {
+                              const data = (await response.json().catch(() => null)) as { error?: string } | null;
+                              if (data?.error === "email") {
+                                setAlertError("Inserisci una email valida.");
+                              } else if (data?.error === "available") {
+                                setAlertError("Questo capo è già di nuovo disponibile.");
+                              } else {
+                                setAlertError("Non è stato possibile salvare l'avviso. Riprova.");
+                              }
+                              return;
+                            }
+                            setAlertSent(true);
+                          }}
+                          className="w-full rounded-full border border-ink-line px-6 py-4 text-sm disabled:opacity-60"
+                        >
+                          {alertBusy ? "Un attimo…" : "Avvisami quando torna"}
+                        </button>
+                        {alertError ? (
+                          <p className="mt-2 text-center text-xs text-red-300">{alertError}</p>
+                        ) : (
+                          <p className="mt-2 text-center text-xs text-ivory-dim">
+                            Ti scriviamo solo quando questa taglia torna in negozio.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
 
                 <AnimatePresence>

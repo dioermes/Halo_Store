@@ -1,6 +1,5 @@
 /**
  * Unica fonte di verità per i dati del negozio.
- * I valori marcati DA CONFERMARE vanno validati con il titolare prima di pubblicare.
  */
 
 export type DaySchedule = {
@@ -14,7 +13,6 @@ export type DaySchedule = {
 const MORNING = { open: "09:30", close: "13:00" };
 const AFTERNOON = { open: "17:00", close: "20:30" };
 
-/** DA CONFERMARE: orari dedotti da Google Maps ("Chiude alle 13, riapre alle 17"). */
 export const openingHours: DaySchedule[] = [
   { day: 1, label: "Lunedì", slots: [AFTERNOON] },
   { day: 2, label: "Martedì", slots: [MORNING, AFTERNOON] },
@@ -63,7 +61,6 @@ export const storeConfig = {
     number: rawWhatsapp,
     isConfigured: rawWhatsapp.length >= 11,
   },
-  /** DA CONFERMARE con il titolare */
   instagram: {
     handle: "halostoreconversano",
     url: "https://www.instagram.com/halostoreconversano/",
@@ -85,6 +82,15 @@ export const storeConfig = {
     count: 1,
   },
   siteUrl: "https://halostore-conversano.it",
+  vatNumber: (process.env.NEXT_PUBLIC_HALO_PIVA ?? "").trim(),
+  fiscalCode: (process.env.NEXT_PUBLIC_HALO_CF ?? "").trim(),
 } as const;
 
 export const fullAddress = `${storeConfig.address.street}, ${storeConfig.address.postalCode} ${storeConfig.address.city} ${storeConfig.address.province}`;
+
+export function fiscalLine() {
+  const parts: string[] = [];
+  if (storeConfig.vatNumber) parts.push(`P.IVA ${storeConfig.vatNumber}`);
+  if (storeConfig.fiscalCode) parts.push(`C.F. ${storeConfig.fiscalCode}`);
+  return parts.join(" · ");
+}

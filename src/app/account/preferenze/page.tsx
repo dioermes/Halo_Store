@@ -12,7 +12,7 @@ export default async function PreferencesPage() {
   const admin = createAdminClient();
   const { data: consent } = await admin
     .from("halo_consents")
-    .select("email_marketing, cookie_analytics, cookie_marketing")
+    .select("email_marketing")
     .eq("customer_id", customer.id)
     .maybeSingle();
 
@@ -29,7 +29,7 @@ export default async function PreferencesPage() {
         <MarketingOptIn initial={Boolean(consent?.email_marketing)} />
       </div>
       <p className="mt-8 text-sm text-ivory-dim">
-        I cookie si gestiscono dal banner in basso.{" "}
+        Usiamo solo cookie tecnici.{" "}
         <Link href="/cookie" className="text-halo-bright underline underline-offset-4">
           Informativa cookie
         </Link>

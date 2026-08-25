@@ -94,10 +94,6 @@ export function StoreInfo() {
                   );
                 })}
               </ul>
-              <p className="mt-4 text-xs text-ivory-dim">
-                Orari indicativi: confermali con il negozio prima di fare
-                strada.
-              </p>
             </Reveal>
 
             <Reveal delay={0.4}>

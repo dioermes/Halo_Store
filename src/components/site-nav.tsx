@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-react";
 import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
@@ -31,14 +31,12 @@ export function SiteNav({
           { href: "/#saldi", label: "Saldi" },
         ];
   const links = inAdmin ? adminNav : storefrontLinks;
-  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const { count, openBag, lastAdded } = useReservation();
   const { isSignedIn } = useAuth();
-  const { scrollY } = useScroll();
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -49,10 +47,6 @@ export function SiteNav({
     });
     return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
-
-  useMotionValueEvent(scrollY, "change", (value) => {
-    setScrolled(value > 24);
-  });
 
   useEffect(() => {
     setMenuOpen(false);
@@ -69,7 +63,9 @@ export function SiteNav({
   }, [menuOpen]);
 
   const iconBtn =
-    "flex h-11 w-11 items-center justify-center rounded-full text-ivory transition-colors duration-500 hover:bg-ivory/10 hover:text-halo-bright";
+    "flex h-11 w-11 items-center justify-center rounded-full text-ivory transition-colors duration-500 hover:bg-ivory/15 hover:text-halo-bright";
+  const cluster =
+    "pointer-events-auto relative z-20 flex items-center rounded-full border border-ivory/12 bg-ink/75 p-0.5 shadow-[0_8px_30px_rgba(63,21,33,0.18)] backdrop-blur-md";
 
   return (
     <>
@@ -77,14 +73,10 @@ export function SiteNav({
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        className={`pointer-events-auto fixed inset-x-0 top-0 z-[100] transition-colors duration-500 ${
-          scrolled
-            ? "border-b border-ink-line/80 bg-ink/85 backdrop-blur-xl"
-            : "border-b border-ink-line bg-ink md:border-transparent md:bg-ink/40 md:backdrop-blur-md"
-        }`}
+        className="pointer-events-none fixed inset-x-0 top-0 z-[100] overflow-visible"
       >
-        <nav className="mx-auto grid h-16 max-w-[84rem] grid-cols-[1fr_auto_1fr] items-center gap-3 px-5 sm:h-20 sm:px-10">
-          <div className="flex items-center gap-1">
+        <nav className="relative mx-auto flex max-w-[84rem] items-start justify-between px-4 pt-3 sm:px-8 sm:pt-4">
+          <div className={cluster}>
             <button
               type="button"
               onClick={() => {
@@ -113,17 +105,17 @@ export function SiteNav({
 
           <Link
             href="/"
-            className="flex h-12 items-center justify-center sm:h-16"
+            className="pointer-events-auto absolute left-1/2 top-1 z-10 -translate-x-1/2 sm:top-0"
             aria-label="Halo Store, torna alla home"
           >
             {inAdmin ? (
-              <HaloLogo className="h-9 text-ivory sm:h-11" />
+              <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
             ) : (
-              <HaloLogoOriginal className="h-12 sm:h-16" />
+              <HaloLogoOriginal className="h-[5.75rem] w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.28)] sm:h-28 md:h-36" />
             )}
           </Link>
 
-          <div className="flex items-center justify-end gap-1">
+          <div className={cluster}>
             <AccountMenu
               open={accountOpen}
               onOpenChange={(next) => {

@@ -53,6 +53,7 @@ export default function CheckoutPage() {
   } | null>(null);
   const [promoBusy, setPromoBusy] = useState(false);
   const [suggestedCode, setSuggestedCode] = useState("HALO10");
+  const [shippingCents, setShippingCents] = useState(700);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reserved, setReserved] = useState<{ when: string; name: string } | null>(null);
@@ -60,13 +61,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     void fetch("/api/newsletter/subscribe")
       .then((response) => (response.ok ? response.json() : null))
-      .then((data: { newsletterCode?: string } | null) => {
+      .then((data: { newsletterCode?: string; shippingItalyCents?: number } | null) => {
         if (data?.newsletterCode) setSuggestedCode(data.newsletterCode);
+        if (typeof data?.shippingItalyCents === "number" && Number.isFinite(data.shippingItalyCents)) {
+          setShippingCents(data.shippingItalyCents);
+        }
       })
       .catch(() => undefined);
   }, []);
 
-  const shippingCents = 700;
   const discountEuro = promo ? promo.discountCents / 100 : 0;
   const grandTotal =
     (fulfillment === "shipping" ? total + shippingCents / 100 : total) - discountEuro;
@@ -222,8 +225,8 @@ export default function CheckoutPage() {
               </p>
               <p className="mt-1 text-sm text-ivory-dim">
                 {option === "pickup"
-                  ? `${storeConfig.address.street} · gratis`
-                  : `Forfait ${formatPrice(shippingCents / 100)}`}
+                  ? `${storeConfig.address.street}`
+                  : `Costi di spedizione ${formatPrice(shippingCents / 100)}`}
               </p>
             </button>
           ))}
@@ -473,7 +476,7 @@ export default function CheckoutPage() {
           {fulfillment === "pickup" ? (
             <>
               <p className="mt-4 flex justify-between text-sm">
-                <span>Adesso</span>
+                <span>Da pagare adesso</span>
                 <span>0 €</span>
               </p>
               <p className="mt-2 flex justify-between font-display text-3xl">

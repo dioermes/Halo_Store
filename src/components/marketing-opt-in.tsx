@@ -36,8 +36,8 @@ export function MarketingOptIn({ initial }: { initial: boolean }) {
         />
         <span>
           Voglio ricevere email su offerte, nuovi capi, scorte in esaurimento e
-          i codici sconto (benvenuto e compleanno). È un consenso a parte dai
-          cookie.
+          i codici sconto (benvenuto e compleanno). È un consenso a parte, non
+          legato ai cookie.
         </span>
       </label>
       {saved && <p className="mt-2 text-xs text-halo-bright">Preferenza salvata.</p>}

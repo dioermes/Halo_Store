@@ -377,6 +377,27 @@ export async function sendBirthdayPromoEmail(opts: {
   );
 }
 
+export async function sendStockBackEmail(opts: {
+  email: string;
+  productName: string;
+  size: string;
+  color: string;
+  href: string;
+}): Promise<SendEmailResult> {
+  return send(
+    opts.email,
+    `È tornato: ${opts.productName} · ${storeConfig.name}`,
+    haloEmail({
+      preheader: `${opts.productName}, ${opts.color}, taglia ${opts.size} è di nuovo disponibile.`,
+      title: "Il capo è tornato.",
+      body: `<p style="margin:0 0 14px;">Ci hai chiesto di avvisarti quando tornava disponibile.</p>
+        <p style="margin:0 0 14px;"><strong>${esc(opts.productName)}</strong> · ${esc(opts.color)} · taglia ${esc(opts.size)}</p>
+        <p style="margin:0;">È di nuovo in vetrina. Le scorte sono poche: se lo vuoi, prendilo prima che vada di nuovo.</p>`,
+      cta: { href: opts.href, label: "Vai al catalogo" },
+    }),
+  );
+}
+
 export async function sendMarketingEmail(to: string, subject: string, htmlBody: string, unsubUrl: string) {
   await send(
     to,
