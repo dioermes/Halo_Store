@@ -81,7 +81,7 @@ export const storeConfig = {
     value: 5,
     count: 1,
   },
-  siteUrl: "https://halostore-conversano.it",
+  siteUrl: "https://www.halostore.it",
   vatNumber: (process.env.NEXT_PUBLIC_HALO_PIVA ?? "").trim(),
   fiscalCode: (process.env.NEXT_PUBLIC_HALO_CF ?? "").trim(),
 } as const;
