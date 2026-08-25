@@ -18,6 +18,7 @@ import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 import { displayHomeSectionTitle, getSiteAppearance } from "@/lib/site";
 import { displayFontStack, googleFontHref } from "@/lib/display-fonts";
+import { DisplayFontLink } from "@/components/display-font-link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -82,18 +83,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
       style={{ "--font-display": displayFontStack(appearance.displayFont) } as CSSProperties}
     >
-      {displayHref ? (
-        <>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="stylesheet" href={displayHref} />
-        </>
-      ) : null}
       <body
         className="min-h-full"
+        suppressHydrationWarning
         style={
           {
             "--sold-out-bg": appearance.soldOutBadgeBg,
@@ -101,6 +97,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           } as CSSProperties
         }
       >
+        <DisplayFontLink href={displayHref} />
         <ClerkProvider
           appearance={clerkAppearance}
           localization={itIT}
