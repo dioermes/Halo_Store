@@ -283,6 +283,21 @@ input[type="range"] {
   display: none !important;
 }
 
+@keyframes halo-nav-in {
+  from {
+    opacity: 0;
+    transform: translateY(-1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.halo-nav-in {
+  animation: halo-nav-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -295,7 +310,8 @@ input[type="range"] {
   .animate-halo-pulse,
   .animate-marquee,
   .animate-ping,
-  .grain::after {
+  .grain::after,
+  .halo-nav-in {
     animation: none !important;
   }
 }

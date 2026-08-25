@@ -69,12 +69,7 @@ export function SiteNav({
 
   return (
     <>
-      <motion.header
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-[100] overflow-visible"
-      >
+      <header className="halo-nav-in pointer-events-none fixed inset-x-0 top-0 z-[100] overflow-visible">
         <nav className="relative mx-auto flex max-w-[84rem] items-start justify-between px-4 pt-3 sm:px-8 sm:pt-4">
           <div className={cluster}>
             <button
@@ -128,7 +123,7 @@ export function SiteNav({
               type="button"
               onClick={openBag}
               className={`relative ${iconBtn}`}
-              aria-label={`Apri il carrello, ${count} capi`}
+              aria-label="Apri il carrello"
             >
               <ShoppingBag className="h-5 w-5" aria-hidden />
               <AnimatePresence>
@@ -159,7 +154,7 @@ export function SiteNav({
             </button>
           </div>
         </nav>
-      </motion.header>
+      </header>
 
       <AnimatePresence>
         {menuOpen && (

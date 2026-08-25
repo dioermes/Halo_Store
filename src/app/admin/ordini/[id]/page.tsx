@@ -7,6 +7,9 @@ import { updateOrderAction } from "@/app/admin/actions";
 import { OrderStatusSelect } from "@/components/order-status-select";
 import { OrderUpdatedNotice, UpdateOrderButton } from "@/components/update-order-feedback";
 import { markAdminOrderSeen } from "@/lib/admin-orders";
+import { isPacklinkLive, isCustomerTrackingCode } from "@/lib/packlink";
+import { applyTrackingToOrder, loadPacklinkState } from "@/lib/packlink-store";
+import { PacklinkShipPanel } from "@/components/packlink-ship-panel";
 
 type OrderItem = {
   id: string;
@@ -36,6 +39,15 @@ export default async function AdminOrderDetail({
   if (!order) notFound();
 
   await markAdminOrderSeen(order.id);
+  const packlink = order.fulfillment === "shipping" ? await loadPacklinkState(order.id) : null;
+  if (
+    packlink &&
+    order.tracking_code &&
+    !isCustomerTrackingCode(String(order.tracking_code), packlink.reference)
+  ) {
+    await applyTrackingToOrder(order.id, packlink.carrierName, [], packlink.reference);
+    order.tracking_code = null;
+  }
 
   const options = nextStatuses(order.status as OrderStatus, order.fulfillment as Fulfillment);
   const items = (order.halo_order_items ?? []) as OrderItem[];
@@ -109,6 +121,19 @@ export default async function AdminOrderDetail({
         <p className="mt-4 whitespace-pre-line text-sm text-ivory">{order.customer_note}</p>
       )}
 
+      {order.fulfillment === "shipping" &&
+      order.status !== "cancelled" &&
+      order.status !== "refunded" &&
+      order.status !== "pending_payment" ? (
+        <PacklinkShipPanel
+          orderId={order.id}
+          toZip={order.shipping_postal_code ?? ""}
+          toCity={order.shipping_city ?? ""}
+          configured={isPacklinkLive()}
+          initial={packlink}
+        />
+      ) : null}
+
       <form action={updateOrderAction} className="mt-10 grid gap-3">
         <input type="hidden" name="id" value={order.id} />
         <OrderStatusSelect current={order.status as OrderStatus} options={options} />
@@ -127,8 +152,9 @@ export default async function AdminOrderDetail({
               className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3"
             />
             <p className="text-xs text-ivory-dim">
-              Quando segni Spedito, parte una mail al cliente. Se inserisci il tracking, lo
-              includiamo nel messaggio.
+              Il corriere lo compilamo da Packlink. Il tracking del cliente no: sull’etichetta c’è
+              il riferimento Packlink, il codice corriere arriva dopo la scansione. Quando segni
+              Spedito parte la mail; se il tracking c’è, lo includiamo.
             </p>
           </>
         )}

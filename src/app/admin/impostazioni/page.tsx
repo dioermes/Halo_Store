@@ -1,8 +1,10 @@
 import { getStoreSettings } from "@/lib/settings";
 import { saveSettingsAction, sendNewsletterAction } from "@/app/admin/actions";
+import { isPacklinkLive } from "@/lib/packlink";
 
 export default async function AdminSettingsPage() {
   const settings = await getStoreSettings();
+  const packlinkReady = isPacklinkLive();
 
   return (
     <div className="grid max-w-2xl gap-16">
@@ -96,6 +98,17 @@ export default async function AdminSettingsPage() {
           Salva impostazioni
         </button>
       </form>
+
+      <div className="grid gap-3">
+        <h2 className="font-display text-3xl">Packlink PRO</h2>
+        <p className="text-sm text-ivory-dim">
+          Serve solo a te, per pagare i corrieri. Il cliente continua a pagare il forfait Halo.
+          In Packlink PRO apri Impostazioni e copia la «Packlink PRO API key» in{" "}
+          <code className="text-ivory">PACKLINK_API_KEY</code> nel file{" "}
+          <code className="text-ivory">.env.local</code> e su Vercel, poi riavvia. Oggi:{" "}
+          {packlinkReady ? "chiave presente, API live." : "nessuna chiave, demo attiva."}
+        </p>
+      </div>
 
       <form action={sendNewsletterAction} className="grid gap-4">
         <h2 className="font-display text-3xl">Newsletter</h2>
