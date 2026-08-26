@@ -9,6 +9,7 @@ import { OrderUpdatedNotice, UpdateOrderButton } from "@/components/update-order
 import { markAdminOrderSeen } from "@/lib/admin-orders";
 import { isPacklinkLive, isCustomerTrackingCode } from "@/lib/packlink";
 import { applyTrackingToOrder, loadPacklinkState } from "@/lib/packlink-store";
+import { syncPacklinkOrder } from "@/lib/packlink-order-sync";
 import { PacklinkShipPanel } from "@/components/packlink-ship-panel";
 
 type OrderItem = {
@@ -31,15 +32,26 @@ export default async function AdminOrderDetail({
   const { id } = await params;
   const query = await searchParams;
   const admin = createAdminClient();
-  const { data: order } = await admin
+  const { data: loaded } = await admin
     .from("halo_orders")
     .select("*, halo_customers(*), halo_order_items(*)")
     .eq("id", id)
     .maybeSingle();
-  if (!order) notFound();
+  if (!loaded) notFound();
+  let order = loaded;
 
   await markAdminOrderSeen(order.id);
-  const packlink = order.fulfillment === "shipping" ? await loadPacklinkState(order.id) : null;
+  let packlink = order.fulfillment === "shipping" ? await loadPacklinkState(order.id) : null;
+  if (packlink?.reference && order.fulfillment === "shipping") {
+    await syncPacklinkOrder(order.id);
+    const { data: refreshed } = await admin
+      .from("halo_orders")
+      .select("*, halo_customers(*), halo_order_items(*)")
+      .eq("id", id)
+      .maybeSingle();
+    if (refreshed) order = refreshed;
+    packlink = await loadPacklinkState(order.id);
+  }
   if (
     packlink &&
     order.tracking_code &&
@@ -51,6 +63,9 @@ export default async function AdminOrderDetail({
 
   const options = nextStatuses(order.status as OrderStatus, order.fulfillment as Fulfillment);
   const items = (order.halo_order_items ?? []) as OrderItem[];
+  const showTracking =
+    order.fulfillment === "shipping" &&
+    (order.status === "shipped" || order.status === "completed");
 
   return (
     <div className="max-w-2xl">
@@ -137,7 +152,14 @@ export default async function AdminOrderDetail({
       <form action={updateOrderAction} className="mt-10 grid gap-3">
         <input type="hidden" name="id" value={order.id} />
         <OrderStatusSelect current={order.status as OrderStatus} options={options} />
-        {order.fulfillment === "shipping" && (
+        {order.fulfillment === "shipping" ? (
+          <p className="text-xs text-ivory-dim">
+            Packlink aggiorna da solo gli stati: etichetta → in preparazione, pacco in viaggio →
+            spedito (con corriere e tracking), consegnato → completato. Puoi ancora cambiarli a
+            mano se serve.
+          </p>
+        ) : null}
+        {showTracking && (
           <>
             <input
               name="trackingCarrier"
@@ -152,9 +174,8 @@ export default async function AdminOrderDetail({
               className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3"
             />
             <p className="text-xs text-ivory-dim">
-              Il corriere lo compilamo da Packlink. Il tracking del cliente no: sull’etichetta c’è
-              il riferimento Packlink, il codice corriere arriva dopo la scansione. Quando segni
-              Spedito parte la mail; se il tracking c’è, lo includiamo.
+              Corriere e tracking arrivano da Packlink dopo la scansione del corriere. Puoi
+              correggerli se manca qualcosa: la mail di spedizione li include.
             </p>
           </>
         )}

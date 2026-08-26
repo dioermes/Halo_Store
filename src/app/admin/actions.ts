@@ -417,8 +417,13 @@ export async function updateOrderAction(formData: FormData) {
   const client = await admin();
   const id = String(formData.get("id"));
   const status = String(formData.get("status")) as OrderStatus;
-  const trackingCode = String(formData.get("trackingCode") ?? "").trim() || null;
-  const trackingCarrier = String(formData.get("trackingCarrier") ?? "").trim() || null;
+  const hasTrackingFields = formData.has("trackingCode");
+  const trackingCode = hasTrackingFields
+    ? String(formData.get("trackingCode") ?? "").trim() || null
+    : undefined;
+  const trackingCarrier = hasTrackingFields
+    ? String(formData.get("trackingCarrier") ?? "").trim() || null
+    : undefined;
 
   const { data: current } = await client
     .from("halo_orders")
@@ -469,8 +474,9 @@ export async function updateOrderAction(formData: FormData) {
     .from("halo_orders")
     .update({
       status,
-      tracking_code: trackingCode,
-      tracking_carrier: trackingCarrier,
+      ...(hasTrackingFields
+        ? { tracking_code: trackingCode, tracking_carrier: trackingCarrier }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -485,8 +491,8 @@ export async function updateOrderAction(formData: FormData) {
       fulfillment: current.fulfillment,
       totalCents: current.total_cents,
       shippingCents: current.shipping_cents,
-      trackingCode,
-      trackingCarrier,
+      trackingCode: trackingCode ?? current.tracking_code,
+      trackingCarrier: trackingCarrier ?? current.tracking_carrier,
       items: current.halo_order_items.map((item: { product_name: string; size: string; color: string; quantity: number; unit_price_cents: number }) => ({
         name: item.product_name,
         size: item.size,

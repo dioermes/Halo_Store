@@ -191,8 +191,8 @@ export default function CheckoutPage() {
       <section className="mx-auto max-w-2xl px-5 py-24">
         <h1 className="font-display text-5xl">Paga su Halo.</h1>
         <p className="mt-3 mb-8 text-ivory-dim">
-          Questa sessione scadrà tra 30 minuti. Una volta scaduta, i capi
-          tornano disponibili in vetrina.
+          Qui paghi con carta. L’indirizzo di consegna è già quello che hai inserito sopra.
+          Questa sessione scade tra 30 minuti: dopo i capi tornano in vetrina.
         </p>
         <div className="overflow-hidden rounded-3xl border border-ink-line bg-ink p-2">
           <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
@@ -302,6 +302,10 @@ export default function CheckoutPage() {
 
         {fulfillment === "shipping" && (
           <div className="mt-8 grid gap-3">
+            <p className="text-sm text-ivory-dim">
+              Indirizzo di consegna. Al pagamento Stripe chiede solo la carta, non di nuovo questi
+              dati.
+            </p>
             <input
               value={shipping.name}
               onChange={(event) => setShipping({ ...shipping, name: event.target.value })}

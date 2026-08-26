@@ -7,7 +7,8 @@ import {
   parseParcel,
   type PacklinkOrderState,
 } from "@/lib/packlink";
-import { applyTrackingToOrder, loadPacklinkState, savePacklinkState } from "@/lib/packlink-store";
+import { loadPacklinkState, savePacklinkState } from "@/lib/packlink-store";
+import { syncPacklinkOrder } from "@/lib/packlink-order-sync";
 
 export const runtime = "nodejs";
 
@@ -104,9 +105,9 @@ export async function POST(req: Request) {
       live,
     };
     await savePacklinkState(orderId, state);
-    await applyTrackingToOrder(orderId, state.carrierName, state.trackingCodes, state.reference);
+    const synced = await syncPacklinkOrder(orderId);
 
-    return NextResponse.json({ live, state });
+    return NextResponse.json({ live, state: synced?.state ?? state, orderStatus: synced?.status });
   } catch (error) {
     return packlinkApiError(error);
   }

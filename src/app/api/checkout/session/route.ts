@@ -369,8 +369,23 @@ async function handleCheckout(req: Request) {
             ]
           : []),
       ],
-      ...(body.fulfillment === "shipping"
-        ? { shipping_address_collection: { allowed_countries: ["IT"] as const } }
+      ...(body.fulfillment === "shipping" && body.shipping
+        ? {
+            billing_address_collection: "auto" as const,
+            payment_intent_data: {
+              shipping: {
+                name: body.shipping.name,
+                phone: body.phone?.trim() || undefined,
+                address: {
+                  line1: body.shipping.line1,
+                  city: body.shipping.city,
+                  postal_code: body.shipping.postalCode,
+                  state: body.shipping.province,
+                  country: "IT",
+                },
+              },
+            },
+          }
         : {}),
     });
   } catch (error) {

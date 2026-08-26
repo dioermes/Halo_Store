@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePacklinkOwner, packlinkApiError } from "@/lib/packlink-api";
 import { getPacklinkShipment, isPacklinkLive, pickupGroupKey } from "@/lib/packlink";
 import { applyTrackingToOrder, loadPacklinkState, savePacklinkState } from "@/lib/packlink-store";
+import { syncPacklinkOrder } from "@/lib/packlink-order-sync";
 
 export const runtime = "nodejs";
 
@@ -50,7 +51,8 @@ export async function POST(req: Request) {
       const next = { ...row.state, pickupRequestedAt: now, trackingCodes };
       await savePacklinkState(row.orderId, next);
       await applyTrackingToOrder(row.orderId, next.carrierName, trackingCodes, next.reference);
-      updated.push({ orderId: row.orderId, state: next });
+      const synced = await syncPacklinkOrder(row.orderId);
+      updated.push({ orderId: row.orderId, state: synced?.state ?? next, orderStatus: synced?.status });
     }
 
     return NextResponse.json({

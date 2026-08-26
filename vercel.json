@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/birthday",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/packlink",
+      "schedule": "0 7,11,15,19 * * *"
     }
   ]
 }
