@@ -113,7 +113,10 @@ export async function fulfillPaidCheckoutSession(
   const paid = session.payment_status === "paid" || session.status === "complete";
   if (paid && order.status === "pending_payment") {
     const { error: holdError } = await admin.rpc("halo_confirm_holds", { p_order_id: order.id });
-    if (holdError) console.error("[halo_confirm_holds]", holdError.message);
+    if (holdError) {
+      console.error("[halo_confirm_holds]", holdError.message);
+      throw new Error(`Stock non scalato dopo il pagamento: ${holdError.message}`);
+    }
     const shipping = shippingFromSession(session);
     const address = shipping.address;
     const { data: updated } = await admin
@@ -202,6 +205,7 @@ export async function settleCustomerPendingPayments(customerId: string): Promise
         }
       } catch (error) {
         console.error("[settle pending checkout]", row.id, error);
+        continue;
       }
     }
 

@@ -481,8 +481,9 @@ export async function updateOrderAction(formData: FormData) {
     })
     .eq("id", id);
 
+  const statusChanged = status !== current.status;
   let mailed = false;
-  if (statusMailNeeded(status) && status !== "paid") {
+  if (statusChanged && statusMailNeeded(status) && status !== "paid") {
     const mail = await sendOrderStatusEmail({
       id: current.id,
       email: current.halo_customers?.email ?? "",
@@ -510,7 +511,7 @@ export async function updateOrderAction(formData: FormData) {
   revalidatePath("/admin/ordini");
   revalidatePath(`/admin/ordini/${id}`);
   const query = new URLSearchParams({ ok: "1", stato: status });
-  if (statusMailNeeded(status) && status !== "paid") {
+  if (statusChanged && statusMailNeeded(status) && status !== "paid") {
     query.set("mail", mailed ? "1" : "0");
   }
   redirect(`/admin/ordini/${id}?${query.toString()}`);

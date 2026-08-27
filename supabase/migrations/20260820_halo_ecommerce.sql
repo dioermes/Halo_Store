@@ -163,6 +163,7 @@ create or replace function public.halo_available_stock(p_variant uuid)
 returns integer
 language sql
 stable
+set search_path to public, pg_temp
 as $$
   select greatest(
     0,
@@ -182,6 +183,7 @@ $$;
 create or replace function public.halo_release_expired_holds()
 returns integer
 language plpgsql
+set search_path to public, pg_temp
 as $$
 declare
   n integer;
@@ -203,6 +205,7 @@ create or replace function public.halo_reserve_stock(
   p_minutes integer default 20
 ) returns void
 language plpgsql
+set search_path to public, pg_temp
 as $$
 declare
   item jsonb;
@@ -236,6 +239,7 @@ $$;
 create or replace function public.halo_confirm_holds(p_order_id uuid)
 returns void
 language plpgsql
+set search_path to public, pg_temp
 as $$
 begin
   update public.halo_variants v
@@ -257,6 +261,7 @@ $$;
 create or replace function public.halo_release_order_holds(p_order_id uuid)
 returns void
 language plpgsql
+set search_path to public, pg_temp
 as $$
 begin
   update public.halo_stock_holds
@@ -317,11 +322,11 @@ values (
 on conflict (id) do nothing;
 
 drop policy if exists halo_catalog_public_read on storage.objects;
-create policy halo_catalog_public_read on storage.objects
-  for select using (bucket_id = 'halo-catalog');
+-- Public URLs already serve files; a SELECT policy would let anyone list the bucket.
 
 -- halo_variant_availability_view
-create or replace view public.halo_variants_store as
+create or replace view public.halo_variants_store
+with (security_invoker = true) as
 select
   v.*,
   public.halo_available_stock(v.id) as available

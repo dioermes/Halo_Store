@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase";
 import {
-  customerTrackingCodes,
   getPacklinkShipment,
   getPacklinkTracking,
   isPacklinkLive,
@@ -18,23 +17,41 @@ const rank: Partial<Record<OrderStatus, number>> = {
   completed: 4,
 };
 
-function eventBlob(events: unknown[]) {
-  return events
-    .map((event) => {
-      if (typeof event === "string") return event;
-      if (!event || typeof event !== "object") return "";
-      const rec = event as Record<string, unknown>;
-      return [rec.description, rec.status, rec.state, rec.message, rec.event]
-        .filter((value) => typeof value === "string")
-        .join(" ");
-    })
-    .join(" ");
-}
-
 function customerFrom(raw: unknown): { email?: string; full_name?: string | null } {
   if (Array.isArray(raw)) return raw[0] ?? {};
   if (raw && typeof raw === "object") return raw as { email?: string; full_name?: string | null };
   return {};
+}
+
+function statusCode(raw: unknown) {
+  return String(raw ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+const DELIVERED = new Set(["DELIVERED", "CONSEGNATO", "DELIVERY_COMPLETED"]);
+const IN_TRANSIT = new Set([
+  "IN_TRANSIT",
+  "OUT_FOR_DELIVERY",
+  "PICKED_UP",
+  "COLLECTED",
+  "DEPARTED",
+  "IN_VIAGGIO",
+  "IN_CONSEGNA",
+]);
+
+function codesFromEvents(events: unknown[]) {
+  const codes: string[] = [];
+  for (const event of events) {
+    if (!event || typeof event !== "object") continue;
+    const rec = event as Record<string, unknown>;
+    for (const key of ["status", "state", "code"] as const) {
+      const value = statusCode(rec[key]);
+      if (value) codes.push(value);
+    }
+  }
+  return codes;
 }
 
 export function interpretPacklinkProgress(input: {
@@ -45,15 +62,9 @@ export function interpretPacklinkProgress(input: {
   pickupRequestedAt: string | null;
   events: unknown[];
 }): OrderStatus | null {
-  const text = `${input.packlinkStatus} ${eventBlob(input.events)}`.toLowerCase();
-  const delivered = /\b(delivered|consegnat|consegna effettuata|consegnato)\b/i.test(text);
-  if (delivered) return "completed";
-
-  const inTransit = /\b(in.?transit|in_transit|picked.?up|collected|ritirat|accettat|in viaggio|out for delivery|in consegna|departed|spedito|shipped)\b/i.test(
-    text,
-  );
-  const realTracking = customerTrackingCodes(input.trackingCodes, input.reference).length > 0;
-  if (inTransit || (realTracking && input.pickupRequestedAt)) return "shipped";
+  const codes = [statusCode(input.packlinkStatus), ...codesFromEvents(input.events)];
+  if (codes.some((code) => DELIVERED.has(code))) return "completed";
+  if (codes.some((code) => IN_TRANSIT.has(code))) return "shipped";
   if (input.hasLabel) return "preparing";
   return null;
 }
