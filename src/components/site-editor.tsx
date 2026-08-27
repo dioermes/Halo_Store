@@ -11,8 +11,8 @@ import type { Product } from "@/lib/products";
 const fieldClass =
   "mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory outline-none";
 
-async function uploadMedia(file: File) {
-  const url = await uploadAdminFile(file);
+async function uploadMedia(file: File, onStatus?: (message: string) => void) {
+  const url = await uploadAdminFile(file, onStatus);
   return { url, kind: merchKindFromFile(file) };
 }
 
@@ -30,7 +30,7 @@ function MediaFields({
   const initial = appearance[prefix];
   const [url, setUrl] = useState(initial.url);
   const [kind, setKind] = useState(initial.kind);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
   const [saved, setSaved] = useState(false);
@@ -39,7 +39,8 @@ function MediaFields({
     <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
       <legend className="px-1 font-display text-2xl">{label}</legend>
       <p className="text-sm text-ivory-dim">
-        {hint} Video fino a 50 MB. Il caricamento salva da solo: non serve il tasto in fondo.
+        {hint} Comprimiamo foto e video da soli in caricamento. Si salva da solo: non serve il tasto
+        in fondo.
       </p>
       {url ? (
         <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
@@ -74,20 +75,20 @@ function MediaFields({
         </select>
       </label>
       <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm">
-        {busy ? "Carico…" : "Carica foto o video"}
+        {busy || "Carica foto o video"}
         <input
           type="file"
           accept="image/*,video/*"
           className="sr-only"
-          disabled={busy}
+          disabled={Boolean(busy)}
           onChange={async (event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
             if (!file) return;
-            setBusy(true);
+            setBusy("Comprimo…");
             setError("");
             try {
-              const uploaded = await uploadMedia(file);
+              const uploaded = await uploadMedia(file, setBusy);
               await saveSiteMediaSlotAction(prefix, uploaded.url, uploaded.kind);
               setUrl(uploaded.url);
               setKind(uploaded.kind);
@@ -95,7 +96,7 @@ function MediaFields({
             } catch (err) {
               setError(err instanceof Error ? err.message : "Caricamento non riuscito");
             } finally {
-              setBusy(false);
+              setBusy("");
             }
           }}
         />

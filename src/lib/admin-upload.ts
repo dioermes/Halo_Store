@@ -1,5 +1,3 @@
-import { createPublicClient } from "@/lib/supabase";
-
 const MAX_BYTES = 50 * 1024 * 1024;
 
 async function readJson(response: Response) {
@@ -12,41 +10,32 @@ async function readJson(response: Response) {
     );
   }
   try {
-    return JSON.parse(raw) as {
-      error?: string;
-      path?: string;
-      token?: string;
-      publicUrl?: string;
-    };
+    return JSON.parse(raw) as { error?: string; publicUrl?: string };
   } catch {
     throw new Error("Risposta non valida dal server.");
   }
 }
 
-export async function uploadAdminFile(file: File): Promise<string> {
+export async function uploadAdminFile(file: File, onStatus?: (message: string) => void) {
   if (file.size > MAX_BYTES) {
-    throw new Error("Il file supera 50 MB. Comprimi il video (H.264, 1080p) e riprova.");
+    throw new Error("Il file supera 50 MB. Usa un video più corto e riprova.");
   }
 
-  const sign = await fetch("/api/admin/upload", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      filename: file.name,
-      contentType: file.type || "application/octet-stream",
-      size: file.size,
-    }),
-  });
-  const payload = await readJson(sign);
-  if (!sign.ok || !payload.path || !payload.token || !payload.publicUrl) {
-    throw new Error(payload.error ?? "Impossibile preparare il caricamento.");
+  let payload = file;
+  if (file.type.startsWith("video/")) {
+    const { compressAdminVideo } = await import("@/lib/compress-video");
+    payload = await compressAdminVideo(file, onStatus);
+  } else {
+    onStatus?.("Comprimo la foto…");
   }
 
-  const { error } = await createPublicClient()
-    .storage.from("halo-catalog")
-    .uploadToSignedUrl(payload.path, payload.token, file, {
-      contentType: file.type || "application/octet-stream",
-    });
-  if (error) throw new Error(error.message);
-  return payload.publicUrl;
+  onStatus?.("Carico…");
+  const body = new FormData();
+  body.append("file", payload);
+  const sign = await fetch("/api/admin/upload", { method: "POST", body });
+  const data = await readJson(sign);
+  if (!sign.ok || !data.publicUrl) {
+    throw new Error(data.error ?? "Impossibile caricare il file.");
+  }
+  return data.publicUrl;
 }

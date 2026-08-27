@@ -88,7 +88,7 @@ function SectionInterlude({
   media: SiteMedia | null;
   onChange: (media: SiteMedia | null) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const enabled = Boolean(media);
 
@@ -107,7 +107,8 @@ function SectionInterlude({
       {enabled ? (
         <>
           <p className="text-sm text-ivory-dim">
-            Foto o video a tutto schermo, come tra i nuovi arrivi e i best seller. Si carica da solo.
+            Foto o video a tutto schermo, come tra i nuovi arrivi e i best seller. Comprimiamo da soli
+            in caricamento.
           </p>
           {media?.url ? (
             <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
@@ -120,27 +121,27 @@ function SectionInterlude({
             </div>
           ) : null}
           <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm">
-            {busy ? "Carico…" : "Carica foto o video"}
+            {busy || "Carica foto o video"}
             <input
               type="file"
               accept="image/*,video/*"
               className="sr-only"
-              disabled={busy}
+              disabled={Boolean(busy)}
               onChange={async (event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";
                 if (!file) return;
-                setBusy(true);
+                setBusy("Comprimo…");
                 setError("");
                 try {
-                  const url = await uploadAdminFile(file);
+                  const url = await uploadAdminFile(file, setBusy);
                   const kind = merchKindFromFile(file);
                   onChange({ url, kind });
                   await saveHomeSectionInterludeAction(sectionId, url, kind);
                 } catch (err) {
                   setError(err instanceof Error ? err.message : "Caricamento non riuscito");
                 } finally {
-                  setBusy(false);
+                  setBusy("");
                 }
               }}
             />
