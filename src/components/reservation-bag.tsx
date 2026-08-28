@@ -148,8 +148,8 @@ export function ReservationBag() {
                       <ShoppingBag className="h-6 w-6 text-ivory-dim" aria-hidden />
                     </span>
                     <p className="mt-6 max-w-xs leading-relaxed text-ivory-dim">
-                      Scegli i capi dal catalogo: li paghi qui e li ritiri in negozio
-                      oppure te li spediamo in Italia.
+                      Prenota il prodotto sul sito e lo ritiri in negozio, oppure paghi
+                      sul sito e te lo spediamo a casa.
                     </p>
                     <button
                       type="button"
