@@ -1,6 +1,5 @@
 import { storeConfig } from "@/lib/store-config";
 import { toSchemaOpeningHours } from "@/lib/opening-hours";
-import { products } from "@/lib/products";
 
 export function StructuredData() {
   const data = {
@@ -48,16 +47,6 @@ export function StructuredData() {
           "Un'ottima esperienza, negozio di abbigliamento davvero eccezionale dove puoi trovare quello che cerchi e non trovi ovunque. Prezzi onesti e alta qualità dei tessuti, titolare educato e a modo. Lo consiglio, ci ritornerò per ogni evento.",
       },
     ],
-    makesOffer: products.slice(0, 8).map((product) => ({
-      "@type": "Offer",
-      itemOffered: {
-        "@type": "Product",
-        name: `${product.name} · ${product.subtitle}`,
-      },
-      price: product.price,
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStoreOnly",
-    })),
     sameAs: [storeConfig.instagram.url],
   };
 
