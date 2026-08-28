@@ -117,18 +117,25 @@ export default async function AdminOrderDetail({
         <p className="mt-6 text-sm text-ivory-dim">
           {order.fulfillment === "pickup" ? "Chi ritira" : "Spedizione"}
           <br />
-          {order.shipping_name}
+          {order.shipping_name &&
+          order.shipping_name.trim().toLowerCase() !== String(order.shipping_line1 ?? "").trim().toLowerCase() ? (
+            <>
+              {order.shipping_name}
+              <br />
+            </>
+          ) : null}
           {order.shipping_phone ? (
             <>
-              <br />
               {order.shipping_phone}
+              <br />
             </>
           ) : null}
           {order.shipping_line1 ? (
             <>
-              <br />
               {order.shipping_line1}, {order.shipping_postal_code} {order.shipping_city}
             </>
+          ) : order.shipping_name ? (
+            order.shipping_name
           ) : null}
         </p>
       )}

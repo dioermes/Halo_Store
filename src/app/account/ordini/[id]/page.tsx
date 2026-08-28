@@ -123,11 +123,16 @@ export default async function CustomerOrderPage({
       ) : (
         <div className="mt-8 text-sm leading-relaxed text-ivory-dim">
           <p className="text-xs uppercase tracking-[0.2em]">Spedizione</p>
-          <p className="mt-2 text-ivory">{order.shipping_name}</p>
+          {order.shipping_name &&
+          order.shipping_name.trim().toLowerCase() !== String(order.shipping_line1 ?? "").trim().toLowerCase() ? (
+            <p className="mt-2 text-ivory">{order.shipping_name}</p>
+          ) : null}
           {order.shipping_line1 ? (
-            <p>
+            <p className={order.shipping_name ? "mt-1" : "mt-2"}>
               {order.shipping_line1}, {order.shipping_postal_code} {order.shipping_city}
             </p>
+          ) : order.shipping_name ? (
+            <p className="mt-2 text-ivory">{order.shipping_name}</p>
           ) : null}
           {order.tracking_code ? (
             <p className="mt-3 text-ivory">
