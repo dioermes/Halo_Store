@@ -55,12 +55,13 @@ export const metadata: Metadata = {
     description:
       "Capi che non trovi ovunque. Acquista online, ritira in negozio o fatti spedire in Italia.",
     siteName: "Halo Store",
-    images: [{ url: "/catalogo/amb-interno.jpg", width: 1400, height: 933 }],
+    images: [{ url: "/catalogo/amb-interno.jpg", width: 474, height: 580 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Halo Store Conversano",
     description: "Capi che non trovi ovunque. Acquista online.",
+    images: ["/catalogo/amb-interno.jpg"],
   },
   alternates: { canonical: "/" },
   other: { "geo.placename": fullAddress },
