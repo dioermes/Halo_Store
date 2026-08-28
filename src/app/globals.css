@@ -30,6 +30,7 @@ html::-webkit-scrollbar {
   display: none;
 }
 
+.halo-page-bg,
 body {
   background-color: var(--color-ink);
   background-image:
@@ -37,6 +38,9 @@ body {
     radial-gradient(ellipse 55% 42% at 108% 18%, color-mix(in oklab, var(--color-halo) 9%, transparent), transparent 62%),
     radial-gradient(ellipse 50% 36% at -8% 72%, color-mix(in oklab, var(--color-halo) 7%, transparent), transparent 58%);
   background-attachment: fixed;
+}
+
+body {
   color: var(--color-ivory);
   font-family: var(--font-sans);
   font-size: 1rem;

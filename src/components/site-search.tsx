@@ -54,12 +54,12 @@ export function SiteSearch({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-ink/95 backdrop-blur-xl"
+            className="halo-page-bg fixed inset-0 z-[120] flex flex-col"
             role="dialog"
             aria-modal="true"
             aria-label="Cerca nel catalogo"
           >
-            <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 pt-20 sm:px-8">
+            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-3 px-5 pt-20 sm:px-8">
               <Search className="h-5 w-5 shrink-0 text-halo" aria-hidden />
               <input
                 ref={inputRef}
@@ -77,28 +77,30 @@ export function SiteSearch({
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            <div className="mx-auto max-h-[calc(100svh-8rem)] max-w-7xl overflow-y-auto px-5 py-10 sm:px-8">
-              {query.trim().length < 2 ? (
-                <p className="text-sm text-ivory-dim">
-                  Prova parole come jeans, maglietta, bomber, nero, nuovo, più venduti.
-                </p>
-              ) : results.length === 0 ? (
-                <p className="text-ivory-dim">Nessun capo per “{query.trim()}”.</p>
-              ) : (
-                <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-                  {results.map((product, index) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      index={index}
-                      onOpen={(item) => {
-                        setSelected(item);
-                        onClose();
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-10 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+              <div className="mx-auto max-w-7xl">
+                {query.trim().length < 2 ? (
+                  <p className="text-sm text-ivory-dim">
+                    Prova parole come jeans, maglietta, bomber, nero, nuovo, più venduti.
+                  </p>
+                ) : results.length === 0 ? (
+                  <p className="text-ivory-dim">Nessun capo per “{query.trim()}”.</p>
+                ) : (
+                  <div className="halo-product-grid">
+                    {results.map((product, index) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        index={index}
+                        onOpen={(item) => {
+                          setSelected(item);
+                          onClose();
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         ) : null}
