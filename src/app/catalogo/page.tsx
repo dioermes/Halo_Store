@@ -1,4 +1,5 @@
 import { Catalog } from "@/components/catalog";
+import { ProductListStructuredData } from "@/components/structured-data";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 
@@ -15,5 +16,10 @@ export default async function CatalogoPage() {
     getStoreCategories(),
   ]);
 
-  return <Catalog products={products} categories={categories} initialCategory="tutti" />;
+  return (
+    <>
+      <ProductListStructuredData products={products} />
+      <Catalog products={products} categories={categories} initialCategory="tutti" />
+    </>
+  );
 }

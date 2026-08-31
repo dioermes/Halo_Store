@@ -12,6 +12,7 @@ import {
   productsForHomeSection,
 } from "@/lib/site";
 import type { Product } from "@/lib/products";
+import { ProductListStructuredData } from "@/components/structured-data";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function Home() {
 
   return (
     <>
+      <ProductListStructuredData products={products} />
       <Hero appearance={appearance} />
       {appearance.homeSections.map((section) => {
         const tagged = productsForHomeSection(section, products);

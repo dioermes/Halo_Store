@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Catalog } from "@/components/catalog";
+import { ProductListStructuredData } from "@/components/structured-data";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 
@@ -17,5 +18,12 @@ export default async function CatalogoCategoryPage({
   ]);
   if (!categories.some((row) => row.id === category)) notFound();
 
-  return <Catalog products={products} categories={categories} initialCategory={category} />;
+  const visible = products.filter((product) => product.category === category);
+
+  return (
+    <>
+      <ProductListStructuredData products={visible} />
+      <Catalog products={products} categories={categories} initialCategory={category} />
+    </>
+  );
 }

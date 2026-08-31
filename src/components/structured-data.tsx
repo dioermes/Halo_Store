@@ -1,5 +1,46 @@
 import { storeConfig } from "@/lib/store-config";
 import { toSchemaOpeningHours } from "@/lib/opening-hours";
+import { catalogPath } from "@/lib/categories";
+import { isProductSoldOut, type Product } from "@/lib/products";
+
+function absUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = storeConfig.siteUrl.replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function productNode(product: Product) {
+  const page = absUrl(`${catalogPath(product.category)}#${product.id}`);
+  return {
+    "@type": "Product" as const,
+    name: product.name,
+    description: product.subtitle || product.description,
+    image: absUrl(product.image),
+    sku: product.id,
+    brand: { "@type": "Brand" as const, name: storeConfig.name },
+    url: page,
+    offers: {
+      "@type": "Offer" as const,
+      url: page,
+      priceCurrency: "EUR",
+      price: Number(product.price.toFixed(2)),
+      availability: isProductSoldOut(product)
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "ClothingStore" as const, name: storeConfig.name },
+    },
+  };
+}
+
+function JsonLd({ data }: { data: unknown }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
 
 export function StructuredData() {
   const data = {
@@ -50,10 +91,18 @@ export function StructuredData() {
     sameAs: [storeConfig.instagram.url],
   };
 
+  return <JsonLd data={data} />;
+}
+
+/** Elenco capi con Offer: Google richiede offers, review o aggregateRating sui Product. */
+export function ProductListStructuredData({ products }: { products: Product[] }) {
+  if (!products.length) return null;
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@graph": products.map(productNode),
+      }}
     />
   );
 }
