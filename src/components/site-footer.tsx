@@ -2,6 +2,7 @@ import { MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import { InstagramGlyph } from "@/components/icons";
 import { HaloLogoOriginal } from "@/components/halo-logo";
+import { CookieSettingsButton } from "@/components/cookie-banner";
 import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
 
 export function SiteFooter() {
@@ -78,6 +79,7 @@ export function SiteFooter() {
             <Link href="/cookie" className="hover:text-ivory">
               Cookie
             </Link>
+            <CookieSettingsButton className="hover:text-ivory" />
             <Link href="/termini" className="hover:text-ivory">
               Vendite e recesso
             </Link>

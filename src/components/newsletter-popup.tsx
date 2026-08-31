@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { CONSENT_CHANGED, hasConsentDecision } from "@/lib/consent";
 
 const KEY = "halo-newsletter-popup-v1";
 export const HALO_NEWSLETTER_EVENT = "halo-open-newsletter";
@@ -86,11 +87,22 @@ export function NewsletterPopup() {
     if (hidden || alreadySeen()) {
       return () => window.removeEventListener(HALO_NEWSLETTER_EVENT, openForced);
     }
-    const timer = window.setTimeout(() => setOpen(true), 700);
-    loadOffer();
+
+    const tryOpen = () => {
+      if (!hasConsentDecision() || alreadySeen()) return;
+      setOpen(true);
+      loadOffer();
+    };
+
+    let timer: number | undefined;
+    if (hasConsentDecision()) {
+      timer = window.setTimeout(tryOpen, 700);
+    }
+    window.addEventListener(CONSENT_CHANGED, tryOpen);
     return () => {
-      window.clearTimeout(timer);
+      if (timer) window.clearTimeout(timer);
       window.removeEventListener(HALO_NEWSLETTER_EVENT, openForced);
+      window.removeEventListener(CONSENT_CHANGED, tryOpen);
     };
   }, [hidden]);
 
@@ -235,6 +247,13 @@ export function NewsletterPopup() {
             >
               {loading ? "Un attimo…" : "Voglio il benvenuto"}
             </button>
+            <p className="mt-3 text-xs leading-relaxed text-ivory-dim">
+              Iscrivendoti acconsenti a ricevere email promozionali. Informativa:{" "}
+              <a href="/privacy" className="underline underline-offset-4">
+                Privacy
+              </a>
+              . Puoi disiscriverti in ogni mail.
+            </p>
             <button
               type="button"
               onClick={close}

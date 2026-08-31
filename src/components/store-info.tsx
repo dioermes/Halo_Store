@@ -5,7 +5,9 @@ import { MapPin, Navigation, Phone } from "lucide-react";
 import { InstagramGlyph } from "@/components/icons";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { OpenBadge } from "@/components/open-badge";
+import { useEmbedsAllowed } from "@/components/cookie-banner";
 import { formatSlots, weekSchedule } from "@/lib/opening-hours";
+import { writeConsent } from "@/lib/consent";
 import { fullAddress, storeConfig } from "@/lib/store-config";
 
 export function StoreInfo() {
@@ -128,23 +130,58 @@ export function StoreInfo() {
           </div>
 
           <Reveal delay={0.15}>
-            <div className="relative h-full min-h-[420px] overflow-hidden rounded-3xl border border-ink-line">
-              <iframe
-                title="Mappa di Halo Store in Via Castellana 18A a Conversano"
-                src={storeConfig.maps.embed}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="h-full w-full grayscale-[0.65] contrast-[1.1] invert-[0.92] hue-rotate-180"
-                allowFullScreen
-              />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-ink-line"
-              />
-            </div>
+            <StoreMap />
           </Reveal>
         </div>
       </div>
     </section>
+  );
+}
+
+function StoreMap() {
+  const allowed = useEmbedsAllowed();
+
+  if (!allowed) {
+    return (
+      <div className="relative flex h-full min-h-[420px] flex-col items-start justify-end overflow-hidden rounded-3xl border border-ink-line bg-ink-soft p-8">
+        <p className="font-display text-3xl leading-none text-ivory">Mappa Google</p>
+        <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory-dim">
+          La mappa è un contenuto di Google: si carica solo se accetti i cookie non
+          necessari, oppure se la attivi qui.
+        </p>
+        <button
+          type="button"
+          onClick={() => writeConsent(true)}
+          className="mt-6 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-ink"
+        >
+          Carica la mappa
+        </button>
+        <a
+          href={storeConfig.maps.place}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 text-sm text-halo-bright underline underline-offset-4"
+        >
+          Apri su Google Maps
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full min-h-[420px] overflow-hidden rounded-3xl border border-ink-line">
+      <iframe
+        title="Mappa di Halo Store in Via Castellana 18A a Conversano"
+        src={storeConfig.maps.embed}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className="h-full w-full grayscale-[0.65] contrast-[1.1] invert-[0.92] hue-rotate-180"
+        allowFullScreen
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-ink-line"
+      />
+    </div>
   );
 }

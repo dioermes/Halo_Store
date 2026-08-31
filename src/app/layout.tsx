@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { itIT } from "@clerk/localizations";
-import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { HaloCursor } from "@/components/halo-cursor";
 import { ReservationProvider } from "@/components/reservation-provider";
@@ -17,21 +16,8 @@ import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 import { displayHomeSectionTitle, getSiteAppearance } from "@/lib/site";
-import { displayFontStack, googleFontHref } from "@/lib/display-fonts";
-import { DisplayFontLink } from "@/components/display-font-link";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-});
+import { displayFontStack } from "@/lib/display-fonts";
+import { displayFontClassNames } from "@/app/fonts";
 
 export const metadata: Metadata = {
   metadataBase: new URL(storeConfig.siteUrl),
@@ -79,13 +65,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     getSiteAppearance(),
   ]);
 
-  const displayHref = googleFontHref(appearance.displayFont);
-
   return (
     <html
       lang="it"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${displayFontClassNames} h-full antialiased`}
       style={{ "--font-display": displayFontStack(appearance.displayFont) } as CSSProperties}
     >
       <body
@@ -98,7 +82,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           } as CSSProperties
         }
       >
-        <DisplayFontLink href={displayHref} />
         <ClerkProvider
           appearance={clerkAppearance}
           localization={itIT}

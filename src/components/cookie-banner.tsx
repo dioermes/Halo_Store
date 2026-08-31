@@ -2,82 +2,94 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  CONSENT_CHANGED,
+  CONSENT_OPEN,
+  embedsAllowed,
+  hasConsentDecision,
+  openCookieBanner,
+  writeConsent,
+} from "@/lib/consent";
 
-const STORAGE_KEYS = ["halo-cookie-consent-v1", "halo-cookie-consent-v2"] as const;
-const COOKIE = "halo_cookie_ok";
-const YEAR = 60 * 60 * 24 * 365;
-
-function readCookie(name: string) {
-  return document.cookie.split(";").some((part) => part.trim().startsWith(`${name}=`));
-}
-
-function hasDecision() {
-  try {
-    if (STORAGE_KEYS.some((key) => window.localStorage.getItem(key))) return true;
-    if (readCookie(COOKIE)) return true;
-  } catch {
-    return true;
-  }
-  return false;
-}
-
-function remember() {
-  const payload = JSON.stringify({ necessary: true, decidedAt: new Date().toISOString() });
-  try {
-    for (const key of STORAGE_KEYS) window.localStorage.setItem(key, payload);
-  } catch {
-    // ignore
-  }
-  try {
-    document.cookie = `${COOKIE}=1; Max-Age=${YEAR}; Path=/; SameSite=Lax`;
-  } catch {
-    // ignore
-  }
+export function CookieSettingsButton({ className }: { className?: string }) {
+  return (
+    <button type="button" onClick={() => openCookieBanner()} className={className}>
+      Gestisci cookie
+    </button>
+  );
 }
 
 export function CookieBanner() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (hasDecision()) {
-      remember();
-      setOpen(false);
-      return;
-    }
-    setOpen(true);
+    const sync = () => setOpen(!hasConsentDecision());
+    sync();
+    const reopen = () => setOpen(true);
+    window.addEventListener(CONSENT_OPEN, reopen);
+    window.addEventListener(CONSENT_CHANGED, sync);
+    return () => {
+      window.removeEventListener(CONSENT_OPEN, reopen);
+      window.removeEventListener(CONSENT_CHANGED, sync);
+    };
   }, []);
 
   if (!open) return null;
 
-  const accept = () => {
-    remember();
+  const choose = (embeds: boolean) => {
+    writeConsent(embeds);
     setOpen(false);
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-4 md:p-6">
+    <div className="fixed inset-x-0 bottom-0 z-[110] p-4 md:p-6">
       <div className="mx-auto max-w-3xl rounded-3xl border border-ink-line bg-ink-soft/95 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
         <p className="text-xs uppercase tracking-[0.28em] text-halo">Cookie</p>
-        <p className="mt-3 font-display text-3xl leading-none">Solo i cookie necessari.</p>
+        <p className="mt-3 font-display text-3xl leading-none">La tua scelta sui cookie</p>
         <p className="mt-3 text-sm leading-relaxed text-ivory-dim">
-          Usiamo solo cookie tecnici: sessione, carrello, sicurezza. Non misuriamo
-          visite e non usiamo pubblicità. L&apos;iscrizione alla newsletter è a parte,
-          nel popup al primo ingresso.{" "}
+          I cookie tecnici (account, carrello, sicurezza, pagamento in cassa) partono sempre:
+          servono al sito. La mappa Google si carica solo se accetti i contenuti di terzi. I
+          caratteri dei titoli sono già sul sito, non passano da Google. Non usiamo Analytics
+          né pixel pubblicitari. La newsletter è un consenso a parte.{" "}
           <Link href="/cookie" className="text-halo-bright underline underline-offset-4">
             Informativa cookie
           </Link>
+          {" · "}
+          <Link href="/privacy" className="text-halo-bright underline underline-offset-4">
+            Privacy
+          </Link>
           .
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={accept}
+            onClick={() => choose(true)}
             className="rounded-full bg-ivory px-5 py-3 text-sm font-medium text-ink"
           >
-            Ho capito
+            Accetta
+          </button>
+          <button
+            type="button"
+            onClick={() => choose(false)}
+            className="rounded-full border border-ink-line px-5 py-3 text-sm"
+          >
+            Solo necessari
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+export function useEmbedsAllowed() {
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setAllowed(embedsAllowed());
+    sync();
+    window.addEventListener(CONSENT_CHANGED, sync);
+    return () => window.removeEventListener(CONSENT_CHANGED, sync);
+  }, []);
+
+  return allowed;
 }

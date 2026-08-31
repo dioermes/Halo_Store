@@ -29,7 +29,7 @@ export default async function PreferencesPage() {
         <MarketingOptIn initial={Boolean(consent?.email_marketing)} />
       </div>
       <p className="mt-8 text-sm text-ivory-dim">
-        Usiamo solo cookie tecnici.{" "}
+        Usiamo cookie tecnici sempre; la mappa Google solo se la accetti.{" "}
         <Link href="/cookie" className="text-halo-bright underline underline-offset-4">
           Informativa cookie
         </Link>

@@ -7,7 +7,6 @@ import {
   displayFontGroups,
   displayFonts,
   displayFontStack,
-  allGoogleFontsHref,
   resolveDisplayFont,
   type DisplayFontGroup,
 } from "@/lib/display-fonts";
@@ -24,16 +23,6 @@ export function DisplayFontPicker({ initialId }: { initialId: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const font = resolveDisplayFont(id);
   const stack = useMemo(() => displayFontStack(id), [id]);
-
-  useEffect(() => {
-    const href = allGoogleFontsHref();
-    if (document.querySelector(`link[data-halo-display-catalog]`)) return;
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = href;
-    link.dataset.haloDisplayCatalog = "1";
-    document.head.appendChild(link);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +46,8 @@ export function DisplayFontPicker({ initialId }: { initialId: string }) {
       <p className="text-sm leading-relaxed text-ivory-dim">
         Vale per le scritte grandi della vetrina: sezioni della home (Nuovi arrivi, I più
         venduti, Saldi), catalogo, e in generale i titoli in corsivo/serif del sito. Il
-        testo normale resta com&apos;è. Ogni voce del menu è già nel suo carattere.
+        testo normale resta com&apos;è. I quindici caratteri sono già sul sito: cambiarli
+        non richiede Google né i cookie.
       </p>
       <input type="hidden" name="displayFont" value={font.id} />
       <div ref={rootRef} className="relative">

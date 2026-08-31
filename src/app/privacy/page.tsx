@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { CookieSettingsButton } from "@/components/cookie-banner";
 import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
 
 export const metadata = {
@@ -12,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <article className="mx-auto max-w-2xl px-5 py-24 leading-relaxed text-ivory-dim">
       <h1 className="font-display text-5xl text-ivory">Privacy</h1>
-      <p className="mt-3 text-sm">Ultimo aggiornamento: 25 agosto 2026</p>
+      <p className="mt-3 text-sm">Ultimo aggiornamento: 31 agosto 2026</p>
 
       <h2 className="mt-10 font-display text-3xl text-ivory">Titolare del trattamento</h2>
       <p className="mt-4">
@@ -26,7 +28,8 @@ export default function PrivacyPage() {
         </p>
       ) : null}
       <p className="mt-4">
-        Per esercitare i tuoi diritti o per qualsiasi domanda sui dati:{" "}
+        Non è nominato un DPO. Per esercitare i tuoi diritti o per qualsiasi domanda
+        sui dati:{" "}
         <a href={support.emailHref} className="text-ivory hover:text-halo-bright">
           {support.email}
         </a>
@@ -50,8 +53,10 @@ export default function PrivacyPage() {
         tracking, eventuali codici sconto.
       </p>
       <p className="mt-4">
-        Dati tecnici necessari al sito: sessione, carrello, cookie tecnici. Non
-        usiamo strumenti di statistica né pubblicità.
+        Dati tecnici: sessione, carrello, sicurezza, scelta sui cookie. Non usiamo
+        Google Analytics né pixel pubblicitari. I caratteri dei titoli sono ospitati
+        sul sito. Se accetti i contenuti di terzi (o carichi la mappa), Google riceve
+        l&apos;indirizzo IP e cookie propri della mappa.
       </p>
       <p className="mt-4">
         Se chiedi l&apos;avviso «è tornato il capo», teniamo l&apos;email e la
@@ -61,20 +66,23 @@ export default function PrivacyPage() {
 
       <h2 className="mt-10 font-display text-3xl text-ivory">Perché e su quale base</h2>
       <p className="mt-4">
-        Esecuzione del contratto: creare l&apos;account, confermare ritiro o spedizione,
-        pagare (solo per la spedizione), evadere l&apos;ordine, assistenza, resi e rimborsi.
+        Esecuzione del contratto (art. 6.1.b GDPR): creare l&apos;account, confermare
+        ritiro o spedizione, pagare (solo per la spedizione), evadere l&apos;ordine,
+        assistenza, resi e rimborsi.
       </p>
       <p className="mt-4">
-        Obblighi di legge: fatturazione, contabilità, diritti di garanzia e recesso.
+        Obblighi di legge (art. 6.1.c): fatturazione, contabilità, diritti di garanzia
+        e recesso.
       </p>
       <p className="mt-4">
-        Consenso: newsletter, offerte, codice di benvenuto e codice compleanno. Il consenso
-        si dà nel popup (email e compleanno) o da Account → Preferenze. Non coincide con i
-        cookie tecnici. Puoi revocarlo in ogni mail, dal link «Disiscriviti», o dalle preferenze.
+        Consenso (art. 6.1.a): newsletter, offerte, codice di benvenuto e codice
+        compleanno; cookie e contenuti non necessari (mappa Google incorporata).
+        Il consenso newsletter si dà nel popup o da Account → Preferenze. Il consenso
+        cookie si dà dal banner o da «Gestisci cookie». Puoi revocare in ogni momento.
       </p>
       <p className="mt-4">
-        Interesse legittimo: sicurezza del sito, prevenzione abusi, miglioramento del
-        servizio nei limiti di legge.
+        Interesse legittimo (art. 6.1.f): sicurezza del sito, prevenzione abusi,
+        miglioramento del servizio nei limiti di legge.
       </p>
 
       <h2 className="mt-10 font-display text-3xl text-ivory">Quanto li teniamo</h2>
@@ -83,18 +91,37 @@ export default function PrivacyPage() {
         resta attivo e per un periodo successivo utile a chiudere eventuali pratiche.
         Newsletter: finché resti iscritto, poi cessiamo gli invii promozionali.
         Avvisi di disponibilità: fino all&apos;invio della mail o alla cancellazione
-        della richiesta.
+        della richiesta. Scelta cookie: 12 mesi, poi la richiediamo di nuovo.
       </p>
 
       <h2 className="mt-10 font-display text-3xl text-ivory">A chi li comunichiamo</h2>
       <p className="mt-4">
         Fornitori che ci servono per far funzionare il negozio, ciascuno per il proprio
-        compito: accesso all&apos;account, database, pagamenti online, invio email, hosting
-        del sito. Non vendiamo i tuoi dati.
+        compito (responsabili o titolari autonomi secondo il servizio):
       </p>
+      <ul className="mt-4 list-disc space-y-2 pl-5">
+        <li>Clerk — accesso all&apos;account</li>
+        <li>Supabase — database e file</li>
+        <li>Stripe — pagamenti online della spedizione</li>
+        <li>Resend — invio email (ordini, newsletter, avvisi)</li>
+        <li>Vercel — hosting del sito</li>
+        <li>Packlink — etichette e tracking delle spedizioni</li>
+        <li>Google — solo se acconsenti: mappa incorporata</li>
+      </ul>
       <p className="mt-4">
-        Alcuni fornitori possono trattare dati anche fuori dallo Spazio economico europeo,
-        con le garanzie previste dalla normativa (tra cui clausole contrattuali tipo).
+        Non vendiamo i tuoi dati. Alcuni fornitori possono trattare dati anche fuori
+        dallo Spazio economico europeo, con le garanzie previste dalla normativa
+        (tra cui clausole contrattuali tipo e, ove applicabile, il Data Privacy Framework).
+      </p>
+
+      <h2 className="mt-10 font-display text-3xl text-ivory">Cookie</h2>
+      <p className="mt-4">
+        I dettagli (nome, finalità, durata) sono nella{" "}
+        <Link href="/cookie" className="text-halo-bright underline underline-offset-4">
+          informativa cookie
+        </Link>
+        . Puoi cambiare idea in qualsiasi momento:{" "}
+        <CookieSettingsButton className="text-halo-bright underline underline-offset-4" />.
       </p>
 
       <h2 className="mt-10 font-display text-3xl text-ivory">I tuoi diritti</h2>
@@ -102,8 +129,17 @@ export default function PrivacyPage() {
         Puoi chiedere accesso, rettifica, cancellazione, limitazione, portabilità e
         opporti al trattamento, nei casi previsti dal Regolamento (UE) 2016/679. Puoi
         revocare il consenso in qualsiasi momento, senza pregiudicare i trattamenti già
-        svolti. Hai anche diritto di reclamare al Garante per la protezione dei dati
-        personali.
+        svolti. Hai diritto di proporre reclamo al Garante per la protezione dei dati
+        personali (
+        <a
+          href="https://www.garanteprivacy.it"
+          className="text-halo-bright underline underline-offset-4"
+          target="_blank"
+          rel="noreferrer"
+        >
+          garanteprivacy.it
+        </a>
+        ).
       </p>
       <p className="mt-4">
         Per una richiesta scrivi a {support.email} indicando un documento o altro elemento
