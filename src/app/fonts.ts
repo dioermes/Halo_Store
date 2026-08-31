@@ -1,10 +1,6 @@
 import localFont from "next/font/local";
 import { Geist, Instrument_Serif } from "next/font/google";
 
-const serif = ["Georgia", "serif"] as const;
-const sans = ["ui-sans-serif", "system-ui", "sans-serif"] as const;
-const script = ["cursive"] as const;
-
 export const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -28,7 +24,7 @@ export const cormorant = localFont({
   variable: "--font-cormorant",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const playfair = localFont({
@@ -40,7 +36,7 @@ export const playfair = localFont({
   variable: "--font-playfair",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const fraunces = localFont({
@@ -52,7 +48,7 @@ export const fraunces = localFont({
   variable: "--font-fraunces",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const dmSerif = localFont({
@@ -63,7 +59,7 @@ export const dmSerif = localFont({
   variable: "--font-dm-serif",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const ebGaramond = localFont({
@@ -75,7 +71,7 @@ export const ebGaramond = localFont({
   variable: "--font-eb-garamond",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const cinzel = localFont({
@@ -86,7 +82,7 @@ export const cinzel = localFont({
   variable: "--font-cinzel",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const libreBaskerville = localFont({
@@ -98,7 +94,7 @@ export const libreBaskerville = localFont({
   variable: "--font-libre-baskerville",
   display: "swap",
   preload: false,
-  fallback: [...serif],
+  fallback: ["Georgia", "serif"],
 });
 
 export const syne = localFont({
@@ -109,7 +105,7 @@ export const syne = localFont({
   variable: "--font-syne",
   display: "swap",
   preload: false,
-  fallback: [...sans],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 export const outfit = localFont({
@@ -120,7 +116,7 @@ export const outfit = localFont({
   variable: "--font-outfit",
   display: "swap",
   preload: false,
-  fallback: [...sans],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 export const oswald = localFont({
@@ -131,7 +127,7 @@ export const oswald = localFont({
   variable: "--font-oswald",
   display: "swap",
   preload: false,
-  fallback: [...sans],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 export const tenorSans = localFont({
@@ -139,7 +135,7 @@ export const tenorSans = localFont({
   variable: "--font-tenor",
   display: "swap",
   preload: false,
-  fallback: [...sans],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 export const greatVibes = localFont({
@@ -147,7 +143,7 @@ export const greatVibes = localFont({
   variable: "--font-great-vibes",
   display: "swap",
   preload: false,
-  fallback: [...script],
+  fallback: ["cursive"],
 });
 
 export const allura = localFont({
@@ -155,7 +151,7 @@ export const allura = localFont({
   variable: "--font-allura",
   display: "swap",
   preload: false,
-  fallback: [...script],
+  fallback: ["cursive"],
 });
 
 export const parisienne = localFont({
@@ -163,7 +159,7 @@ export const parisienne = localFont({
   variable: "--font-parisienne",
   display: "swap",
   preload: false,
-  fallback: [...script],
+  fallback: ["cursive"],
 });
 
 export const displayFontClassNames = [
