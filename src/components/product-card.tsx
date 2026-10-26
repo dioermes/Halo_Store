@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef } from "react";
 import {
   motion,
@@ -12,18 +13,18 @@ import {
 } from "motion/react";
 import { SoldOutLabel } from "@/components/sold-out-label";
 import { formatPrice, isProductSoldOut, type Product } from "@/lib/products";
+import { productPath } from "@/lib/product-path";
 
 const spring = { stiffness: 220, damping: 26, mass: 0.5 };
+const MotionLink = motion.create(Link);
 
 export function ProductCard({
   product,
-  onOpen,
 }: {
   product: Product;
   index?: number;
-  onOpen: (product: Product) => void;
 }) {
-  const cardRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLAnchorElement>(null);
   const reduceMotion = useReducedMotion();
 
   const pointerX = useMotionValue(0.5);
@@ -35,7 +36,7 @@ export function ProductCard({
   const glowY = useTransform(pointerY, (value) => `${value * 100}%`);
   const glow = useMotionTemplate`radial-gradient(340px circle at ${glowX} ${glowY}, rgba(63,21,33,0.18), transparent 70%)`;
 
-  const handleMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+  const handleMove = (event: React.PointerEvent<HTMLAnchorElement>) => {
     if (reduceMotion) return;
     const rect = cardRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -59,15 +60,14 @@ export function ProductCard({
       className="h-full"
       style={{ perspective: 1600 }}
     >
-      <motion.button
+      <MotionLink
         ref={cardRef}
-        type="button"
-        onClick={() => onOpen(product)}
+        href={productPath(product.id)}
         onPointerMove={handleMove}
         onPointerLeave={handleLeave}
         style={reduceMotion ? undefined : { rotateX, rotateY, transformStyle: "preserve-3d" }}
         className="group flex h-full w-full cursor-pointer flex-col text-left"
-        aria-label={`Apri la scheda di ${product.name}, ${product.subtitle}, ${formatPrice(product.price)}`}
+        aria-label={`${product.name}, ${product.subtitle}, ${formatPrice(product.price)}`}
       >
         <div className="relative aspect-[3/4] w-full overflow-hidden">
           <Image
@@ -108,7 +108,7 @@ export function ProductCard({
             <p className="font-display text-lg text-halo-bright sm:text-xl">{formatPrice(product.price)}</p>
           </div>
         </div>
-      </motion.button>
+      </MotionLink>
     </motion.div>
   );
 }

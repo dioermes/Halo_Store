@@ -4,10 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { ProductDialog } from "@/components/product-dialog";
 import { useReservation } from "@/components/reservation-provider";
 import { matchesProductQuery } from "@/lib/search";
-import type { Product } from "@/lib/products";
 
 export function SiteSearch({
   open,
@@ -18,7 +16,6 @@ export function SiteSearch({
 }) {
   const { products } = useReservation();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Product | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,65 +44,54 @@ export function SiteSearch({
   }, [products, query]);
 
   return (
-    <>
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="halo-page-bg fixed inset-0 z-[120] flex flex-col"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Cerca nel catalogo"
-          >
-            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-3 px-5 pt-20 sm:px-8">
-              <Search className="h-5 w-5 shrink-0 text-halo" aria-hidden />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Cerca un capo, una taglia, denim, nuovo arrivo…"
-                className="w-full bg-transparent py-3 text-lg text-ivory outline-none placeholder:text-ivory-dim/70"
-              />
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-line"
-                aria-label="Chiudi la ricerca"
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </button>
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="halo-page-bg fixed inset-0 z-[120] flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Cerca nel catalogo"
+        >
+          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-3 px-5 pt-20 sm:px-8">
+            <Search className="h-5 w-5 shrink-0 text-halo" aria-hidden />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Cerca un capo, una taglia, denim, nuovo arrivo…"
+              className="w-full bg-transparent py-3 text-lg text-ivory outline-none placeholder:text-ivory-dim/70"
+            />
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-line"
+              aria-label="Chiudi la ricerca"
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-10 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto max-w-7xl">
+              {query.trim().length < 2 ? (
+                <p className="text-sm text-ivory-dim">
+                  Prova parole come jeans, maglietta, bomber, nero, nuovo, più venduti.
+                </p>
+              ) : results.length === 0 ? (
+                <p className="text-ivory-dim">Nessun capo per “{query.trim()}”.</p>
+              ) : (
+                <div className="halo-product-grid" onClick={onClose}>
+                  {results.map((product, index) => (
+                    <ProductCard key={product.id} product={product} index={index} />
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-10 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
-              <div className="mx-auto max-w-7xl">
-                {query.trim().length < 2 ? (
-                  <p className="text-sm text-ivory-dim">
-                    Prova parole come jeans, maglietta, bomber, nero, nuovo, più venduti.
-                  </p>
-                ) : results.length === 0 ? (
-                  <p className="text-ivory-dim">Nessun capo per “{query.trim()}”.</p>
-                ) : (
-                  <div className="halo-product-grid">
-                    {results.map((product, index) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        index={index}
-                        onOpen={(item) => {
-                          setSelected(item);
-                          onClose();
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      <ProductDialog product={selected} onClose={() => setSelected(null)} />
-    </>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

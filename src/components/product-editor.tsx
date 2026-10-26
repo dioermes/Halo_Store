@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, CircleAlert, Eye, ImagePlus, Move, Plus, Save, Trash2, Upload, X } from "lucide-react";
+import { Check, CircleAlert, Copy, Eye, ImagePlus, Move, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { createCatalogTagAction, saveProductAction, type SaveProductState } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { PhotoCropper } from "@/components/photo-cropper";
@@ -17,6 +17,8 @@ import {
   type StoreCategory,
 } from "@/lib/products";
 import { slugify } from "@/lib/slug";
+import { productPath } from "@/lib/product-path";
+import { storeConfig } from "@/lib/store-config";
 import type { CatalogTag } from "@/lib/site";
 
 type ColorDraft = {
@@ -551,6 +553,9 @@ export function ProductEditor({
               className={fieldClass}
             />
           </label>
+          {slug ? (
+            <PublicCapoLink slug={slug} published={published} />
+          ) : null}
           <label className="text-sm text-ivory-dim">
             Sottotitolo
             <input
@@ -1064,6 +1069,50 @@ export function ProductEditor({
           onApply={handleCropped}
         />
       )}
+    </div>
+  );
+}
+
+function PublicCapoLink({ slug, published }: { slug: string; published: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const href = `${storeConfig.siteUrl.replace(/\/$/, "")}${productPath(slug)}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(href);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-ink-line bg-ink/30 px-4 py-3 text-sm">
+      <p className="text-ivory-dim">Pagina pubblica (sponsorizzate e Google)</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="min-w-0 break-all text-halo-bright underline underline-offset-4"
+        >
+          {href}
+        </a>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-ink-line px-3 py-1 text-xs text-ivory"
+        >
+          <Copy className="h-3 w-3" aria-hidden />
+          {copied ? "Copiato" : "Copia"}
+        </button>
+      </div>
+      {!published ? (
+        <p className="mt-2 text-xs text-ivory-dim">
+          Il capo è nascosto: il link funziona in vetrina solo quando è pubblicato.
+        </p>
+      ) : null}
     </div>
   );
 }

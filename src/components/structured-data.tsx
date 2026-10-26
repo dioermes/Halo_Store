@@ -1,6 +1,6 @@
 import { storeConfig } from "@/lib/store-config";
 import { toSchemaOpeningHours } from "@/lib/opening-hours";
-import { catalogPath } from "@/lib/categories";
+import { productPath } from "@/lib/product-path";
 import { isProductSoldOut, type Product } from "@/lib/products";
 
 function absUrl(path: string) {
@@ -9,8 +9,8 @@ function absUrl(path: string) {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-function productNode(product: Product) {
-  const page = absUrl(`${catalogPath(product.category)}#${product.id}`);
+export function productNode(product: Product) {
+  const page = absUrl(productPath(product.id));
   return {
     "@type": "Product" as const,
     name: product.name,
@@ -92,6 +92,17 @@ export function StructuredData() {
   };
 
   return <JsonLd data={data} />;
+}
+
+export function ProductJsonLd({ product }: { product: Product }) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        ...productNode(product),
+      }}
+    />
+  );
 }
 
 /** Elenco capi con Offer: Google richiede offers, review o aggregateRating sui Product. */

@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { catalogPath, getStoreCategories } from "@/lib/categories";
+import { getPublishedProducts } from "@/lib/catalog";
+import { productPath } from "@/lib/product-path";
 import { storeConfig } from "@/lib/store-config";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = storeConfig.siteUrl.replace(/\/$/, "");
   const now = new Date();
   const categories = await getStoreCategories();
+  const products = await getPublishedProducts();
 
   const pages: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: "weekly", priority: 1 },
@@ -23,6 +26,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
+    });
+  }
+
+  for (const product of products) {
+    pages.push({
+      url: `${base}${productPath(product.id)}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
     });
   }
 

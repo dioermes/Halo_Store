@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
-import { ProductDialog } from "@/components/product-dialog";
 import { formatPrice, getColorLook, type Product, type StoreCategory } from "@/lib/products";
 import { catalogFilters, catalogPath } from "@/lib/categories";
 
@@ -258,7 +257,6 @@ export function Catalog({
   const [active, setActive] = useState(initialCategory);
   const [maxSelected, setMaxSelected] = useState(0);
   const [color, setColor] = useState("");
-  const [selected, setSelected] = useState<Product | null>(null);
   const ceiling = useRef(0);
   const categoryRef = useRef(active);
 
@@ -385,18 +383,11 @@ export function Catalog({
             className="halo-product-grid mt-14 lg:mt-16"
           >
             {visible.map((product, index) => (
-              <ProductCard
-                key={product.uuid ?? product.id}
-                product={product}
-                index={index}
-                onOpen={setSelected}
-              />
+              <ProductCard key={product.uuid ?? product.id} product={product} index={index} />
             ))}
           </motion.div>
         )}
       </div>
-
-      <ProductDialog product={selected} onClose={() => setSelected(null)} />
     </section>
   );
 }

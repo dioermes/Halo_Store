@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
-import { ProductDialog } from "@/components/product-dialog";
 import type { Product } from "@/lib/products";
 
 export function FeaturedRail({
@@ -20,7 +19,6 @@ export function FeaturedRail({
   rest: Product[];
 }) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Product | null>(null);
   const extra = useMemo(
     () =>
       rest.filter(
@@ -43,7 +41,7 @@ export function FeaturedRail({
 
         <div className="halo-product-grid mt-16 sm:mt-20">
           {featured.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} onOpen={setSelected} />
+            <ProductCard key={product.id} product={product} index={index} />
           ))}
         </div>
 
@@ -76,7 +74,6 @@ export function FeaturedRail({
                         key={product.id}
                         product={product}
                         index={index + featured.length}
-                        onOpen={setSelected}
                       />
                     ))}
                   </div>
@@ -86,7 +83,6 @@ export function FeaturedRail({
           </div>
         ) : null}
       </div>
-      <ProductDialog product={selected} onClose={() => setSelected(null)} />
     </section>
   );
 }
