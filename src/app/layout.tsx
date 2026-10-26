@@ -68,6 +68,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${displayFontClassNames} h-full antialiased`}
       style={{ "--font-display": displayFontStack(appearance.displayFont) } as CSSProperties}
