@@ -1,5 +1,4 @@
 import { SiteEditor } from "@/components/site-editor";
-import { getAllProductsAdmin } from "@/lib/catalog";
 import { getCatalogMerch, getSiteAppearance } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +9,8 @@ export default async function AdminSitePage({
   searchParams: Promise<{ salvato?: string }>;
 }) {
   const query = await searchParams;
-  const [appearance, products, merch] = await Promise.all([
+  const [appearance, merch] = await Promise.all([
     getSiteAppearance(),
-    getAllProductsAdmin(),
     getCatalogMerch(),
   ]);
 
@@ -23,7 +21,7 @@ export default async function AdminSitePage({
           Sito salvato. Apri la home e fai un refresh se vedi ancora il media precedente.
         </p>
       ) : null}
-      <SiteEditor appearance={appearance} products={products} tags={merch.tags} />
+      <SiteEditor appearance={appearance} tags={merch.tags} />
     </div>
   );
 }

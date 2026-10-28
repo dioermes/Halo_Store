@@ -29,6 +29,23 @@ export function ReservationBag() {
   const closeRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const productCount = items.reduce(
+    (sum, item) => sum + (item.giftCardAmountCents ? 0 : item.quantity),
+    0,
+  );
+  const giftCardCount = items.reduce(
+    (sum, item) => sum + (item.giftCardAmountCents ? item.quantity : 0),
+    0,
+  );
+  const countLabel =
+    [
+      productCount > 0
+        ? `${productCount} ${productCount === 1 ? "capo" : "capi"}`
+        : null,
+      giftCardCount > 0 ? `${giftCardCount} gift card` : null,
+    ]
+      .filter(Boolean)
+      .join(" + ") || "Nessun articolo selezionato";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,7 +101,7 @@ export function ReservationBag() {
             <span className="flex items-center gap-3">
               <ShoppingBag className="h-4 w-4 text-halo" aria-hidden />
               <span className="text-sm">
-                {count} {count === 1 ? "capo" : "capi"} nel carrello
+                {countLabel} nel carrello
               </span>
             </span>
             <span className="text-sm text-halo-bright">{formatPrice(total)}</span>
@@ -126,8 +143,8 @@ export function ReservationBag() {
                   </h2>
                   <p className="mt-2 text-sm text-ivory-dim">
                     {count === 0
-                      ? "Nessun capo selezionato"
-                      : `${count} ${count === 1 ? "capo" : "capi"} · ${formatPrice(total)}`}
+                      ? countLabel
+                      : `${countLabel} · ${formatPrice(total)}`}
                   </p>
                 </div>
                 <button
@@ -165,7 +182,8 @@ export function ReservationBag() {
                       <AnimatePresence initial={false}>
                         {items.map((item) => {
                           const product = productById(item.productId);
-                          if (!product) return null;
+                          const giftCardAmount = item.giftCardAmountCents;
+                          if (!product && !giftCardAmount) return null;
                           return (
                             <motion.li
                               key={`${item.productId}-${item.size}-${item.color}`}
@@ -175,25 +193,36 @@ export function ReservationBag() {
                               exit={{ opacity: 0, x: 30, height: 0 }}
                               className="flex gap-4"
                             >
-                              <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-line">
-                                <Image
-                                  src={productImageForColor(product, item.color)}
-                                  alt=""
-                                  fill
-                                  sizes="80px"
-                                  className="object-cover"
-                                />
-                              </div>
+                              {product ? (
+                                <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-line">
+                                  <Image
+                                    src={productImageForColor(product, item.color)}
+                                    alt=""
+                                    fill
+                                    sizes="80px"
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-xl border border-ink-line bg-[#c5cebc] text-center text-xs font-medium uppercase tracking-[0.12em] text-[#3f1521]">
+                                  Gift<br />card
+                                </div>
+                              )}
                               <div className="flex flex-1 flex-col justify-center">
                                 <p className="font-display text-xl leading-none">
-                                  {product.name}
+                                  {product?.name ?? "Gift card Halo Store"}
                                 </p>
                                 <p className="mt-1.5 text-xs text-ivory-dim">
-                                  Taglia {item.size}
-                                  {item.color ? ` · ${item.color}` : ""}
+                                  {product
+                                    ? `Taglia ${item.size}${item.color ? ` · ${item.color}` : ""}`
+                                    : `Valore ${formatPrice((giftCardAmount ?? 0) / 100)}`}
                                 </p>
                                 <p className="mt-1.5 text-sm text-halo-bright">
-                                  {formatPrice(product.price * item.quantity)}
+                                  {formatPrice(
+                                    giftCardAmount
+                                      ? (giftCardAmount / 100) * item.quantity
+                                      : (product?.price ?? 0) * item.quantity,
+                                  )}
                                 </p>
                                 <div className="mt-2 flex items-center gap-2">
                                   <button
@@ -219,7 +248,7 @@ export function ReservationBag() {
                                 type="button"
                                 onClick={() => remove(item)}
                                 className="self-start rounded-full p-2 text-ivory-dim transition-colors hover:text-ivory"
-                                aria-label={`Togli ${product.name} dal carrello`}
+                                aria-label={`Togli ${product?.name ?? "gift card"} dal carrello`}
                               >
                                 <Trash2 className="h-4 w-4" aria-hidden />
                               </button>

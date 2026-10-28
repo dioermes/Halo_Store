@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { itIT } from "@clerk/localizations";
 import "./globals.css";
 import { HaloCursor } from "@/components/halo-cursor";
+import { FavoritesProvider } from "@/components/favorites-provider";
 import { ReservationProvider } from "@/components/reservation-provider";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -11,6 +12,7 @@ import { ReservationBag } from "@/components/reservation-bag";
 import { StructuredData } from "@/components/structured-data";
 import { CookieBanner } from "@/components/cookie-banner";
 import { NewsletterPopup } from "@/components/newsletter-popup";
+import { WhatsAppSupport } from "@/components/whatsapp-support";
 import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
@@ -92,21 +94,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           signUpFallbackRedirectUrl="/account"
         >
           <StructuredData />
-          <ReservationProvider products={products}>
-            <HaloCursor />
-            <SiteNav
-              categories={categories}
-              homeLinks={appearance.homeSections.map((section) => ({
-                href: `/#${section.id}`,
-                label: displayHomeSectionTitle(section.title),
-              }))}
-            />
-            <main id="top">{children}</main>
-            <SiteFooter />
-            <ReservationBag />
-            <CookieBanner />
-            <NewsletterPopup />
-          </ReservationProvider>
+          <FavoritesProvider>
+            <ReservationProvider products={products}>
+              <HaloCursor />
+              <SiteNav
+                categories={categories}
+                homeLinks={appearance.homeSections.map((section) => ({
+                  href: `/#${section.id}`,
+                  label: displayHomeSectionTitle(section.title),
+                }))}
+              />
+              <main id="top">{children}</main>
+              <SiteFooter />
+              <ReservationBag />
+              <WhatsAppSupport />
+              <CookieBanner />
+              <NewsletterPopup imageUrl={appearance.newsletterPopupImage} />
+            </ReservationProvider>
+          </FavoritesProvider>
         </ClerkProvider>
       </body>
     </html>

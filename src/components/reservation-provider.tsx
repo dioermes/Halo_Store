@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { findVariant, type Product } from "@/lib/products";
+import { GIFT_CARD_AMOUNTS_EUR } from "@/lib/gift-card-constants";
 
 export type CartItem = {
   productId: string;
@@ -16,6 +17,7 @@ export type CartItem = {
   size: string;
   color: string;
   quantity: number;
+  giftCardAmountCents?: number;
 };
 
 type CartContextValue = {
@@ -26,6 +28,7 @@ type CartContextValue = {
   lastAdded: string | null;
   products: Product[];
   add: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
+  addGiftCard: (amountCents: number) => void;
   remove: (item: CartItem) => void;
   setQuantity: (item: CartItem, quantity: number) => void;
   clear: () => void;
@@ -46,24 +49,36 @@ function sameItem(a: Pick<CartItem, "productId" | "size" | "color">, b: Pick<Car
 
 function parseItems(raw: unknown, products: Product[]): CartItem[] {
   if (!Array.isArray(raw)) return [];
-  return raw.flatMap((entry) => {
-    if (typeof entry !== "object" || entry === null) return [];
+  const parsed: CartItem[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== "object" || entry === null) continue;
     const item = entry as Partial<CartItem>;
-    if (typeof item.productId !== "string") return [];
+    if (typeof item.productId !== "string") continue;
+    if (item.productId.startsWith("gift-card-")) {
+      const amountCents = Number(item.productId.slice("gift-card-".length));
+      if (!GIFT_CARD_AMOUNTS_EUR.some((amount) => amount * 100 === amountCents)) continue;
+      parsed.push({
+        productId: item.productId,
+        size: "",
+        color: "Gift card",
+        quantity: Math.max(1, Math.min(10, Number(item.quantity) || 1)),
+        giftCardAmountCents: amountCents,
+      });
+      continue;
+    }
     const product = products.find((row) => row.id === item.productId);
-    if (!product) return [];
+    if (!product) continue;
     const size = typeof item.size === "string" ? item.size : product.sizes[0];
     const color = typeof item.color === "string" ? item.color : product.colors[0] ?? "";
-    return [
-      {
-        productId: item.productId,
-        variantId: item.variantId ?? findVariant(product, size, color)?.id,
-        size,
-        color,
-        quantity: Math.max(1, Number(item.quantity) || 1),
-      },
-    ];
-  });
+    parsed.push({
+      productId: item.productId,
+      variantId: item.variantId ?? findVariant(product, size, color)?.id,
+      size,
+      color,
+      quantity: Math.max(1, Number(item.quantity) || 1),
+    });
+  }
+  return parsed;
 }
 
 export function ReservationProvider({
@@ -121,11 +136,57 @@ export function ReservationProvider({
     [products],
   );
 
+  const addGiftCard = useCallback((amountCents: number) => {
+    if (!GIFT_CARD_AMOUNTS_EUR.some((amount) => amount * 100 === amountCents)) return;
+    const productId = `gift-card-${amountCents}`;
+    setItems((current) => {
+      const totalGiftCards = current.reduce(
+        (sum, item) => sum + (item.giftCardAmountCents ? item.quantity : 0),
+        0,
+      );
+      if (totalGiftCards >= 10) return current;
+      const existing = current.find((item) => item.productId === productId);
+      if (existing) {
+        return current.map((item) =>
+          item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item,
+        );
+      }
+      return [
+        ...current,
+        {
+          productId,
+          size: "",
+          color: "Gift card",
+          quantity: 1,
+          giftCardAmountCents: amountCents,
+        },
+      ];
+    });
+    setLastAdded(productId);
+  }, []);
+
   const remove = useCallback((item: CartItem) => {
     setItems((current) => current.filter((entry) => !sameItem(entry, item)));
   }, []);
 
   const setQuantity = useCallback((item: CartItem, quantity: number) => {
+    if (item.giftCardAmountCents && quantity > 0) {
+      setItems((current) => {
+        const otherGiftCards = current.reduce(
+          (sum, entry) =>
+            sum +
+            (entry.giftCardAmountCents && entry.productId !== item.productId
+              ? entry.quantity
+              : 0),
+          0,
+        );
+        if (otherGiftCards + quantity > 10) return current;
+        return current.map((entry) =>
+          sameItem(entry, item) ? { ...entry, quantity: Math.min(10, quantity) } : entry,
+        );
+      });
+      return;
+    }
     if (quantity <= 0) {
       setItems((current) => current.filter((entry) => !sameItem(entry, item)));
       return;
@@ -158,7 +219,7 @@ export function ReservationProvider({
     () =>
       items.reduce((sum, item) => {
         const product = productById(item.productId);
-        return sum + (product?.price ?? 0) * item.quantity;
+        return sum + (item.giftCardAmountCents ?? Math.round((product?.price ?? 0) * 100)) / 100 * item.quantity;
       }, 0),
     [items, productById],
   );
@@ -177,6 +238,7 @@ export function ReservationProvider({
       lastAdded,
       products,
       add,
+      addGiftCard,
       remove,
       setQuantity,
       clear,
@@ -185,7 +247,7 @@ export function ReservationProvider({
       closeBag: () => setIsOpen(false),
       productById,
     }),
-    [items, count, total, isOpen, lastAdded, products, add, remove, setQuantity, clear, has, productById],
+    [items, count, total, isOpen, lastAdded, products, add, addGiftCard, remove, setQuantity, clear, has, productById],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

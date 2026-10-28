@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { saveSiteAppearanceAction, saveSiteMediaSlotAction } from "@/app/admin/actions";
+import {
+  saveNewsletterPopupImageAction,
+  saveSiteAppearanceAction,
+  saveSiteMediaSlotAction,
+} from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
-import { merchKindFromFile, type CatalogTag, type SiteAppearance } from "@/lib/site";
+import {
+  merchKindFromFile,
+  type CatalogTag,
+  type HomeSection,
+  type SiteAppearance,
+} from "@/lib/site";
 import { DisplayFontPicker } from "@/components/display-font-picker";
 import { HomeSectionsEditor } from "@/components/home-sections-editor";
-import type { Product } from "@/lib/products";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory outline-none";
@@ -107,6 +115,55 @@ function MediaFields({
   );
 }
 
+function NewsletterPopupImageField({ initialUrl }: { initialUrl: string }) {
+  const [url, setUrl] = useState(initialUrl);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
+      <legend className="px-1 font-display text-2xl">Foto popup newsletter</legend>
+      <p className="text-sm text-ivory-dim">
+        Scegli la foto mostrata a sinistra nel popup. Testo e campi del modulo sono fissi.
+      </p>
+      <div className="relative aspect-[4/5] max-w-xs overflow-hidden rounded-xl border border-ink-line bg-ink">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt="Anteprima foto popup newsletter" className="h-full w-full object-cover" />
+      </div>
+      <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm">
+        {busy || "Scegli una foto"}
+        <input
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          disabled={Boolean(busy)}
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (!file) return;
+            setBusy("Caricamento…");
+            setError("");
+            setSaved(false);
+            try {
+              const uploaded = await uploadAdminFile(file, setBusy);
+              await saveNewsletterPopupImageAction(uploaded);
+              setUrl(uploaded);
+              setSaved(true);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+            } finally {
+              setBusy("");
+            }
+          }}
+        />
+      </label>
+      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {saved ? <p className="text-sm text-halo">Foto salvata.</p> : null}
+    </fieldset>
+  );
+}
+
 function ColorField({
   name,
   label,
@@ -168,15 +225,207 @@ function SoldOutColorFields({ appearance }: { appearance: SiteAppearance }) {
   );
 }
 
+function HeroButtonsEditor({
+  appearance,
+  tags,
+  sections,
+}: {
+  appearance: SiteAppearance;
+  tags: CatalogTag[];
+  sections: HomeSection[];
+}) {
+  const sectionDestination = (sectionId: string) => `section:${sectionId}`;
+  const getInitialOption = (key: "shopNow" | "newIn") => {
+    const button = appearance.heroButtons[key];
+    if (button.destinationType === "tag") return "tag";
+    if (button.destination === "/catalogo") return "catalog";
+    const hash = button.destination.match(/^\/#(.+)$/)?.[1];
+    if (hash) {
+      const section = sections.find((item) => item.id === hash);
+      if (section) return sectionDestination(section.id);
+      const newArrivals = sections.find((item) => item.source === "newArrival");
+      if (newArrivals && hash.replace(/[-_]/g, "").toLowerCase() === "nuoviarrivi") {
+        return sectionDestination(newArrivals.id);
+      }
+    }
+    return "custom";
+  };
+  const [options, setOptions] = useState({
+    shopNow: getInitialOption("shopNow"),
+    newIn: getInitialOption("newIn"),
+  });
+  const [customUrls, setCustomUrls] = useState({
+    shopNow:
+      appearance.heroButtons.shopNow.destinationType === "url"
+        ? appearance.heroButtons.shopNow.destination
+        : "",
+    newIn:
+      appearance.heroButtons.newIn.destinationType === "url"
+        ? appearance.heroButtons.newIn.destination
+        : "",
+  });
+  const [selectedTags, setSelectedTags] = useState({
+    shopNow:
+      appearance.heroButtons.shopNow.destinationType === "tag"
+        ? appearance.heroButtons.shopNow.destination
+        : "",
+    newIn:
+      appearance.heroButtons.newIn.destinationType === "tag"
+        ? appearance.heroButtons.newIn.destination
+        : "",
+  });
+
+  const destinationFor = (key: "shopNow" | "newIn", option: string) => {
+    if (option === "catalog") return "/catalogo";
+    if (option.startsWith("section:")) return `/#${option.slice("section:".length)}`;
+    if (option === "tag") return selectedTags[key];
+    return customUrls[key];
+  };
+
+  return (
+    <fieldset className="grid gap-5 rounded-2xl border border-ink-line bg-ink/40 p-5">
+      <legend className="px-1 font-display text-2xl">Pulsanti della hero</legend>
+      <p className="text-sm text-ivory-dim">
+        Scegli cosa succede quando un cliente preme ciascun pulsante nella copertina.
+      </p>
+      {(["shopNow", "newIn"] as const).map((key) => {
+        const button = appearance.heroButtons[key];
+        const label = key === "shopNow" ? "SHOP NOW" : "NEW IN";
+        const selectedTagExists = tags.some((tag) => tag.id === selectedTags[key]);
+        const option =
+          options[key] === "tag" && !selectedTagExists
+            ? key === "shopNow"
+              ? "catalog"
+              : sectionDestination(
+                  sections.find((section) => section.source === "newArrival")?.id ??
+                    "nuovi-arrivi",
+                )
+            : options[key];
+        return (
+          <div key={key} className="grid gap-3 rounded-xl border border-ink-line/70 p-4">
+            <h3 className="text-sm font-medium">{label}</h3>
+            <label className="text-sm text-ivory-dim">
+              Testo del pulsante
+              <input
+                name={`heroButton${key}Label`}
+                defaultValue={button.label}
+                maxLength={24}
+                required
+                className={fieldClass}
+              />
+            </label>
+            <label className="text-sm text-ivory-dim">
+              Dove deve portare?
+              <select
+                value={option}
+                onChange={(event) => {
+                  const nextOption = event.target.value;
+                  setOptions((current) => ({
+                    ...current,
+                    [key]: nextOption,
+                  }));
+                  if (nextOption === "tag" && !selectedTags[key] && tags[0]) {
+                    setSelectedTags((current) => ({ ...current, [key]: tags[0].id }));
+                  }
+                }}
+                className={fieldClass}
+              >
+                <option value="catalog">Tutto il catalogo</option>
+                {sections
+                  .filter((section) => section.source === "newArrival")
+                  .map((section) => (
+                    <option key={section.id} value={sectionDestination(section.id)}>
+                      Nuovi arrivi
+                    </option>
+                  ))}
+                {sections
+                  .filter((section) => section.source !== "newArrival")
+                  .map((section) => (
+                    <option key={section.id} value={sectionDestination(section.id)}>
+                      Sezione: {section.title}
+                    </option>
+                  ))}
+                <option value="tag" disabled={tags.length === 0}>
+                  Una selezione per tag
+                </option>
+                <option value="custom">Un link personalizzato</option>
+              </select>
+            </label>
+            <input
+              type="hidden"
+              name={`heroButton${key}Type`}
+              value={option === "tag" ? "tag" : "url"}
+            />
+            {option === "tag" ? (
+              tags.length ? (
+                <label className="text-sm text-ivory-dim">
+                  Scegli il tag
+                  <select
+                    value={selectedTags[key]}
+                    onChange={(event) =>
+                      setSelectedTags((current) => ({ ...current, [key]: event.target.value }))
+                    }
+                    required
+                    className={fieldClass}
+                  >
+                    <option value="">Seleziona un tag</option>
+                    {tags.map((tag) => (
+                      <option key={tag.id} value={tag.id}>
+                        {tag.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <p className="text-sm text-ivory-dim">
+                  Non ci sono tag disponibili. Creane uno dal catalogo per usarlo come destinazione.
+                </p>
+              )
+            ) : null}
+            {option === "custom" ? (
+              <label className="text-sm text-ivory-dim">
+                Link esterno o percorso del sito
+                <input
+                  value={customUrls[key]}
+                  placeholder="https://esempio.it o /pagina"
+                  onChange={(event) =>
+                    setCustomUrls((current) => ({ ...current, [key]: event.target.value }))
+                  }
+                  required
+                  className={fieldClass}
+                />
+              </label>
+            ) : null}
+            <input
+              type="hidden"
+              name={`heroButton${key}Destination`}
+              value={destinationFor(key, option)}
+            />
+            {option.startsWith("section:") || option === "catalog" ? (
+              <p className="text-xs text-ivory-dim">
+                Destinazione:{" "}
+                {option === "catalog"
+                  ? "catalogo completo"
+                  : sections.find((section) => section.id === option.slice("section:".length))
+                      ?.title}
+              </p>
+            ) : null}
+          </div>
+        );
+      })}
+    </fieldset>
+  );
+}
+
 export function SiteEditor({
   appearance,
-  products = [],
   tags = [],
 }: {
   appearance: SiteAppearance;
-  products?: Product[];
   tags?: CatalogTag[];
 }) {
+  const [siteTags, setSiteTags] = useState(tags);
+
   return (
     <form action={saveSiteAppearanceAction} className="grid max-w-2xl gap-10">
       <div>
@@ -199,8 +448,23 @@ export function SiteEditor({
         hint="Formato verticale, a tutto schermo sul telefono."
         appearance={appearance}
       />
+      <NewsletterPopupImageField initialUrl={appearance.newsletterPopupImage} />
       <DisplayFontPicker initialId={appearance.displayFont} />
-      <HomeSectionsEditor sections={appearance.homeSections} products={products} tags={tags} />
+      <HeroButtonsEditor
+        appearance={appearance}
+        tags={siteTags}
+        sections={appearance.homeSections}
+      />
+      <HomeSectionsEditor
+        sections={appearance.homeSections}
+        tags={siteTags}
+        onTagCreated={(tag) =>
+          setSiteTags((current) =>
+            current.some((existing) => existing.id === tag.id) ? current : [...current, tag],
+          )
+        }
+        onTagDeleted={(tagId) => setSiteTags((current) => current.filter((tag) => tag.id !== tagId))}
+      />
 
       <SoldOutColorFields appearance={appearance} />
 

@@ -13,8 +13,8 @@ export function CategoryPicker({
   onCategoriesChange,
 }: {
   categories: StoreCategory[];
-  value: string;
-  onChange: (id: string) => void;
+  value: string[];
+  onChange: (ids: string[]) => void;
   onCategoriesChange: (next: StoreCategory[]) => void;
 }) {
   const listId = useId();
@@ -25,7 +25,11 @@ export function CategoryPicker({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
-  const selected = categories.find((row) => row.id === value);
+  const selected = categories.filter((row) => value.includes(row.id));
+  const toggleCategory = (id: string) => {
+    const next = value.includes(id) ? value.filter((selectedId) => selectedId !== id) : [...value, id];
+    if (next.length) onChange(next);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -65,7 +69,7 @@ export function CategoryPicker({
         ? categories.map((row) => (row.id === created.category.id ? created.category : row))
         : [...categories, created.category];
       onCategoriesChange(next);
-      onChange(created.category.id);
+      onChange(value.includes(created.category.id) ? value : [...value, created.category.id]);
       setDraftName("");
       setDraftHint("");
       setOpen(false);
@@ -87,9 +91,13 @@ export function CategoryPicker({
         className="mt-2 flex w-full items-center justify-between rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-left text-ivory outline-none transition-colors hover:border-halo/40 focus:border-halo/50"
       >
         <span>
-          <span className="block">{selected?.label ?? "Scegli una tipologia"}</span>
-          {selected?.hint ? (
-            <span className="mt-0.5 block text-xs text-ivory-dim">{selected.hint}</span>
+          <span className="block">
+            {selected.length
+              ? selected.map((row) => row.label).join(", ")
+              : "Scegli una o più tipologie"}
+          </span>
+          {selected.length === 1 && selected[0].hint ? (
+            <span className="mt-0.5 block text-xs text-ivory-dim">{selected[0].hint}</span>
           ) : null}
         </span>
         <ChevronDown
@@ -97,16 +105,20 @@ export function CategoryPicker({
           aria-hidden
         />
       </button>
+      <p className="mt-1 text-xs text-ivory-dim">
+        Puoi selezionare più tipologie. Premi di nuovo una voce per rimuoverla.
+      </p>
 
       {open && (
         <div
           id={listId}
           role="listbox"
+          aria-multiselectable="true"
           className="absolute z-30 mt-2 w-full overflow-hidden rounded-2xl border border-ink-line bg-ink-soft shadow-2xl"
         >
           <ul className="max-h-64 overflow-y-auto py-1">
             {categories.map((row) => {
-              const active = row.id === value;
+              const active = value.includes(row.id);
               return (
                 <li key={row.id}>
                   <button
@@ -114,8 +126,7 @@ export function CategoryPicker({
                     role="option"
                     aria-selected={active}
                     onClick={() => {
-                      onChange(row.id);
-                      setOpen(false);
+                      toggleCategory(row.id);
                     }}
                     className={`flex w-full items-start justify-between gap-3 px-4 py-3 text-left text-sm transition-colors ${
                       active ? "bg-halo/10 text-halo-bright" : "text-ivory hover:bg-ivory/5"

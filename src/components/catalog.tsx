@@ -4,17 +4,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
-import { formatPrice, getColorLook, type Product, type StoreCategory } from "@/lib/products";
+import {
+  formatPrice,
+  getColorLook,
+  productHasCategory,
+  type Product,
+  type StoreCategory,
+} from "@/lib/products";
 import { catalogFilters, catalogPath } from "@/lib/categories";
+import {
+  catalogTagLabel,
+  isProductInCatalogTag,
+  type CatalogTag,
+} from "@/lib/site";
 
 function categoryFromPath(pathname: string) {
   const match = pathname.match(/^\/catalogo\/([^/]+)\/?$/);
   return match?.[1] || "tutti";
 }
 
-function setCatalogUrl(id: string) {
-  const next = catalogPath(id);
-  if (window.location.pathname === next) return;
+function setCatalogUrl(id: string, tag: string) {
+  const next = `${catalogPath(id)}${tag ? `?tag=${encodeURIComponent(tag)}` : ""}`;
+  if (`${window.location.pathname}${window.location.search}` === next) return;
   window.history.replaceState(window.history.state, "", next);
 }
 
@@ -37,7 +48,9 @@ function collectColors(products: Product[]) {
 
 function pricesInCategory(products: Product[], categoryId: string) {
   const list =
-    categoryId === "tutti" ? products : products.filter((product) => product.category === categoryId);
+    categoryId === "tutti"
+      ? products
+      : products.filter((product) => productHasCategory(product, categoryId));
   const prices = list.map((product) => product.price);
   return prices.length ? Math.max(...prices) : 0;
 }
@@ -248,13 +261,18 @@ export function Catalog({
   products,
   categories,
   initialCategory = "tutti",
+  initialTag = "",
+  tags = [],
 }: {
   products: Product[];
   categories: StoreCategory[];
   initialCategory?: string;
+  initialTag?: string;
+  tags?: CatalogTag[];
 }) {
   const filters = catalogFilters(categories, products.length);
   const [active, setActive] = useState(initialCategory);
+  const [activeTag, setActiveTag] = useState(initialTag);
   const [maxSelected, setMaxSelected] = useState(0);
   const [color, setColor] = useState("");
   const ceiling = useRef(0);
@@ -264,13 +282,20 @@ export function Catalog({
     () =>
       active === "tutti"
         ? products
-        : products.filter((product) => product.category === active),
+        : products.filter((product) => productHasCategory(product, active)),
     [active, products],
   );
-  const prices = scoped.map((product) => product.price);
+  const tagged = useMemo(
+    () =>
+      activeTag
+        ? scoped.filter((product) => isProductInCatalogTag(product, activeTag))
+        : scoped,
+    [activeTag, scoped],
+  );
+  const prices = tagged.map((product) => product.price);
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
-  const colors = useMemo(() => collectColors(scoped), [scoped]);
+  const colors = useMemo(() => collectColors(tagged), [tagged]);
 
   const selectCategory = (id: string) => {
     if (id === active) return;
@@ -278,22 +303,31 @@ export function Catalog({
     categoryRef.current = id;
     ceiling.current = nextMax;
     setActive(id);
+    setActiveTag("");
     setMaxSelected(nextMax);
-    setCatalogUrl(id);
+    setCatalogUrl(id, "");
+  };
+
+  const clearTag = () => {
+    setActiveTag("");
+    setCatalogUrl(active, "");
   };
 
   useEffect(() => {
     const onPop = () => {
       const id = categoryFromPath(window.location.pathname);
+      const requestedTag = new URLSearchParams(window.location.search).get("tag") ?? "";
+      const nextTag = tags.some((tag) => tag.id === requestedTag) ? requestedTag : "";
       const nextMax = pricesInCategory(products, id);
       categoryRef.current = id;
       ceiling.current = nextMax;
       setActive(id);
+      setActiveTag(nextTag);
       setMaxSelected(nextMax);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [products]);
+  }, [products, tags]);
 
   useEffect(() => {
     if (active !== "tutti" && !categories.some((category) => category.id === active)) {
@@ -319,12 +353,12 @@ export function Catalog({
 
   const visible = useMemo(
     () =>
-      scoped.filter((product) => {
+      tagged.filter((product) => {
         if (product.price > maxSelected) return false;
         if (color && !productHasColor(product, color)) return false;
         return true;
       }),
-    [color, maxSelected, scoped],
+    [color, maxSelected, tagged],
   );
 
   return (
@@ -367,6 +401,17 @@ export function Catalog({
         <p className="mt-10 text-center text-xs uppercase tracking-[0.24em] text-ivory-dim">
           {visible.length} {visible.length === 1 ? "capo" : "capi"}
         </p>
+        {activeTag ? (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={clearTag}
+              className="rounded-full border border-ink-line px-4 py-2 text-xs text-ivory-dim transition-colors hover:text-ivory"
+            >
+              Tag: {catalogTagLabel(activeTag, tags)} ×
+            </button>
+          </div>
+        ) : null}
 
         {visible.length === 0 ? (
           <p className="mt-16 text-center text-sm text-ivory-dim">

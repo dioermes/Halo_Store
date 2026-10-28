@@ -33,11 +33,16 @@ function asCategoryList(value: unknown): StoreCategory[] {
   });
 }
 
-function asOverrides(value: unknown): Record<string, string> {
+export type ProductCategoryOverrides = Record<string, string | string[]>;
+
+function asOverrides(value: unknown): ProductCategoryOverrides {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).filter(
-      (entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1]),
+      (entry): entry is [string, string | string[]] =>
+        (typeof entry[1] === "string" && Boolean(entry[1])) ||
+        (Array.isArray(entry[1]) &&
+          entry[1].every((id) => typeof id === "string" && Boolean(id))),
     ),
   );
 }
@@ -148,7 +153,9 @@ export async function deleteStoreCategory(id: string) {
     .select("id", { count: "exact", head: true })
     .eq("category", id);
   const overrides = await getProductCategoryOverrides();
-  const overrideCount = Object.values(overrides).filter((value) => value === id).length;
+  const overrideCount = Object.values(overrides).filter((value) =>
+    Array.isArray(value) ? value.includes(id) : value === id,
+  ).length;
   if ((count ?? 0) + overrideCount > 0) {
     throw new Error("Sposta prima i capi di questa tipologia, poi puoi eliminarla.");
   }
@@ -173,17 +180,30 @@ async function readCategoryTable(): Promise<StoreCategory[]> {
   }
 }
 
-export async function getProductCategoryOverrides(): Promise<Record<string, string>> {
+export async function getProductCategoryOverrides(): Promise<ProductCategoryOverrides> {
   return asOverrides(await readSetting(OVERRIDES_KEY));
 }
 
 export function applyCategoryOverride(
   productId: string | undefined,
   stored: string,
-  overrides: Record<string, string>,
+  overrides: ProductCategoryOverrides,
 ) {
-  if (productId && overrides[productId]) return overrides[productId];
+  if (productId && overrides[productId]) {
+    const override = overrides[productId];
+    return Array.isArray(override) ? override[0] ?? stored : override;
+  }
   return stored;
+}
+
+export function getProductCategoryIds(
+  productId: string | undefined,
+  stored: string,
+  overrides: ProductCategoryOverrides,
+) {
+  if (!productId || !overrides[productId]) return [stored];
+  const override = overrides[productId];
+  return Array.isArray(override) ? override : [override];
 }
 
 export async function ensureStoreCategory(input: {
@@ -216,9 +236,14 @@ export async function ensureStoreCategory(input: {
   return category;
 }
 
-export async function saveCategoryOverride(productId: string, categoryId: string | null) {
+export async function saveCategoryOverride(
+  productId: string,
+  categoryId: string | string[] | null,
+) {
   const current = await getProductCategoryOverrides();
-  if (categoryId) current[productId] = categoryId;
+  const ids = Array.isArray(categoryId) ? [...new Set(categoryId.filter(Boolean))] : null;
+  if (ids?.length) current[productId] = ids;
+  else if (typeof categoryId === "string" && categoryId) current[productId] = categoryId;
   else delete current[productId];
   await writeSetting(OVERRIDES_KEY, current);
 }

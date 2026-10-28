@@ -3,7 +3,11 @@ import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
 import { getStoreSettings } from "@/lib/settings";
-import { getSeenAdminOrderIds, isUnseenAdminOrder } from "@/lib/admin-orders";
+import {
+  getSeenAdminOrderIds,
+  groupAdminOrdersByDate,
+  isUnseenAdminOrder,
+} from "@/lib/admin-orders";
 import { AdminLiveRefresh } from "@/components/admin-live-refresh";
 import { NewOrderTag } from "@/components/new-order-tag";
 
@@ -32,11 +36,14 @@ export default async function AdminHome() {
       .order("stock"),
     getSeenAdminOrderIds(),
   ]);
-  const recent = [...(orders ?? [])].sort((a, b) => {
-    const aNew = isUnseenAdminOrder(a.status, a.id, seen) ? 0 : 1;
-    const bNew = isUnseenAdminOrder(b.status, b.id, seen) ? 0 : 1;
-    return aNew - bNew;
-  });
+  const recentByDate = groupAdminOrdersByDate(orders ?? []);
+  for (const group of recentByDate) {
+    group.orders.sort((a, b) => {
+      const aNew = isUnseenAdminOrder(a.status, a.id, seen) ? 0 : 1;
+      const bNew = isUnseenAdminOrder(b.status, b.id, seen) ? 0 : 1;
+      return aNew - bNew;
+    });
+  }
   const low = (variants ?? [])
     .filter((row) => productRef(row.halo_products as ProductRef | ProductRef[] | null)?.published !== false)
     .slice(0, 12);
@@ -46,29 +53,38 @@ export default async function AdminHome() {
       <section>
         <h2 className="font-display text-3xl">Ordini recenti</h2>
         <AdminLiveRefresh />
-        <ul className="mt-4 space-y-3">
-          {recent.map((order) => {
-            const unseen = isUnseenAdminOrder(order.status, order.id, seen);
-            return (
-            <li key={order.id}>
-              <Link href={`/admin/ordini/${order.id}`} className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 hover:border-halo/50 ${unseen ? "border-ivory bg-ivory/10" : "border-ink-line"}`}>
-                <span className="flex min-w-0 items-center gap-2">
-                  {unseen ? <NewOrderTag /> : null}
-                  <span>#{order.id.slice(0, 8)} · {order.fulfillment === "pickup" ? "ritiro" : "spedizione"}</span>
-                </span>
-                <span className="text-halo-bright">
-                  {orderStatusLabel[order.status as OrderStatus]} ·{" "}
-                  {order.fulfillment === "pickup" &&
-                  order.status !== "completed" &&
-                  order.status !== "cancelled"
-                    ? `da incassare ${formatPrice(order.total_cents / 100)}`
-                    : formatPrice(order.total_cents / 100)}
-                </span>
-              </Link>
-            </li>
-            );
-          })}
-        </ul>
+        <div className="mt-4 space-y-6">
+          {recentByDate.map((group) => (
+            <section key={group.key}>
+              <h3 className="mb-3 border-b border-ink-line pb-2 text-xs uppercase tracking-[0.2em] text-ivory-dim">
+                {group.label}
+              </h3>
+              <ul className="space-y-3">
+                {group.orders.map((order) => {
+                  const unseen = isUnseenAdminOrder(order.status, order.id, seen);
+                  return (
+                    <li key={order.id}>
+                      <Link href={`/admin/ordini/${order.id}`} className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 hover:border-halo/50 ${unseen ? "border-ivory bg-ivory/10" : "border-ink-line"}`}>
+                        <span className="flex min-w-0 items-center gap-2">
+                          {unseen ? <NewOrderTag /> : null}
+                          <span>#{order.id.slice(0, 8)} · {order.fulfillment === "pickup" ? "ritiro" : "spedizione"}</span>
+                        </span>
+                        <span className="text-halo-bright">
+                          {orderStatusLabel[order.status as OrderStatus]} ·{" "}
+                          {order.fulfillment === "pickup" &&
+                          order.status !== "completed" &&
+                          order.status !== "cancelled"
+                            ? `da incassare ${formatPrice(order.total_cents / 100)}`
+                            : formatPrice(order.total_cents / 100)}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       </section>
       <section>
         <h2 className="font-display text-3xl">Scorte basse</h2>

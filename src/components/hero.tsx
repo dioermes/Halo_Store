@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { SiteMediaView } from "@/components/site-media";
 import type { SiteAppearance } from "@/lib/site";
@@ -14,6 +15,10 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
   });
   const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.4 });
   const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion ? "0%" : "12%"]);
+  const destination = (button: SiteAppearance["heroButtons"]["shopNow"]) =>
+    button.destinationType === "tag"
+      ? `/catalogo?tag=${encodeURIComponent(button.destination)}`
+      : button.destination;
 
   return (
     <section
@@ -42,6 +47,20 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
           />
         </div>
       </motion.div>
+      <div className="absolute bottom-10 left-5 z-10 flex gap-3 sm:bottom-14 sm:left-10 sm:gap-4">
+        <Link
+          href={destination(appearance.heroButtons.shopNow)}
+          className="flex min-h-11 items-center justify-center border border-white bg-white px-6 text-xs font-semibold tracking-[0.18em] text-ivory transition-colors hover:bg-transparent hover:text-white sm:px-8"
+        >
+          {appearance.heroButtons.shopNow.label}
+        </Link>
+        <Link
+          href={destination(appearance.heroButtons.newIn)}
+          className="flex min-h-11 items-center justify-center border border-white bg-transparent px-6 text-xs font-semibold tracking-[0.18em] text-white transition-colors hover:bg-white hover:text-ivory sm:px-8"
+        >
+          {appearance.heroButtons.newIn.label}
+        </Link>
+      </div>
     </section>
   );
 }

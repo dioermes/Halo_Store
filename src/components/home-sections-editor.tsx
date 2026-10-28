@@ -2,81 +2,28 @@
 
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
-import { createCatalogTagAction, saveHomeSectionInterludeAction } from "@/app/admin/actions";
-import { uploadAdminFile } from "@/lib/admin-upload";
 import {
-  homeSectionSourceOptions,
+  createCatalogTagAction,
+  deleteCatalogTagAction,
+  saveHomeSectionInterludeAction,
+} from "@/app/admin/actions";
+import { uploadAdminFile } from "@/lib/admin-upload";
+import { ambientImages } from "@/lib/products";
+import {
   merchKindFromFile,
-  productsForHomeSection,
   uniqueHomeSectionId,
   type CatalogTag,
   type HomeSection,
-  type HomeSectionSource,
   type SiteMedia,
 } from "@/lib/site";
-import type { Product } from "@/lib/products";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory outline-none";
 
-function optionId(product: Product) {
-  return product.uuid || product.id;
-}
-
-function FeaturedSlots({
-  pool,
-  selected,
-  onChange,
-}: {
-  pool: Product[];
-  selected: string[];
-  onChange: (ids: string[]) => void;
-}) {
-  const slots = [0, 1, 2, 3].map((index) => selected[index] ?? "");
-
-  const choose = (index: number, value: string) => {
-    const next = [...slots];
-    next[index] = value;
-    for (let i = 0; i < next.length; i += 1) {
-      if (i !== index && value && next[i] === value) next[i] = "";
-    }
-    onChange(next.filter(Boolean));
-  };
-
-  if (pool.length === 0) {
-    return (
-      <p className="rounded-xl border border-ink-line bg-ink/50 px-4 py-3 text-sm text-ivory-dim">
-        Quando ci sono capi in questa sezione, qui scegli fino a quattro da mettere in evidenza.
-      </p>
-    );
-  }
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {[0, 1, 2, 3].map((index) => (
-        <label key={index} className="text-sm text-ivory-dim">
-          Posto {index + 1}
-          <select
-            value={slots[index]}
-            onChange={(event) => choose(index, event.target.value)}
-            className={fieldClass}
-          >
-            <option value="">Nessuno</option>
-            {pool.map((product) => {
-              const id = optionId(product);
-              const taken = slots.some((slot, slotIndex) => slotIndex !== index && slot === id);
-              if (taken) return null;
-              return (
-                <option key={id} value={id}>
-                  {product.name}
-                </option>
-              );
-            })}
-          </select>
-        </label>
-      ))}
-    </div>
-  );
+function sectionAssignment(section: HomeSection) {
+  if (section.source === "tag" && section.tagId) return `tag:${section.tagId}`;
+  if (["newArrival", "bestseller", "sale"].includes(section.source)) return section.source;
+  return "";
 }
 
 function SectionInterlude({
@@ -102,13 +49,13 @@ function SectionInterlude({
             onChange(event.target.checked ? media ?? { url: "", kind: "image" } : null);
           }}
         />
-        Passaggio visivo dopo questa sezione
+        Mostra una foto o un video per questa sezione
       </label>
       {enabled ? (
         <>
           <p className="text-sm text-ivory-dim">
-            Foto o video a tutto schermo, come tra i nuovi arrivi e i best seller. Comprimiamo da soli
-            in caricamento.
+            Questo media sarà la copertina cliccabile della sezione. Comprimiamo automaticamente i
+            file caricati.
           </p>
           {media?.url ? (
             <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
@@ -155,18 +102,29 @@ function SectionInterlude({
 
 export function HomeSectionsEditor({
   sections: initial,
-  products,
   tags: initialTags = [],
+  onTagCreated,
+  onTagDeleted,
 }: {
   sections: HomeSection[];
-  products: Product[];
   tags?: CatalogTag[];
+  onTagCreated?: (tag: CatalogTag) => void;
+  onTagDeleted?: (tagId: string) => void;
 }) {
   const [sections, setSections] = useState(initial);
   const [tags, setTags] = useState(initialTags);
   const [newTagLabel, setNewTagLabel] = useState("");
   const [tagBusy, setTagBusy] = useState(false);
-  const list = Array.isArray(products) ? products : [];
+  const [deletingTag, setDeletingTag] = useState<string | null>(null);
+  const [tagError, setTagError] = useState("");
+
+  const availableTag = tags.find(
+    (tag) => !sections.some((section) => sectionAssignment(section) === `tag:${tag.id}`),
+  );
+  const availableSource = (["newArrival", "bestseller", "sale"] as const).find(
+    (source) => !sections.some((section) => sectionAssignment(section) === source),
+  );
+  const canAddSection = sections.length < 4 && Boolean(availableTag || availableSource);
 
   const update = (id: string, patch: Partial<HomeSection>) => {
     setSections((current) =>
@@ -185,18 +143,35 @@ export function HomeSectionsEditor({
   };
 
   const addSection = () => {
+    if (!canAddSection) return;
     setSections((current) => {
       const id = uniqueHomeSectionId("Collezione", current.map((section) => section.id));
+      const nextTag = tags.find(
+        (tag) => !current.some((section) => sectionAssignment(section) === `tag:${tag.id}`),
+      );
+      const nextSource = (["newArrival", "bestseller", "sale"] as const).find(
+        (source) => !current.some((section) => sectionAssignment(section) === source),
+      );
+      const source = nextTag ? "tag" : nextSource ?? "picks";
+      const title =
+        nextTag?.label ??
+        (nextSource
+          ? {
+              newArrival: "Nuovi arrivi",
+              bestseller: "I più venduti",
+              sale: "Saldi",
+            }[nextSource]
+          : "Nuova sezione");
       return [
         ...current,
         {
           id,
-          title: "Nuova sezione",
-          source: "picks" as const,
-          tagId: "",
+          title,
+          source,
+          tagId: nextTag?.id ?? "",
           productIds: [],
           featuredIds: [],
-          interlude: null,
+          interlude: { url: ambientImages.interior, kind: "image" },
         },
       ];
     });
@@ -213,25 +188,71 @@ export function HomeSectionsEditor({
       <div>
         <h3 className="font-display text-2xl">Sezioni della home</h3>
         <p className="mt-2 text-sm leading-relaxed text-ivory-dim">
-          Crea collezioni, togli una sezione fuori stagione o spostala in alto. L&apos;ordine qui è
-          quello che vede chi apre il sito. Puoi anche creare un tag nuovo e usarlo come fonte della
-          sezione: poi lo assegni ai capi nel catalogo.
+          Scegli fino a quattro tag da mostrare come copertine nella home. Ogni copertina apre il
+          catalogo filtrato per quel tag. Puoi cambiare titolo, immagine o video e ordine.
         </p>
       </div>
 
       <div className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
         <p className="font-display text-xl">Tag personalizzati</p>
         <p className="text-sm text-ivory-dim">
-          Servono per una sezione futura, tipo collezione estate. Dopo aver creato il tag, sceglilo
-          in «Cosa mostrare» e spuntalo sui capi nel catalogo.
+          Crea un tag, assegnalo ai capi nel catalogo e poi selezionalo in una delle quattro
+          copertine qui sotto.
         </p>
         {tags.length ? (
-          <p className="text-sm text-ivory">
-            {tags.map((tag) => tag.label).join(" · ")}
-          </p>
+          <ul className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <li
+                key={tag.id}
+                className="inline-flex items-center gap-2 rounded-full border border-ink-line px-3 py-1.5 text-sm"
+              >
+                <span>{tag.label}</span>
+                <button
+                  type="button"
+                  aria-label={`Elimina il tag ${tag.label}`}
+                  title={`Elimina il tag ${tag.label}`}
+                  disabled={deletingTag !== null}
+                  onClick={async () => {
+                    if (
+                      !window.confirm(
+                        `Eliminare il tag «${tag.label}»? Verrà rimosso dai capi e dalle sezioni della home che lo usano.`,
+                      )
+                    ) {
+                      return;
+                    }
+                    setDeletingTag(tag.id);
+                    setTagError("");
+                    try {
+                      await deleteCatalogTagAction(tag.id);
+                      setTags((current) => current.filter((row) => row.id !== tag.id));
+                      setSections((current) =>
+                        current.filter(
+                          (section) => section.source !== "tag" || section.tagId !== tag.id,
+                        ),
+                      );
+                      onTagDeleted?.(tag.id);
+                    } catch (error) {
+                      setTagError(
+                        error instanceof Error ? error.message : "Impossibile eliminare il tag.",
+                      );
+                      setDeletingTag(null);
+                    }
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded-full text-ivory-dim transition-colors hover:bg-red-100 hover:text-red-700 disabled:opacity-40"
+                >
+                  {deletingTag === tag.id ? (
+                    <span className="text-xs">…</span>
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p className="text-sm text-ivory-dim">Nessun tag extra per ora.</p>
         )}
+        {tagError ? <p className="text-sm text-red-700">{tagError}</p> : null}
         <div className="flex flex-wrap gap-2">
           <input
             value={newTagLabel}
@@ -251,6 +272,7 @@ export function HomeSectionsEditor({
                 setTags((current) =>
                   current.some((row) => row.id === tag.id) ? current : [...current, tag],
                 );
+                onTagCreated?.(tag);
                 setNewTagLabel("");
               } finally {
                 setTagBusy(false);
@@ -265,19 +287,12 @@ export function HomeSectionsEditor({
 
       {sections.length === 0 ? (
         <p className="rounded-2xl border border-ink-line bg-ink/40 px-4 py-3 text-sm text-ivory-dim">
-          Nessuna sezione. Aggiungine una e scegli i capi da mostrare.
+          Nessuna sezione visibile. Aggiungine una per scegliere un tag e il relativo media.
         </p>
       ) : null}
 
       {sections.map((section, index) => {
-        const sourceMeta = homeSectionSourceOptions.find((option) => option.id === section.source);
-        const pool = productsForHomeSection(section, list);
-        const sourceValue =
-          section.source === "tag" && section.tagId ? `tag:${section.tagId}` : section.source;
-        const sourceHint =
-          section.source === "tag"
-            ? `Mostra i capi con il tag «${tags.find((tag) => tag.id === section.tagId)?.label ?? "…"}».`
-            : sourceMeta?.hint;
+        const sourceValue = sectionAssignment(section);
 
         return (
           <fieldset key={section.id} className="grid gap-4 rounded-2xl border border-ink-line bg-ink/40 p-5">
@@ -324,78 +339,76 @@ export function HomeSectionsEditor({
             </label>
 
             <label className="text-sm text-ivory-dim">
-              Cosa mostrare
+              Quali capi mostrare?
               <select
                 value={sourceValue}
                 onChange={(event) => {
                   const value = event.target.value;
                   if (value.startsWith("tag:")) {
-                    update(section.id, { source: "tag", tagId: value.slice(4) });
+                    const tag = tags.find((row) => row.id === value.slice(4));
+                    update(section.id, {
+                      source: "tag",
+                      tagId: value.slice(4),
+                      title: tag?.label ?? section.title,
+                    });
                     return;
                   }
-                  update(section.id, { source: value as HomeSectionSource, tagId: "" });
+                  update(section.id, {
+                    source: value as "newArrival" | "bestseller" | "sale",
+                    tagId: "",
+                    title:
+                      value === "newArrival"
+                        ? "Nuovi arrivi"
+                        : value === "bestseller"
+                          ? "I più venduti"
+                          : "Saldi",
+                  });
                 }}
                 className={fieldClass}
               >
-                {homeSectionSourceOptions
-                  .filter((option) => option.id !== "tag")
-                  .map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
+                <option value="" disabled>
+                  Seleziona un tag
+                </option>
+                <option
+                  value="newArrival"
+                  disabled={sections.some(
+                    (row) => row.id !== section.id && sectionAssignment(row) === "newArrival",
+                  )}
+                >
+                  Nuovi arrivi
+                </option>
+                <option
+                  value="bestseller"
+                  disabled={sections.some(
+                    (row) => row.id !== section.id && sectionAssignment(row) === "bestseller",
+                  )}
+                >
+                  I più venduti
+                </option>
+                <option
+                  value="sale"
+                  disabled={sections.some(
+                    (row) => row.id !== section.id && sectionAssignment(row) === "sale",
+                  )}
+                >
+                  Saldi
+                </option>
+                {tags.map((tag) => {
+                  const tagValue = `tag:${tag.id}`;
+                  return (
+                    <option
+                      key={tag.id}
+                      value={tagValue}
+                      disabled={sections.some(
+                        (row) => row.id !== section.id && sectionAssignment(row) === tagValue,
+                      )}
+                    >
+                      {tag.label}
                     </option>
-                  ))}
-                {tags.map((tag) => (
-                  <option key={tag.id} value={`tag:${tag.id}`}>
-                    Tag: {tag.label}
-                  </option>
-                ))}
+                  );
+                })}
               </select>
             </label>
-            <p className="text-sm text-ivory-dim">{sourceHint}</p>
-
-            {section.source === "picks" ? (
-              <div className="max-h-64 overflow-y-auto rounded-xl border border-ink-line bg-ink/50 p-3">
-                {list.length === 0 ? (
-                  <p className="text-sm text-ivory-dim">Nessun capo in catalogo.</p>
-                ) : (
-                  <ul className="grid gap-2">
-                    {list.map((product) => {
-                      const id = optionId(product);
-                      const checked = section.productIds.includes(id);
-                      return (
-                        <li key={id}>
-                          <label className="flex items-center gap-3 text-sm text-ivory">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(event) => {
-                                const productIds = event.target.checked
-                                  ? [...section.productIds, id]
-                                  : section.productIds.filter((item) => item !== id);
-                                update(section.id, {
-                                  productIds,
-                                  featuredIds: section.featuredIds.filter((item) =>
-                                    productIds.includes(item),
-                                  ),
-                                });
-                              }}
-                            />
-                            {product.name}
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            ) : null}
-
-            <p className="text-sm text-ivory-dim">Fino a quattro capi in evidenza sulla home.</p>
-            <FeaturedSlots
-              pool={pool}
-              selected={section.featuredIds}
-              onChange={(featuredIds) => update(section.id, { featuredIds })}
-            />
 
             <SectionInterlude
               sectionId={section.id}
@@ -409,10 +422,15 @@ export function HomeSectionsEditor({
       <button
         type="button"
         onClick={addSection}
-        className="inline-flex w-fit items-center gap-2 rounded-full border border-ink-line px-5 py-2.5 text-sm"
+        disabled={!canAddSection}
+        className="inline-flex w-fit items-center gap-2 rounded-full border border-ink-line px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="h-4 w-4" aria-hidden />
-        Aggiungi una sezione
+        {sections.length >= 4
+          ? "Limite di 4 sezioni raggiunto"
+          : canAddSection
+            ? "Aggiungi una sezione"
+            : "Non ci sono altri tag disponibili"}
       </button>
     </div>
   );

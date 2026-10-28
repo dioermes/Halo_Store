@@ -22,6 +22,7 @@ export type Product = {
   name: string;
   subtitle: string;
   category: CategoryId;
+  categoryIds?: CategoryId[];
   price: number;
   /** Prezzo pieno, presente solo sui capi in promozione */
   compareAt?: number;
@@ -32,6 +33,8 @@ export type Product = {
   care: string;
   description: string;
   image: string;
+  /** Second image principale, selezionata dall'admin per la card */
+  secondaryImage?: string;
   /** Altre viste del capo, usate nel viewer a schermo intero */
   gallery?: string[];
   /** Foto dedicata per ciascuna colorazione, se il titolare l'ha caricata */
@@ -55,6 +58,13 @@ export type ColorLook = {
   /** Filtro CSS per simulare la variante quando non c'e una foto dedicata */
   filter?: string;
 };
+
+export function productHasCategory(
+  product: Pick<Product, "category" | "categoryIds">,
+  categoryId: CategoryId,
+) {
+  return (product.categoryIds?.length ? product.categoryIds : [product.category]).includes(categoryId);
+}
 
 export const fallbackCategories: StoreCategory[] = [
   { id: "top", label: "Top", hint: "T-shirt, camicie, maglieria" },
@@ -749,6 +759,7 @@ export function getGallery(product: Product, color?: string): string[] {
   const preferred = productImageForColor(product, color);
   const extras = [
     product.image,
+    ...(product.secondaryImage ? [product.secondaryImage] : []),
     ...(product.gallery ?? CATEGORY_GALLERY[product.category] ?? CATEGORY_GALLERY.top),
     ...Object.values(product.colorImages ?? {}),
   ].filter((src) => src && src !== preferred);

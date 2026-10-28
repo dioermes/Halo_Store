@@ -27,14 +27,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Iscrizione non disponibile in questo momento." }, { status: 503 });
   }
 
-  const body = (await req.json()) as { email?: string; birthday?: string };
+  const body = (await req.json()) as {
+    email?: string;
+    birthday?: string;
+    source?: string;
+  };
   const email = normalizeEmail(body.email ?? "");
-  const birthday = String(body.birthday ?? "").slice(0, 10);
+  const birthday = body.birthday ? String(body.birthday).slice(0, 10) : null;
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Inserisci una email valida." }, { status: 400 });
   }
-  if (!isValidBirthday(birthday)) {
+  if (birthday && !isValidBirthday(birthday)) {
     return NextResponse.json({ error: "Inserisci una data di compleanno valida." }, { status: 400 });
   }
 
@@ -44,7 +48,7 @@ export async function POST(req: Request) {
 
   const { data: existing, error: existingError } = await admin
     .from("halo_subscribers")
-    .select("email, welcome_email_sent_at, marketing_opt_in")
+    .select("email, birthday, welcome_email_sent_at, marketing_opt_in")
     .eq("email", email)
     .maybeSingle();
 
@@ -59,9 +63,9 @@ export async function POST(req: Request) {
   const { error: upsertError } = await admin.from("halo_subscribers").upsert(
     {
       email,
-      birthday,
+      birthday: birthday ?? existing?.birthday ?? null,
       marketing_opt_in: true,
-      source: "popup",
+      source: body.source === "footer" ? "footer" : "popup",
       updated_at: now,
     },
     { onConflict: "email" },
@@ -69,6 +73,27 @@ export async function POST(req: Request) {
   if (upsertError) {
     console.error("[newsletter subscribe]", upsertError.message);
     return NextResponse.json({ error: "Iscrizione non disponibile in questo momento." }, { status: 500 });
+  }
+
+  if (existing?.marketing_opt_in && existing.welcome_email_sent_at) {
+    return NextResponse.json({ ok: true, already: true, emailed: false });
+  }
+
+  const claimedAt = new Date().toISOString();
+  const { data: claim, error: claimError } = await admin
+    .from("halo_subscribers")
+    .update({ welcome_email_sent_at: claimedAt, updated_at: claimedAt })
+    .eq("email", email)
+    .is("welcome_email_sent_at", null)
+    .select("email")
+    .maybeSingle();
+
+  if (claimError) {
+    console.error("[newsletter welcome claim]", claimError.message);
+    return NextResponse.json({ error: "Iscrizione non disponibile in questo momento." }, { status: 503 });
+  }
+  if (!claim) {
+    return NextResponse.json({ ok: true, already: true, emailed: false });
   }
 
   const { data: customer } = await admin.from("halo_customers").select("id").ilike("email", email).maybeSingle();
@@ -111,24 +136,29 @@ export async function POST(req: Request) {
     email,
     code: settings.newsletterCode,
     percent: settings.newsletterDiscountPercent,
-    birthdayCode: settings.birthdayCode,
-    birthdayPercent: settings.birthdayDiscountPercent,
+    ...(birthday
+      ? {
+          birthdayCode: settings.birthdayCode,
+          birthdayPercent: settings.birthdayDiscountPercent,
+        }
+      : {}),
   });
   if (!sent.ok) {
     console.error("[newsletter welcome]", sent.reason);
+    const { error: releaseError } = await admin
+      .from("halo_subscribers")
+      .update({ welcome_email_sent_at: null, updated_at: new Date().toISOString() })
+      .eq("email", email)
+      .eq("welcome_email_sent_at", claimedAt);
+    if (releaseError) console.error("[newsletter welcome claim release]", releaseError.message);
     return NextResponse.json(
       { error: "Non siamo riusciti a inviarti la mail. Riprova tra poco." },
       { status: 503 },
     );
   }
-  await admin
-    .from("halo_subscribers")
-    .update({ welcome_email_sent_at: now, updated_at: now })
-    .eq("email", email);
-
   return NextResponse.json({
     ok: true,
-    already: Boolean(existing?.marketing_opt_in),
+    already: false,
     emailed: true,
   });
 }

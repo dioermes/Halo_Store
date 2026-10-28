@@ -11,6 +11,12 @@ export type SiteMedia = {
 
 export type SiteMediaSlot = "heroDesktop" | "heroMobile";
 
+export type HeroButton = {
+  label: string;
+  destinationType: "url" | "tag";
+  destination: string;
+};
+
 export type HomeSectionSource = "newArrival" | "bestseller" | "sale" | "picks" | "tag";
 
 export type HomeSection = {
@@ -26,6 +32,11 @@ export type HomeSection = {
 export type SiteAppearance = {
   heroDesktop: SiteMedia;
   heroMobile: SiteMedia;
+  newsletterPopupImage: string;
+  heroButtons: {
+    shopNow: HeroButton;
+    newIn: HeroButton;
+  };
   homeSections: HomeSection[];
   soldOutBadgeBg: string;
   soldOutBadgeFg: string;
@@ -109,7 +120,7 @@ function defaultHomeSections(legacy: {
       tagId: "",
       productIds: [],
       featuredIds: asIdList(legacy.featuredSaleIds).slice(0, 4),
-      interlude: null,
+      interlude: { url: ambientImages.rack, kind: "image" },
     },
   ];
 }
@@ -117,6 +128,11 @@ function defaultHomeSections(legacy: {
 const appearanceDefaults: SiteAppearance = {
   heroDesktop: { url: ambientImages.interior, kind: "image" },
   heroMobile: { url: ambientImages.interior, kind: "image" },
+  newsletterPopupImage: ambientImages.interior,
+  heroButtons: {
+    shopNow: { label: "SHOP NOW", destinationType: "url", destination: "/catalogo" },
+    newIn: { label: "NEW IN", destinationType: "url", destination: "/#nuovi-arrivi" },
+  },
   homeSections: defaultHomeSections({}),
   soldOutBadgeBg: "#dc2626",
   soldOutBadgeFg: "#ffffff",
@@ -222,7 +238,7 @@ function parseHomeSection(value: unknown, usedIds: string[]): HomeSection | null
 export function parseHomeSectionsPayload(value: unknown): HomeSection[] {
   if (!Array.isArray(value)) return [];
   const sections: HomeSection[] = [];
-  for (const item of value.slice(0, 16)) {
+  for (const item of value.slice(0, 4)) {
     const parsed = parseHomeSection(
       item,
       sections.map((section) => section.id),
@@ -240,9 +256,35 @@ function parseHomeSections(row: Record<string, unknown>): HomeSection[] {
 function parseAppearance(value: unknown): SiteAppearance {
   if (!value || typeof value !== "object") return appearanceDefaults;
   const row = value as Record<string, unknown> & Partial<SiteAppearance>;
+  const rawButtons =
+    row.heroButtons && typeof row.heroButtons === "object"
+      ? (row.heroButtons as Record<string, unknown>)
+      : {};
+  const parseButton = (key: "shopNow" | "newIn"): HeroButton => {
+    const raw = rawButtons[key];
+    if (!raw || typeof raw !== "object") return appearanceDefaults.heroButtons[key];
+    const button = raw as Partial<HeroButton>;
+    const destinationType = button.destinationType === "tag" ? "tag" : "url";
+    return {
+      label:
+        typeof button.label === "string" && button.label.trim()
+          ? button.label.trim().slice(0, 24)
+          : appearanceDefaults.heroButtons[key].label,
+      destinationType,
+      destination:
+        typeof button.destination === "string" && button.destination.trim()
+          ? button.destination.trim().slice(0, 500)
+          : appearanceDefaults.heroButtons[key].destination,
+    };
+  };
   return {
     heroDesktop: asMedia(row.heroDesktop, appearanceDefaults.heroDesktop),
     heroMobile: asMedia(row.heroMobile, appearanceDefaults.heroMobile),
+    newsletterPopupImage:
+      typeof row.newsletterPopupImage === "string" && row.newsletterPopupImage.trim()
+        ? row.newsletterPopupImage.trim()
+        : appearanceDefaults.newsletterPopupImage,
+    heroButtons: { shopNow: parseButton("shopNow"), newIn: parseButton("newIn") },
     homeSections: parseHomeSections(row),
     soldOutBadgeBg: asHexColor(
       migrateSoldOutColor(row.soldOutBadgeBg, "#3f1521", appearanceDefaults.soldOutBadgeBg),
@@ -351,6 +393,7 @@ function appearanceMediaUrls(appearance: SiteAppearance) {
   return [
     appearance.heroDesktop.url,
     appearance.heroMobile.url,
+    appearance.newsletterPopupImage,
     ...appearance.homeSections.map((section) => section.interlude?.url ?? ""),
   ];
 }
@@ -450,12 +493,34 @@ export function productsForHomeSection(section: HomeSection, products: Product[]
     .filter((product): product is Product => Boolean(product));
 }
 
+export function catalogTagForHomeSection(section: HomeSection): string | null {
+  if (section.source === "newArrival" || section.source === "bestseller" || section.source === "sale") {
+    return section.source;
+  }
+  if (section.source === "tag" && section.tagId) return section.tagId;
+  return null;
+}
+
+export function isProductInCatalogTag(product: Product, tagId: string) {
+  if (tagId === "newArrival") return Boolean(product.isNewArrival);
+  if (tagId === "bestseller") return Boolean(product.isBestseller);
+  if (tagId === "sale") return Boolean(product.isOnSale);
+  return (product.customTagIds ?? []).includes(tagId);
+}
+
+export function catalogTagLabel(tagId: string, tags: CatalogTag[]) {
+  if (tagId === "newArrival") return "Nuovi arrivi";
+  if (tagId === "bestseller") return "I più venduti";
+  if (tagId === "sale") return "Saldi";
+  return tags.find((tag) => tag.id === tagId)?.label ?? tagId;
+}
+
 export function sanitizeHomeSections(sections: HomeSection[], catalog: Product[]): HomeSection[] {
   const resolve = (id: string) => {
     const product = catalog.find((row) => row.uuid === id || row.id === id);
     return product ? productKey(product) : "";
   };
-  return sections.map((section) => {
+  return sections.slice(0, 4).map((section) => {
     const productIds = [...new Set(section.productIds.map(resolve).filter(Boolean))];
     const featuredIds = [...new Set(section.featuredIds.map(resolve).filter(Boolean))].slice(0, 4);
     const allowed = section.source === "picks" ? new Set(productIds) : null;
@@ -505,6 +570,19 @@ export function addCatalogTag(merch: CatalogMerch, label: string): { merch: Cata
       tagProductIds: { ...merch.tagProductIds, [tag.id]: merch.tagProductIds[tag.id] ?? [] },
     },
     tag,
+  };
+}
+
+export function removeCatalogTag(merch: CatalogMerch, tagId: string): CatalogMerch {
+  if (!merch.tags.some((tag) => tag.id === tagId)) {
+    throw new Error("Tag non trovato.");
+  }
+  const tagProductIds = { ...merch.tagProductIds };
+  delete tagProductIds[tagId];
+  return {
+    ...merch,
+    tags: merch.tags.filter((tag) => tag.id !== tagId),
+    tagProductIds,
   };
 }
 

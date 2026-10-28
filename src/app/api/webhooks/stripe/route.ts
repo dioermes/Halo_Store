@@ -5,6 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { fulfillPaidCheckoutSession } from "@/lib/fulfill-checkout";
 import { sendPaymentFailedEmail } from "@/lib/email";
 import { releasePromoForOrder } from "@/lib/promo";
+import { deliverPaidGiftCards } from "@/lib/gift-cards";
 
 export const runtime = "nodejs";
 
@@ -54,17 +55,36 @@ export async function POST(req: Request) {
 
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const order = await fulfillPaidCheckoutSession(session.id, session);
-      if (!order) {
-        return NextResponse.json({ error: "order missing" }, { status: 404 });
+      if (session.metadata?.order_id) {
+        const order = await fulfillPaidCheckoutSession(session.id, session);
+        if (!order) {
+          return NextResponse.json({ error: "order missing" }, { status: 404 });
+        }
+      }
+      if (
+        session.payment_status === "paid" &&
+        (session.metadata?.gift_card_purchase_id || session.metadata?.gift_card_purchase_ids)
+      ) {
+        await deliverPaidGiftCards(session);
       }
     }
 
     if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.gift_card_purchase_id || session.metadata?.gift_card_purchase_ids) {
+        const purchaseIds = session.metadata.gift_card_purchase_ids
+          ? (JSON.parse(session.metadata.gift_card_purchase_ids) as string[])
+          : [session.metadata.gift_card_purchase_id!];
+        await admin
+          .from("halo_gift_card_purchases")
+          .update({ status: "cancelled" })
+          .in("id", purchaseIds)
+          .eq("status", "pending");
+      }
       const order = await loadOrder(admin, session.id, session.metadata?.order_id);
       if (order && order.status === "pending_payment") {
         await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
+        await admin.rpc("halo_restore_gift_card_hold", { p_order_id: order.id });
         await releasePromoForOrder(order.id);
         await admin
           .from("halo_orders")

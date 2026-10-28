@@ -18,6 +18,7 @@ import {
 import { useCart } from "@/components/reservation-provider";
 import { ProductGallery } from "@/components/product-gallery";
 import { SoldOutLabel } from "@/components/sold-out-label";
+import { FavoriteButton } from "@/components/favorite-button";
 import { useAuth } from "@clerk/nextjs";
 
 export function ProductDetail({
@@ -148,9 +149,18 @@ export function ProductDetail({
           <div className="flex-1 overflow-y-auto px-6 pt-6 pb-5 [scrollbar-width:none] sm:px-10 sm:pt-10 [&::-webkit-scrollbar]:hidden">
             {isProductSoldOut(product) ? <SoldOutLabel className="inline-block" /> : null}
 
-            <TitleTag id={titleId} className="mt-4 font-display text-5xl leading-none">
-              {product.name}
-            </TitleTag>
+            <div className="mt-4 flex items-start justify-between gap-3">
+              <TitleTag id={titleId} className="font-display text-5xl leading-none">
+                {product.name}
+              </TitleTag>
+              {product.uuid ? (
+                <FavoriteButton
+                  productId={product.uuid}
+                  productName={product.name}
+                  className="shrink-0 border border-ink-line bg-ink-soft"
+                />
+              ) : null}
+            </div>
             <p className="mt-3 text-ivory-dim">{product.subtitle}</p>
 
             <div className="mt-5 flex items-baseline gap-3">

@@ -28,6 +28,7 @@ type OrderRow = {
   fulfillment: string;
   total_cents: number;
   shipping_cents: number;
+  gift_card_discount_cents: number;
   customer_id: string;
   shipping_name: string | null;
   shipping_line1: string | null;
@@ -116,6 +117,15 @@ export async function fulfillPaidCheckoutSession(
     if (holdError) {
       console.error("[halo_confirm_holds]", holdError.message);
       throw new Error(`Stock non scalato dopo il pagamento: ${holdError.message}`);
+    }
+    if (order.gift_card_discount_cents > 0) {
+      const { error: giftCardError } = await admin.rpc("halo_consume_gift_card_hold", {
+        p_order_id: order.id,
+      });
+      if (giftCardError) {
+        console.error("[halo_consume_gift_card_hold]", giftCardError.message);
+        throw new Error(`Credito gift card non scalato: ${giftCardError.message}`);
+      }
     }
     const shipping = shippingFromSession(session);
     const address = shipping.address;

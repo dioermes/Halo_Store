@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  /* Sage Green 16-1124 TCX principale · Vintage Wine 4975 C dettagli */
-  --color-ink: #c5cebc;
-  --color-ink-soft: #b7c2b0;
-  --color-ink-line: #8a6a72;
+  /* Fondo bianco, con superfici e bordi neutri. */
+  --color-ink: #ffffff;
+  --color-ink-soft: #f7f6f6;
+  --color-ink-line: #ded8da;
   --color-ivory: #3f1521;
   --color-ivory-dim: #6b3a45;
   --color-halo: #3f1521;
@@ -33,10 +33,7 @@ html::-webkit-scrollbar {
 .halo-page-bg,
 body {
   background-color: var(--color-ink);
-  background-image:
-    radial-gradient(ellipse 90% 48% at 50% -8%, color-mix(in oklab, white 22%, transparent), transparent 58%),
-    radial-gradient(ellipse 55% 42% at 108% 18%, color-mix(in oklab, var(--color-halo) 9%, transparent), transparent 62%),
-    radial-gradient(ellipse 50% 36% at -8% 72%, color-mix(in oklab, var(--color-halo) 7%, transparent), transparent 58%);
+  background-image: none;
   background-attachment: fixed;
 }
 
@@ -94,8 +91,8 @@ input[type="range"] {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
-  column-gap: clamp(1.15rem, 2.6vw, 2.6rem);
-  row-gap: clamp(2.75rem, 5.8vw, 5.25rem);
+  column-gap: clamp(0.35rem, 0.8vw, 0.8rem);
+  row-gap: clamp(2rem, 4vw, 3.5rem);
 }
 
 @media (min-width: 1024px) {
@@ -124,35 +121,6 @@ input[type="range"] {
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--color-halo) 35%, transparent),
     0 0 40px -12px color-mix(in oklab, var(--color-halo) 60%, transparent);
-}
-
-/* I bordi della foto si tingono dello sage della pagina, senza farla diventare trasparente. */
-.halo-card-wash {
-  background:
-    linear-gradient(
-      to top,
-      var(--color-ink) 0%,
-      color-mix(in oklab, var(--color-ink) 55%, transparent) 12%,
-      transparent 28%
-    ),
-    linear-gradient(
-      to bottom,
-      var(--color-ink) 0%,
-      color-mix(in oklab, var(--color-ink) 45%, transparent) 8%,
-      transparent 18%
-    ),
-    linear-gradient(
-      to left,
-      var(--color-ink) 0%,
-      color-mix(in oklab, var(--color-ink) 40%, transparent) 7%,
-      transparent 16%
-    ),
-    linear-gradient(
-      to right,
-      var(--color-ink) 0%,
-      color-mix(in oklab, var(--color-ink) 40%, transparent) 7%,
-      transparent 16%
-    );
 }
 
 /* Scrollbar discreta per i filtri (non quella della pagina). */

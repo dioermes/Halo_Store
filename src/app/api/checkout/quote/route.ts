@@ -4,6 +4,7 @@ import { getPublishedProducts } from "@/lib/catalog";
 import { findVariant } from "@/lib/products";
 import { getStoreSettings } from "@/lib/settings";
 import { resolvePromo } from "@/lib/promo";
+import { quoteGiftCard } from "@/lib/gift-cards";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
 
   const body = (await req.json()) as {
     code?: string;
+    giftCardCode?: string;
     fulfillment?: "pickup" | "shipping";
     items?: Array<{ productId: string; variantId?: string; size: string; color: string; quantity: number }>;
   };
@@ -36,11 +38,31 @@ export async function POST(req: Request) {
 
   const settings = await getStoreSettings();
   const shippingCents = body.fulfillment === "shipping" ? settings.shippingItalyCents : 0;
+  let giftCardCents = 0;
+  let giftCardRemainingCents = 0;
+  if (body.giftCardCode?.trim()) {
+    const giftCard = await quoteGiftCard(body.giftCardCode, subtotalCents + shippingCents);
+    if (!giftCard.ok) {
+      return NextResponse.json({ error: giftCard.error }, { status: 400 });
+    }
+    giftCardCents = giftCard.discountCents;
+    giftCardRemainingCents = giftCard.remainingAfterCents;
+  }
+  if (!body.code?.trim()) {
+    return NextResponse.json({
+      giftCardCode: body.giftCardCode ? body.giftCardCode.trim().toUpperCase() : null,
+      giftCardCents,
+      remainingAfterCents: giftCardRemainingCents,
+      subtotalCents,
+      shippingCents,
+      totalCents: subtotalCents + shippingCents - giftCardCents,
+    });
+  }
   const email = user.emailAddresses[0]?.emailAddress ?? "";
   const resolved = await resolvePromo({
     email,
     code: body.code ?? "",
-    subtotalCents,
+    subtotalCents: Math.max(0, subtotalCents - Math.min(subtotalCents, giftCardCents)),
     shippingCents,
     paidOnline: body.fulfillment === "shipping",
     settings,
@@ -55,7 +77,9 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ...resolved.quote,
     subtotalCents,
+    giftCardCents,
+    remainingAfterCents: giftCardRemainingCents,
     shippingCents,
-    totalCents: subtotalCents + shippingCents - resolved.quote.discountCents,
+    totalCents: subtotalCents + shippingCents - giftCardCents - resolved.quote.discountCents,
   });
 }

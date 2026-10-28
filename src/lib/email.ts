@@ -151,6 +151,41 @@ export async function sendOrderPaidEmail(order: OrderEmail) {
   );
 }
 
+export async function sendGiftCardEmail({
+  email,
+  code,
+  amount,
+}: {
+  email: string;
+  code: string;
+  amount: string;
+}): Promise<SendEmailResult> {
+  const card = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;border-collapse:separate;">
+    <tr>
+      <td style="padding:26px 22px;background-color:#c5cebc;background-image:linear-gradient(140deg,#dfe4d6,#c5cebc 52%,#9fae95);border:1px solid #9fae95;border-radius:20px;box-shadow:0 12px 28px rgba(40,20,30,.18);">
+        <p style="margin:0;color:#65203a;font-family:Arial,sans-serif;font-size:10px;letter-spacing:.28em;text-transform:uppercase;">Halo Store · Conversano</p>
+        <p style="margin:26px 0 4px;color:#65203a;font-family:Georgia,'Times New Roman',serif;font-size:28px;">Gift card</p>
+        <p style="margin:0;color:#65203a;font-family:Georgia,'Times New Roman',serif;font-size:22px;">${esc(amount)}</p>
+        <p style="margin:28px 0 0;padding:13px 10px;background-color:#65203a;border-radius:8px;color:#f4f0e6;font-family:Courier New,monospace;font-size:16px;letter-spacing:.12em;text-align:center;">${esc(code)}</p>
+      </td>
+    </tr>
+  </table>`;
+  const result = await send(
+    email,
+    `La tua gift card Halo Store · ${amount}`,
+    haloEmail({
+      preheader: `La tua gift card Halo Store da ${amount} è pronta.`,
+      title: "Un regalo da condividere.",
+      body: `<p style="margin:0 0 16px;">${hello()} grazie per aver scelto Halo Store. La gift card è pronta: puoi inoltrare questa email alla persona a cui vuoi regalarla.</p>
+        ${card}
+        <p style="margin:0 0 12px;"><strong>Credito iniziale:</strong> ${esc(amount)}</p>
+        <p style="margin:0;">Il codice può essere inserito al checkout e utilizzato anche in più ordini. Ogni acquisto scala il credito usato; il saldo residuo resta disponibile finché non viene esaurito. È utilizzabile sui prodotti e cumulabile con gli altri codici sconto.</p>`,
+      cta: { href: `${siteUrl()}/catalogo`, label: "Scopri il catalogo" },
+    }),
+  );
+  return result;
+}
+
 export async function sendPickupReservedEmail(order: OrderEmail) {
   const when = order.pickupLabel
     ? `<p style="margin:14px 0 0;">Ritiro prenotato: <strong>${esc(order.pickupLabel)}</strong>.</p>`
@@ -333,9 +368,13 @@ export async function sendNewsletterWelcomeEmail(opts: {
   email: string;
   code: string;
   percent: number;
-  birthdayPercent: number;
-  birthdayCode: string;
+  birthdayPercent?: number;
+  birthdayCode?: string;
 }): Promise<SendEmailResult> {
+  const birthdayOffer =
+    opts.birthdayCode && opts.birthdayPercent
+      ? `<p style="margin:0;">Il giorno del compleanno ti scriviamo di nuovo: codice <strong>${esc(opts.birthdayCode)}</strong>, ${opts.birthdayPercent}% una volta sola.</p>`
+      : "";
   return send(
     opts.email,
     `Il tuo codice ${opts.code} · ${storeConfig.name}`,
@@ -347,7 +386,7 @@ export async function sendNewsletterWelcomeEmail(opts: {
         <p style="margin:0 0 8px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5C2432;">Codice benvenuto</p>
         <p style="margin:0 0 18px;font-family:Georgia,serif;font-size:32px;letter-spacing:.08em;">${esc(opts.code)}</p>
         <p style="margin:0 0 14px;">Sconto <strong>${opts.percent}%</strong> sul subtotale dei capi. Lo stesso codice vale per tutti gli iscritti, ma ciascuno lo può usare una volta.</p>
-        <p style="margin:0;">Il giorno del compleanno ti scriviamo di nuovo: codice <strong>${esc(opts.birthdayCode)}</strong>, ${opts.birthdayPercent}% una volta sola, nei giorni intorno alla data che ci hai lasciato.</p>`,
+        ${birthdayOffer}`,
       cta: { href: `${siteUrl()}/catalogo`, label: "Vai al catalogo" },
       extra: promoUnsub(opts.email),
     }),

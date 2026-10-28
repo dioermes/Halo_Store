@@ -12,7 +12,7 @@ export type PromoQuote = {
 
 export type SubscriberRow = {
   email: string;
-  birthday: string;
+  birthday: string | null;
   marketing_opt_in: boolean;
   welcome_email_sent_at: string | null;
   welcome_redeemed_at: string | null;
@@ -47,7 +47,8 @@ function isLeap(year: number) {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
-function parseIsoDate(value: string) {
+function parseIsoDate(value: string | null) {
+  if (!value) return null;
   const match = value.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
   const year = Number(match[1]);
@@ -71,21 +72,26 @@ export function isValidBirthday(value: string) {
   return birth <= now && birth >= min;
 }
 
-function birthdayOnYear(birthday: string, year: number) {
+function birthdayOnYear(birthday: string | null, year: number) {
   const parsed = parseIsoDate(birthday);
   if (!parsed) return null;
-  let { month, day } = parsed;
+  const { month } = parsed;
+  let { day } = parsed;
   if (month === 2 && day === 29 && !isLeap(year)) day = 28;
   return { year, month, day };
 }
 
-export function isBirthdayToday(birthday: string, today = romeYmd()) {
+export function isBirthdayToday(birthday: string | null, today = romeYmd()) {
   const [year, month, day] = today.split("-").map(Number);
   const on = birthdayOnYear(birthday, year);
   return Boolean(on && on.month === month && on.day === day);
 }
 
-export function isInBirthdayWindow(birthday: string, validDays: number, today = romeYmd()) {
+export function isInBirthdayWindow(
+  birthday: string | null,
+  validDays: number,
+  today = romeYmd(),
+) {
   const [year, month, day] = today.split("-").map(Number);
   const on = birthdayOnYear(birthday, year);
   if (!on) return false;

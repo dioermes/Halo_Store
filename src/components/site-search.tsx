@@ -73,7 +73,7 @@ export function SiteSearch({
               <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-10 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+          <div className="mt-10 min-h-0 flex-1 overflow-y-auto px-5 pb-10 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
             <div className="mx-auto max-w-7xl">
               {query.trim().length < 2 ? (
                 <p className="text-sm text-ivory-dim">

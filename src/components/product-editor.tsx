@@ -39,6 +39,7 @@ function draftsFromProduct(product?: Product): {
   sizes: string[];
   colors: ColorDraft[];
   cover: string;
+  secondaryImage: string;
 } {
   if (!product) {
     const sizes = ["S", "M", "L"];
@@ -46,6 +47,7 @@ function draftsFromProduct(product?: Product): {
       sizes,
       colors: [{ key: "color-0", name: "", imageUrl: "", stocks: emptyStocks(sizes) }],
       cover: "",
+      secondaryImage: "",
     };
   }
 
@@ -66,6 +68,7 @@ function draftsFromProduct(product?: Product): {
       ),
     })),
     cover: product.image || "",
+    secondaryImage: product.secondaryImage || "",
   };
 }
 
@@ -255,12 +258,14 @@ export function ProductEditor({
   saved = false,
   categories: initialCategories,
   tags: initialTags = [],
+  existingBadges = [],
 }: {
   product?: Product;
   productId?: string;
   saved?: boolean;
   categories?: StoreCategory[];
   tags?: CatalogTag[];
+  existingBadges?: string[];
 }) {
   const router = useRouter();
   const [saveState, formAction, saving] = useActionState(saveProductAction, { error: "" } satisfies SaveProductState);
@@ -270,7 +275,10 @@ export function ProductEditor({
   const [slug, setSlug] = useState(product?.id ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
   const [subtitle, setSubtitle] = useState(product?.subtitle ?? "");
-  const [category, setCategory] = useState(product?.category ?? "top");
+  const [categoryIds, setCategoryIds] = useState<string[]>(
+    product?.categoryIds?.length ? product.categoryIds : [product?.category ?? "top"],
+  );
+  const category = categoryIds[0] ?? "top";
   const [categoryList, setCategoryList] = useState<StoreCategory[]>(() => {
     const list = initialCategories?.length ? [...initialCategories] : [...fallbackCategories];
     if (product?.category && !list.some((row) => row.id === product.category)) {
@@ -296,6 +304,7 @@ export function ProductEditor({
   const [tagBusy, setTagBusy] = useState(false);
   const [searchKeywords, setSearchKeywords] = useState(product?.searchKeywords ?? "");
   const [cover, setCover] = useState(initial.cover);
+  const [secondaryImage, setSecondaryImage] = useState(initial.secondaryImage);
   const [sizes, setSizes] = useState(initial.sizes);
   const [newSize, setNewSize] = useState("");
   const [colors, setColors] = useState(initial.colors);
@@ -323,10 +332,10 @@ export function ProductEditor({
 
   const extras = useMemo(() => {
     const used = new Set(
-      [cover, ...colors.map((color) => color.imageUrl)].filter(Boolean),
+      [cover, secondaryImage, ...colors.map((color) => color.imageUrl)].filter(Boolean),
     );
     return (product?.gallery ?? []).filter((url) => url && !used.has(url));
-  }, [cover, colors, product?.gallery]);
+  }, [cover, secondaryImage, colors, product?.gallery]);
 
   const variants = colors.flatMap((color) =>
     color.name.trim()
@@ -470,6 +479,7 @@ export function ProductEditor({
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="subtitle" value={subtitle} />
         <input type="hidden" name="category" value={category} />
+        <input type="hidden" name="categoryIds" value={JSON.stringify(categoryIds)} />
         <input type="hidden" name="categoryLabel" value={selectedCategory?.label ?? ""} />
         <input type="hidden" name="categoryHint" value={selectedCategory?.hint ?? ""} />
         <input type="hidden" name="price" value={price === "" ? "0" : String(price)} />
@@ -497,6 +507,7 @@ export function ProductEditor({
           name="imagesJson"
           value={JSON.stringify({
             cover,
+            secondaryImage,
             extras,
             colors: colors
               .filter((color) => color.name.trim())
@@ -569,8 +580,8 @@ export function ProductEditor({
             Tipologia
             <CategoryPicker
               categories={categoryList}
-              value={category}
-              onChange={setCategory}
+              value={categoryIds}
+              onChange={setCategoryIds}
               onCategoriesChange={setCategoryList}
             />
           </label>
@@ -583,6 +594,28 @@ export function ProductEditor({
               className={fieldClass}
             />
           </label>
+          {existingBadges.length > 0 ? (
+            <div className="-mt-3 grid gap-2">
+              <p className="text-xs text-ivory-dim">Etichette già usate in vetrina — selezionane una:</p>
+              <div className="flex flex-wrap gap-2">
+                {existingBadges.map((label) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={badge.trim().toLocaleLowerCase("it") === label.toLocaleLowerCase("it")}
+                    onClick={() => setBadge(label)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                      badge.trim().toLocaleLowerCase("it") === label.toLocaleLowerCase("it")
+                        ? "border-halo bg-halo text-ink"
+                        : "border-ink-line text-ivory-dim hover:border-halo hover:text-ivory"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <label className="text-sm text-ivory-dim">
             Descrizione
             <textarea
@@ -786,7 +819,7 @@ export function ProductEditor({
           <div>
             <h3 className="font-display text-2xl">Foto di copertina</h3>
             <p className="mt-1 text-sm text-ivory-dim">
-              È la foto della card in vetrina. Dopo il caricamento la sposti e la zoomi per centrarla.
+              È la prima foto della card in vetrina. Dopo il caricamento la sposti e la zoomi per centrarla.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -811,6 +844,42 @@ export function ProductEditor({
                 label="Rimuovi"
                 tone="danger"
                 onClick={() => setCover("")}
+              />
+            )}
+          </div>
+        </section>
+
+        <section className="grid gap-4 rounded-2xl border border-ink-line bg-ink/40 p-5">
+          <div>
+            <h3 className="font-display text-2xl">Seconda foto principale</h3>
+            <p className="mt-1 text-sm text-ivory-dim">
+              È la seconda immagine mostrata al passaggio del mouse o scorrendo le foto. Le altre foto, incluse quelle dei colori, seguono dopo.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative h-28 w-24 overflow-hidden rounded-xl border border-ink-line">
+              <PreviewShot src={secondaryImage} alt="Seconda foto principale" />
+            </div>
+            <PhotoButton
+              label={secondaryImage ? "Sostituisci" : "Carica"}
+              uploading={uploading === "secondaryImage"}
+              onFile={(file) => openCropForFile(file, "secondaryImage", setSecondaryImage)}
+            />
+            {secondaryImage && (
+              <WordButton
+                icon={Move}
+                label="Inquadra"
+                onClick={() =>
+                  openCropForUrl(secondaryImage, "secondaryImage", setSecondaryImage)
+                }
+              />
+            )}
+            {secondaryImage && (
+              <WordButton
+                icon={Trash2}
+                label="Rimuovi"
+                tone="danger"
+                onClick={() => setSecondaryImage("")}
               />
             )}
           </div>

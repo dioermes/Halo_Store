@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
 import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
+import { useFavorites } from "@/components/favorites-provider";
 import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
 import { SiteSearch } from "@/components/site-search";
 import { adminNav, isAdminNavActive } from "@/lib/admin-nav";
@@ -30,13 +31,16 @@ export function SiteNav({
           { href: "/#best-seller", label: "I più venduti" },
           { href: "/#saldi", label: "Saldi" },
         ];
-  const links = inAdmin ? adminNav : storefrontLinks;
+  const links = inAdmin
+    ? adminNav
+    : [...storefrontLinks, { href: "/#gift-card", label: "Gift card" }];
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const { count, openBag, lastAdded } = useReservation();
   const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+  const { count: favoritesCount } = useFavorites();
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -51,7 +55,6 @@ export function SiteNav({
   useEffect(() => {
     setMenuOpen(false);
     setSearchOpen(false);
-    setAccountOpen(false);
     setCatalogOpen(false);
   }, [pathname]);
 
@@ -63,21 +66,34 @@ export function SiteNav({
   }, [menuOpen]);
 
   const iconBtn =
-    "flex h-11 w-11 items-center justify-center rounded-full text-ivory transition-colors duration-500 hover:bg-ivory/15 hover:text-halo-bright";
-  const cluster =
-    "pointer-events-auto relative z-20 flex items-center rounded-full border border-ivory/12 bg-ink/75 p-0.5 shadow-[0_8px_30px_rgba(63,21,33,0.18)] backdrop-blur-md";
+    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-ivory transition-colors duration-500 hover:text-halo-bright";
 
   return (
     <>
-      <header className="halo-nav-in pointer-events-none fixed inset-x-0 top-0 z-[100] overflow-visible">
-        <nav className="relative mx-auto flex max-w-[84rem] items-start justify-between px-4 pt-3 sm:px-8 sm:pt-4">
-          <div className={cluster}>
+      <header className="halo-nav-in pointer-events-none absolute inset-x-0 top-0 z-[100] overflow-visible">
+        <nav className="mx-auto flex max-w-[84rem] items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4">
+          <Link
+            href="/"
+            className="pointer-events-auto relative z-10 shrink-0"
+            aria-label="Halo Store, torna alla home"
+          >
+            {inAdmin ? (
+              <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
+            ) : (
+              <HaloLogoOriginal
+                className={`w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.28)] ${
+                  pathname === "/"
+                    ? "h-32 md:h-44"
+                    : "h-[5.75rem] sm:h-28 md:h-36"
+                }`}
+              />
+            )}
+          </Link>
+
+          <div className="pointer-events-auto relative z-20 flex items-center">
             <button
               type="button"
-              onClick={() => {
-                setAccountOpen(false);
-                setMenuOpen(true);
-              }}
+              onClick={() => setMenuOpen(true)}
               className={iconBtn}
               aria-label="Apri il menu"
             >
@@ -87,7 +103,6 @@ export function SiteNav({
               <button
                 type="button"
                 onClick={() => {
-                  setAccountOpen(false);
                   setSearchOpen(true);
                 }}
                 className={iconBtn}
@@ -96,29 +111,30 @@ export function SiteNav({
                 <Search className="h-5 w-5" aria-hidden />
               </button>
             ) : null}
-          </div>
-
-          <Link
-            href="/"
-            className="pointer-events-auto absolute left-1/2 top-1 z-10 -translate-x-1/2 sm:top-0"
-            aria-label="Halo Store, torna alla home"
-          >
-            {inAdmin ? (
-              <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
-            ) : (
-              <HaloLogoOriginal className="h-[5.75rem] w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.28)] sm:h-28 md:h-36" />
-            )}
-          </Link>
-
-          <div className={cluster}>
-            <AccountMenu
-              open={accountOpen}
-              onOpenChange={(next) => {
-                if (next) setSearchOpen(false);
-                setAccountOpen(next);
-              }}
-              iconClass={iconBtn}
-            />
+            <Link
+              href={
+                isSignedIn
+                  ? "/account/preferiti"
+                  : "/sign-in?redirect_url=%2Faccount%2Fpreferiti"
+              }
+              className={`relative ${iconBtn}`}
+              aria-label={`Preferiti${favoritesCount ? `, ${favoritesCount} capi` : ""}`}
+            >
+              <Heart className="h-5 w-5" aria-hidden />
+              <AnimatePresence>
+                {favoritesCount > 0 ? (
+                  <motion.span
+                    key="favorites-count"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-halo px-1 text-[10px] font-medium text-ink"
+                  >
+                    {favoritesCount}
+                  </motion.span>
+                ) : null}
+              </AnimatePresence>
+            </Link>
             <button
               type="button"
               onClick={openBag}
@@ -162,24 +178,33 @@ export function SiteNav({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-ink/95 backdrop-blur-xl"
+            className="fixed inset-0 z-[110] bg-ivory/20 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
             aria-label="Menu di navigazione"
+            onClick={() => setMenuOpen(false)}
           >
-            <div className="flex h-16 items-center justify-between px-5 sm:h-20 sm:px-10">
-              <p className="text-xs uppercase tracking-[0.32em] text-ivory-dim">Menu</p>
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-line"
-                aria-label="Chiudi il menu"
-                autoFocus
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </button>
-            </div>
-            <ul className="flex max-h-[calc(100dvh-5rem)] flex-col gap-2 overflow-y-auto px-6 pt-6 sm:px-10">
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="ml-auto h-full w-full max-w-xl overflow-y-auto bg-ink/95 backdrop-blur-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex h-16 items-center justify-between px-5 sm:h-20 sm:px-10">
+                <p className="text-xs uppercase tracking-[0.32em] text-ivory-dim">Menu</p>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-line"
+                  aria-label="Chiudi il menu"
+                  autoFocus
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+              <ul className="flex flex-col gap-2 px-6 pt-6 sm:px-10">
               {links.map((link, index) => {
                 const active = inAdmin && isAdminNavActive(link.href, pathname);
                 return (
@@ -274,7 +299,7 @@ export function SiteNav({
                   </Link>
                 </motion.li>
               ) : null}
-              {!inAdmin && !isSignedIn ? (
+              {!isSignedIn ? (
                 <>
                 <motion.li
                   initial={{ opacity: 0, y: 24 }}
@@ -304,99 +329,46 @@ export function SiteNav({
                 </motion.li>
                 </>
               ) : null}
-            </ul>
+              {isSignedIn ? (
+                <>
+                  <motion.li
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                  >
+                    <Link
+                      href="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="block border-b border-ink-line py-5 font-display text-4xl"
+                    >
+                      Account
+                    </Link>
+                  </motion.li>
+                  <motion.li
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.36, duration: 0.5 }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        void signOut({ redirectUrl: "/" });
+                      }}
+                      className="block w-full border-b border-ink-line py-5 text-left font-display text-4xl"
+                    >
+                      Esci
+                    </button>
+                  </motion.li>
+                </>
+              ) : null}
+              </ul>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <SiteSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
-  );
-}
-
-function AccountMenu({
-  open,
-  onOpenChange,
-  iconClass,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  iconClass: string;
-}) {
-  const { signOut } = useClerk();
-  const { isSignedIn } = useAuth();
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) onOpenChange(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange(false);
-    };
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onOpenChange]);
-
-  const itemClass = "block w-full px-4 py-2.5 text-left text-sm text-ivory hover:bg-ivory/10";
-
-  return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        className={iconClass}
-        aria-label="Account"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => onOpenChange(!open)}
-      >
-        <User className="h-5 w-5" aria-hidden />
-      </button>
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
-            role="menu"
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] min-w-44 overflow-hidden rounded-2xl border border-ink-line bg-ink py-1 shadow-lg"
-          >
-            {!isSignedIn ? (
-              <>
-                <Link href="/sign-in" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                  Accedi
-                </Link>
-                <Link href="/sign-up" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                  Registrati
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/account" role="menuitem" onClick={() => onOpenChange(false)} className={itemClass}>
-                  Account
-                </Link>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={itemClass}
-                  onClick={() => {
-                    onOpenChange(false);
-                    void signOut({ redirectUrl: "/" });
-                  }}
-                >
-                  Esci
-                </button>
-              </>
-            )}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
   );
 }

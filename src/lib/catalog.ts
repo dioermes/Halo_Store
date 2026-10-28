@@ -11,7 +11,12 @@ import {
   type Product,
   type ProductVariant,
 } from "@/lib/products";
-import { applyCategoryOverride, getProductCategoryOverrides } from "@/lib/categories";
+import {
+  applyCategoryOverride,
+  getProductCategoryIds,
+  getProductCategoryOverrides,
+  type ProductCategoryOverrides,
+} from "@/lib/categories";
 import { applyCatalogMerch, getCatalogMerch } from "@/lib/site";
 
 export { findVariant } from "@/lib/products";
@@ -59,7 +64,7 @@ function imageColor(row: ImageRow) {
 
 export function mapProductRow(
   row: ProductRow,
-  overrides: Record<string, string> = {},
+  overrides: ProductCategoryOverrides = {},
 ): Product {
   const images = [...(row.halo_product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -95,6 +100,7 @@ export function mapProductRow(
     name: row.name,
     subtitle: row.subtitle,
     category: applyCategoryOverride(row.id, row.category, overrides),
+    categoryIds: getProductCategoryIds(row.id, row.category, overrides),
     price: row.price_cents / 100,
     compareAt: row.compare_at_cents ? row.compare_at_cents / 100 : undefined,
     sizes: sizes.length > 0 ? sizes : ["Taglia unica"],
@@ -104,7 +110,8 @@ export function mapProductRow(
     care: row.care,
     description: row.description,
     image: cover,
-    gallery: [...general.map((image) => image.url), ...Object.values(colorImages)],
+    secondaryImage: general[1]?.url,
+    gallery: [...general.slice(2).map((image) => image.url), ...Object.values(colorImages)],
     colorImages,
     badge: row.badge ?? undefined,
     stock,
@@ -181,4 +188,3 @@ export async function getProductAdmin(id: string): Promise<Product | null> {
   ]);
   return data ? applyCatalogMerch([mapProductRow(data as ProductRow, overrides)], merch)[0] : null;
 }
-

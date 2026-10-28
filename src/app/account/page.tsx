@@ -3,8 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase";
 import { ensureCustomer, isOwnerUser } from "@/lib/auth";
-import { formatPrice } from "@/lib/products";
-import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
+import { AccountSections } from "@/components/account-sections";
 
 export default async function AccountPage() {
   const user = await currentUser();
@@ -19,17 +18,49 @@ export default async function AccountPage() {
     created_at: string;
     tracking_code: string | null;
   }> = [];
+  let giftCards: Array<{
+    id: string;
+    code: string;
+    initial_balance_cents: number;
+    balance_cents: number;
+  }> = [];
 
   try {
     customer = await ensureCustomer(user);
     const admin = createAdminClient();
-    const { data } = await admin
+    const { data, error: ordersError } = await admin
       .from("halo_orders")
       .select("id, status, fulfillment, total_cents, created_at, tracking_code")
       .eq("customer_id", customer.id)
       .neq("status", "pending_payment")
       .order("created_at", { ascending: false });
+    if (ordersError) throw new Error(ordersError.message);
     orders = data ?? [];
+
+    if (orders.length > 0) {
+      const { data: redemptions, error: redemptionsError } = await admin
+        .from("halo_gift_card_transactions")
+        .select("gift_card_id")
+        .in(
+          "order_id",
+          orders.map((order) => order.id),
+        )
+        .eq("transaction_type", "redeem");
+      if (redemptionsError) throw new Error(redemptionsError.message);
+
+      const redeemedCardIds = [
+        ...new Set((redemptions ?? []).map((redemption) => redemption.gift_card_id)),
+      ];
+      if (redeemedCardIds.length > 0) {
+        const { data: redeemedCards, error: cardsError } = await admin
+          .from("halo_gift_cards")
+          .select("id, code, initial_balance_cents, balance_cents")
+          .in("id", redeemedCardIds)
+          .order("created_at", { ascending: false });
+        if (cardsError) throw new Error(cardsError.message);
+        giftCards = redeemedCards ?? [];
+      }
+    }
   } catch {
     return (
       <section className="mx-auto max-w-xl px-5 py-28">
@@ -58,37 +89,7 @@ export default async function AccountPage() {
         </Link>
       </p>
 
-      <h2 className="mt-16 font-display text-4xl">Ordini</h2>
-      <ul className="mt-6 space-y-4">
-        {(orders ?? []).length === 0 && (
-          <li className="text-ivory-dim">Nessun ordine ancora. Il catalogo è a un tocco di distanza.</li>
-        )}
-        {(orders ?? []).map((order) => (
-          <li key={order.id}>
-            <Link
-              href={`/account/ordini/${order.id}`}
-              className="block rounded-2xl border border-ink-line p-5 transition-colors hover:border-halo/50"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <p className="font-display text-2xl">#{order.id.slice(0, 8)}</p>
-                <p className="text-sm text-halo-bright">
-                  {orderStatusLabel[order.status as OrderStatus]}
-                </p>
-              </div>
-              <p className="mt-2 text-sm text-ivory-dim">
-                {order.fulfillment === "pickup" ? "Ritiro in negozio" : "Spedizione"} ·{" "}
-                {order.fulfillment === "pickup" &&
-                order.status !== "completed" &&
-                order.status !== "cancelled"
-                  ? `Da pagare in negozio ${formatPrice(order.total_cents / 100)}`
-                  : formatPrice(order.total_cents / 100)}
-                {order.tracking_code ? ` · tracking ${order.tracking_code}` : ""}
-              </p>
-              <p className="mt-3 text-xs text-halo-bright">Vedi i dettagli</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <AccountSections orders={orders} giftCards={giftCards} />
     </section>
   );
 }

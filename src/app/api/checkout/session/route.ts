@@ -12,6 +12,8 @@ import { sendOwnerNewOrderEmail, sendPickupReservedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/whatsapp";
 import { settleCustomerPendingPayments, type FulfilledOrder } from "@/lib/fulfill-checkout";
 import { releasePromoForOrder, reservePromo, resolvePromo } from "@/lib/promo";
+import { quoteGiftCard } from "@/lib/gift-cards";
+import { GIFT_CARD_AMOUNTS_EUR } from "@/lib/gift-card-constants";
 
 type CartPayload = {
   productId: string;
@@ -20,6 +22,77 @@ type CartPayload = {
   color: string;
   quantity: number;
 };
+
+type CheckoutProductLine = {
+  productName: string;
+  size: string;
+  color: string;
+  quantity: number;
+  unitPriceCents: number;
+};
+
+function discountedProductLineItems(
+  lines: CheckoutProductLine[],
+  discountCents: number,
+  subtotalCents: number,
+) {
+  const units = lines.flatMap((line) =>
+    Array.from({ length: line.quantity }, () => ({
+      line,
+      baseCents: line.unitPriceCents,
+      discountCents: 0,
+      remainder: BigInt(0),
+    })),
+  );
+  if (discountCents > 0) {
+    let allocated = 0;
+    for (const unit of units) {
+      const numerator = BigInt(discountCents) * BigInt(unit.baseCents);
+      unit.discountCents = Number(numerator / BigInt(subtotalCents));
+      unit.remainder = numerator % BigInt(subtotalCents);
+      allocated += unit.discountCents;
+    }
+    const remaining = discountCents - allocated;
+    const byRemainder = units
+      .map((unit, index) => ({ index, remainder: unit.remainder }))
+      .sort((left, right) =>
+        left.remainder === right.remainder ? left.index - right.index :
+          left.remainder > right.remainder ? -1 : 1,
+      );
+    for (let index = 0; index < remaining; index += 1) {
+      units[byRemainder[index].index].discountCents += 1;
+    }
+  }
+
+  const groups = new Map<
+    string,
+    { line: CheckoutProductLine; unitAmountCents: number; quantity: number }
+  >();
+  for (const unit of units) {
+    const unitAmountCents = unit.baseCents - unit.discountCents;
+    const key = JSON.stringify([
+      unit.line.productName,
+      unit.line.size,
+      unit.line.color,
+      unitAmountCents,
+    ]);
+    const group = groups.get(key);
+    if (group) group.quantity += 1;
+    else groups.set(key, { line: unit.line, unitAmountCents, quantity: 1 });
+  }
+
+  return [...groups.values()].map(({ line, unitAmountCents, quantity }) => ({
+    quantity,
+    price_data: {
+      currency: "eur" as const,
+      unit_amount: unitAmountCents,
+      product_data: {
+        name: line.productName,
+        description: `${line.size} · ${line.color}`,
+      },
+    },
+  }));
+}
 
 function sameCart(
   order: FulfilledOrder,
@@ -66,7 +139,28 @@ async function handleCheckout(req: Request) {
       province: string;
     };
     promoCode?: string;
+    giftCardCode?: string;
+    giftCardAmounts?: number[];
   };
+
+  const giftCardAmounts = body.giftCardAmounts ?? [];
+  if (
+    !Array.isArray(giftCardAmounts) ||
+    giftCardAmounts.length > 10 ||
+    giftCardAmounts.some(
+      (amountCents) =>
+        !Number.isSafeInteger(amountCents) ||
+        !GIFT_CARD_AMOUNTS_EUR.some((amount) => amount * 100 === amountCents),
+    )
+  ) {
+    return NextResponse.json({ error: "Scegli un importo gift card disponibile." }, { status: 400 });
+  }
+  if (giftCardAmounts.length > 0 && body.fulfillment === "pickup") {
+    return NextResponse.json(
+      { error: "Con il ritiro, prenota prima i capi e acquista poi le gift card online." },
+      { status: 400 },
+    );
+  }
 
   if (!body.items?.length) {
     return NextResponse.json({ error: "Il carrello è vuoto." }, { status: 400 });
@@ -143,37 +237,25 @@ async function handleCheckout(req: Request) {
     });
   }
 
-  if (alreadyPaid && sameCart(alreadyPaid, lines)) {
+  if (alreadyPaid && sameCart(alreadyPaid, lines) && giftCardAmounts.length === 0) {
     return NextResponse.json({ alreadyPaid: true, orderId: alreadyPaid.id });
   }
 
   const subtotal = lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0);
   const shippingCents = body.fulfillment === "shipping" ? settings.shippingItalyCents : 0;
+  const giftCardQuote = body.giftCardCode?.trim()
+    ? await quoteGiftCard(body.giftCardCode, subtotal + shippingCents)
+    : null;
+  if (giftCardQuote && !giftCardQuote.ok) {
+    return NextResponse.json({ error: giftCardQuote.error }, { status: 400 });
+  }
+  let giftCardCents = giftCardQuote?.ok ? giftCardQuote.discountCents : 0;
+  let giftCardId = giftCardQuote?.ok ? giftCardQuote.giftCardId : null;
   let discountCents = 0;
   let discountCode: string | null = null;
   let discountKind: "newsletter" | "birthday" | null = null;
 
-  if (body.promoCode?.trim()) {
-    const resolved = await resolvePromo({
-      email: customer.email,
-      code: body.promoCode,
-      subtotalCents: subtotal,
-      shippingCents,
-      paidOnline: body.fulfillment === "shipping",
-      settings,
-    });
-    if (!resolved.ok) {
-      return NextResponse.json(
-        { error: resolved.error, needNewsletter: Boolean(resolved.needNewsletter) },
-        { status: 400 },
-      );
-    }
-    discountCents = resolved.quote.discountCents;
-    discountCode = resolved.quote.code;
-    discountKind = resolved.quote.kind;
-  }
-
-  const total = subtotal + shippingCents - discountCents;
+  let total = subtotal + shippingCents - giftCardCents;
 
   const pickupNote =
     body.fulfillment === "pickup" && body.pickupAt
@@ -192,6 +274,8 @@ async function handleCheckout(req: Request) {
       discount_cents: discountCents,
       discount_code: discountCode,
       discount_kind: discountKind,
+      gift_card_id: giftCardId,
+      gift_card_discount_cents: giftCardCents,
       total_cents: total,
       customer_note: customerNote,
       shipping_phone: body.phone?.trim() || customer.phone,
@@ -211,6 +295,7 @@ async function handleCheckout(req: Request) {
 
   const abortOrder = async () => {
     await releasePromoForOrder(order.id);
+    await admin.rpc("halo_restore_gift_card_hold", { p_order_id: order.id });
     await admin.rpc("halo_release_order_holds", { p_order_id: order.id });
     await admin.from("halo_orders").delete().eq("id", order.id);
   };
@@ -257,6 +342,65 @@ async function handleCheckout(req: Request) {
     );
   }
 
+  if (giftCardQuote?.ok) {
+    const { data: reservedGift, error: giftCardError } = await admin.rpc("halo_reserve_gift_card", {
+      p_code: giftCardQuote.code,
+      p_order_id: order.id,
+      p_requested_cents: subtotal + shippingCents,
+      p_minutes: reserveMinutes,
+    });
+    const reservation = Array.isArray(reservedGift) ? reservedGift[0] : reservedGift;
+    if (giftCardError || !reservation) {
+      await abortOrder();
+      return NextResponse.json(
+        { error: giftCardError?.message ?? "Il credito gift card non è più disponibile." },
+        { status: 409 },
+      );
+    }
+    giftCardCents = reservation.reserved_cents;
+    giftCardId = reservation.gift_card_id;
+  }
+
+  if (body.promoCode?.trim()) {
+    const merchandiseGiftCardCents = Math.min(subtotal, giftCardCents);
+    const resolved = await resolvePromo({
+      email: customer.email,
+      code: body.promoCode,
+      subtotalCents: subtotal - merchandiseGiftCardCents,
+      shippingCents,
+      paidOnline: body.fulfillment === "shipping",
+      settings,
+    });
+    if (!resolved.ok) {
+      await abortOrder();
+      return NextResponse.json(
+        { error: resolved.error, needNewsletter: Boolean(resolved.needNewsletter) },
+        { status: 400 },
+      );
+    }
+    discountCents = resolved.quote.discountCents;
+    discountCode = resolved.quote.code;
+    discountKind = resolved.quote.kind;
+  }
+
+  total = subtotal + shippingCents - giftCardCents - discountCents;
+  const { error: updatePricingError } = await admin
+    .from("halo_orders")
+    .update({
+      discount_cents: discountCents,
+      discount_code: discountCode,
+      discount_kind: discountKind,
+      gift_card_id: giftCardId,
+      gift_card_discount_cents: giftCardCents,
+      total_cents: total,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", order.id);
+  if (updatePricingError) {
+    await abortOrder();
+    return NextResponse.json({ error: updatePricingError.message }, { status: 500 });
+  }
+
   if (discountKind) {
     try {
       await reservePromo(customer.email, discountKind, order.id);
@@ -269,7 +413,38 @@ async function handleCheckout(req: Request) {
     }
   }
 
+  let giftCardPurchaseIds: string[] = [];
+  if (giftCardAmounts.length > 0) {
+    const { data: purchases, error: purchaseError } = await admin
+      .from("halo_gift_card_purchases")
+      .insert(
+        giftCardAmounts.map((amount_cents) => ({
+          customer_id: customer.id,
+          buyer_email: customer.email,
+          amount_cents,
+        })),
+      )
+      .select("id");
+    if (purchaseError || !purchases?.length) {
+      await abortOrder();
+      return NextResponse.json(
+        { error: purchaseError?.message ?? "Impossibile creare l'acquisto gift card." },
+        { status: 500 },
+      );
+    }
+    giftCardPurchaseIds = purchases.map((purchase) => purchase.id);
+  }
+
   if (body.fulfillment === "pickup") {
+    if (giftCardCents > 0) {
+      const { error: giftConsumeError } = await admin.rpc("halo_consume_gift_card_hold", {
+        p_order_id: order.id,
+      });
+      if (giftConsumeError) {
+        await abortOrder();
+        return NextResponse.json({ error: "Impossibile applicare il credito gift card." }, { status: 500 });
+      }
+    }
     const { error: confirmError } = await admin.rpc("halo_confirm_holds", { p_order_id: order.id });
     if (confirmError) {
       await abortOrder();
@@ -320,15 +495,24 @@ async function handleCheckout(req: Request) {
   const origin = siteUrl(req);
   let session;
   try {
-    const coupon =
-      discountCents > 0
-        ? await stripe.coupons.create({
-            amount_off: discountCents,
-            currency: "eur",
-            duration: "once",
-            name: discountCode ?? "Sconto Halo",
-          })
-        : null;
+    const merchandiseGiftCardCents = Math.min(subtotal, giftCardCents);
+    const shippingGiftCardCents = Math.max(0, giftCardCents - merchandiseGiftCardCents);
+    const totalProductDiscountCents = discountCents + merchandiseGiftCardCents;
+    const giftCardPurchaseIdsJson = JSON.stringify(giftCardPurchaseIds);
+    if (giftCardPurchaseIdsJson.length > 450) {
+      throw new Error("Hai selezionato troppe gift card.");
+    }
+    const giftCardLines = giftCardAmounts.map((amountCents) => ({
+      quantity: 1,
+      price_data: {
+        currency: "eur" as const,
+        unit_amount: amountCents,
+        product_data: {
+          name: `Gift card Halo Store · €${amountCents / 100}`,
+          description: "Codice regalo digitale inviato via email dopo il pagamento.",
+        },
+      },
+    }));
     session = await stripe.checkout.sessions.create({
       ui_mode: "embedded_page",
       mode: "payment",
@@ -342,53 +526,76 @@ async function handleCheckout(req: Request) {
         clerk_id: user.id,
         fulfillment: body.fulfillment,
         discount_code: discountCode ?? "",
+        ...(giftCardPurchaseIds.length > 0
+          ? { gift_card_purchase_ids: giftCardPurchaseIdsJson }
+          : {}),
       },
-      ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
-      line_items: [
-        ...lines.map((line) => ({
-          quantity: line.quantity,
-          price_data: {
-            currency: "eur",
-            unit_amount: line.unitPriceCents,
-            product_data: {
-              name: line.productName,
-              description: `${line.size} · ${line.color}`,
+      ...(giftCardPurchaseIds.length > 0
+        ? {
+            payment_intent_data: {
+              metadata: { gift_card_purchase_ids: giftCardPurchaseIdsJson },
+              ...(body.fulfillment === "shipping" && body.shipping
+                ? {
+                    shipping: {
+                      name: body.shipping.name,
+                      phone: body.phone?.trim() || undefined,
+                      address: {
+                        line1: body.shipping.line1,
+                        city: body.shipping.city,
+                        postal_code: body.shipping.postalCode,
+                        state: body.shipping.province,
+                        country: "IT",
+                      },
+                    },
+                  }
+                : {}),
             },
-          },
-        })),
-        ...(shippingCents > 0
+          }
+        : body.fulfillment === "shipping" && body.shipping
+          ? {
+              payment_intent_data: {
+                shipping: {
+                  name: body.shipping.name,
+                  phone: body.phone?.trim() || undefined,
+                  address: {
+                    line1: body.shipping.line1,
+                    city: body.shipping.city,
+                    postal_code: body.shipping.postalCode,
+                    state: body.shipping.province,
+                    country: "IT",
+                  },
+                },
+              },
+            }
+          : {}),
+      line_items: [
+        ...discountedProductLineItems(lines, totalProductDiscountCents, subtotal),
+        ...(shippingCents - shippingGiftCardCents > 0
           ? [
               {
                 quantity: 1,
                 price_data: {
                   currency: "eur" as const,
-                  unit_amount: shippingCents,
+                  unit_amount: shippingCents - shippingGiftCardCents,
                   product_data: { name: "Spedizione Italia" },
                 },
               },
             ]
           : []),
+        ...giftCardLines,
       ],
       ...(body.fulfillment === "shipping" && body.shipping
-        ? {
-            billing_address_collection: "auto" as const,
-            payment_intent_data: {
-              shipping: {
-                name: body.shipping.name,
-                phone: body.phone?.trim() || undefined,
-                address: {
-                  line1: body.shipping.line1,
-                  city: body.shipping.city,
-                  postal_code: body.shipping.postalCode,
-                  state: body.shipping.province,
-                  country: "IT",
-                },
-              },
-            },
-          }
+        ? { billing_address_collection: "auto" as const }
         : {}),
     });
   } catch (error) {
+    if (giftCardPurchaseIds.length > 0) {
+      await admin
+        .from("halo_gift_card_purchases")
+        .delete()
+        .in("id", giftCardPurchaseIds)
+        .eq("status", "pending");
+    }
     await abortOrder();
     const message = error instanceof Error ? error.message : "Stripe ha rifiutato la sessione.";
     return NextResponse.json({ error: message }, { status: 502 });
@@ -402,6 +609,19 @@ async function handleCheckout(req: Request) {
     .from("halo_stock_holds")
     .update({ stripe_session_id: session.id })
     .eq("order_id", order.id);
+  if (giftCardPurchaseIds.length > 0) {
+    const { error: purchaseSessionError } = await admin
+      .from("halo_gift_card_purchases")
+      .update({ stripe_session_id: session.id })
+      .in("id", giftCardPurchaseIds);
+    if (purchaseSessionError) {
+      console.error("[gift card checkout session]", purchaseSessionError.message);
+      return NextResponse.json(
+        { error: "Non è stato possibile collegare le gift card al pagamento. Riprova." },
+        { status: 500 },
+      );
+    }
+  }
 
   return NextResponse.json({ clientSecret: session.client_secret, orderId: order.id });
 }

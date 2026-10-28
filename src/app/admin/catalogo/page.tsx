@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminCategoryBar } from "@/components/admin-category-bar";
 import { getAllProductsAdmin } from "@/lib/catalog";
 import { getStoreCategories, labelFromCategoryId } from "@/lib/categories";
-import { formatPrice, stockBySize } from "@/lib/products";
+import { formatPrice, productHasCategory, stockBySize } from "@/lib/products";
 import { togglePublishedFormAction } from "@/app/admin/actions";
 import { DeleteProductButton } from "@/components/delete-product-button";
 
@@ -23,7 +23,7 @@ export default async function AdminCatalogPage({
   const visible =
     active === "tutti"
       ? products
-      : products.filter((product) => product.category === active);
+      : products.filter((product) => productHasCategory(product, active));
 
   return (
     <div className="min-w-0">
@@ -47,7 +47,9 @@ export default async function AdminCatalogPage({
       ) : (
         <ul className="mt-6 divide-y divide-ink-line border-y border-ink-line">
           {visible.map((product) => {
-            const tipo = labelFromCategoryId(product.category, storeCategories);
+            const tipo = (product.categoryIds?.length ? product.categoryIds : [product.category])
+              .map((categoryId) => labelFromCategoryId(categoryId, storeCategories))
+              .join(" · ");
             const sizeStock = stockBySize(product);
             const meta = [
               tipo,
