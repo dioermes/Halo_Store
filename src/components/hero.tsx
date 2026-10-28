@@ -52,13 +52,13 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
       <div className="absolute bottom-10 left-5 z-10 flex gap-3 sm:bottom-14 sm:left-10 sm:gap-4">
         <Link
           href={destination(appearance.heroButtons.shopNow)}
-          className="flex min-h-11 items-center justify-center border border-white bg-white px-6 text-xs font-semibold tracking-[0.18em] text-ivory transition-colors hover:bg-transparent hover:text-white sm:px-8"
+          className="flex min-h-11 items-center justify-center border border-[#C5CEBC] bg-[#C5CEBC] px-6 text-xs font-semibold tracking-[0.18em] text-ivory transition-colors hover:border-ivory hover:bg-ivory hover:text-white sm:px-8"
         >
           {appearance.heroButtons.shopNow.label}
         </Link>
         <Link
           href={destination(appearance.heroButtons.newIn)}
-          className="flex min-h-11 items-center justify-center border border-white bg-transparent px-6 text-xs font-semibold tracking-[0.18em] text-white transition-colors hover:bg-white hover:text-ivory sm:px-8"
+          className="flex min-h-11 items-center justify-center border border-ivory bg-ivory px-6 text-xs font-semibold tracking-[0.18em] text-white transition-colors hover:border-[#C5CEBC] hover:bg-[#C5CEBC] hover:text-ivory sm:px-8"
         >
           {appearance.heroButtons.newIn.label}
         </Link>

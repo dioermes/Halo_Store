@@ -1,7 +1,6 @@
 import { Hero } from "@/components/hero";
 import { HomeCollections } from "@/components/home-collections";
 import { GiftCardShop } from "@/components/gift-card-shop";
-import { Reviews } from "@/components/reviews";
 import { StoreInfo } from "@/components/store-info";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getStoreSettings } from "@/lib/settings";
@@ -24,7 +23,6 @@ export default async function Home() {
       <Hero appearance={appearance} />
       <HomeCollections sections={appearance.homeSections} />
       <GiftCardShop />
-      <Reviews />
       <StoreInfo />
       <NewsletterSignup
         imageUrl={appearance.newsletterPopupImage}

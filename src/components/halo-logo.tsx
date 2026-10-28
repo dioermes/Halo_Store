@@ -36,9 +36,11 @@ export function HaloLogo({ className }: { className?: string }) {
 export function HaloLogoOriginal({
   className,
   imageRef,
+  style,
 }: {
   className?: string;
   imageRef?: Ref<HTMLImageElement>;
+  style?: CSSProperties;
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -46,6 +48,7 @@ export function HaloLogoOriginal({
       src="/logo-halo-originale.png"
       alt="Halo Store"
       ref={imageRef}
+      style={style}
       className={`block w-auto object-contain ${className ?? ""}`}
     />
   );

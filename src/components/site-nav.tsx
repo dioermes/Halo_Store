@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { Heart, Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
 import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
 import { useFavorites } from "@/components/favorites-provider";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
 import { SiteSearch } from "@/components/site-search";
 import { adminNav, isAdminNavActive } from "@/lib/admin-nav";
@@ -101,7 +102,7 @@ export function SiteNav({
       ? homeLinks
       : [
           { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
-          { href: "/#best-seller", label: "I più venduti" },
+          { href: "/#best-seller", label: "I piÃ¹ venduti" },
           { href: "/#saldi", label: "Saldi" },
         ];
   const links = inAdmin
@@ -112,6 +113,7 @@ export function SiteNav({
   const [catalogOpen, setCatalogOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLImageElement>(null);
+  const sageLogoRef = useRef<HTMLImageElement>(null);
   const { count, openBag, lastAdded } = useReservation();
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
@@ -169,9 +171,8 @@ export function SiteNav({
 
       if (logo && logoRect && logoRect.width > 0) {
         const logoOnDark = logoPixel ? luminance(logoPixel) < 0.45 : iconsOnDark;
-        logo.style.filter = logoOnDark
-          ? "brightness(0) invert(1) drop-shadow(0 6px 18px rgba(0,0,0,.28))"
-          : "drop-shadow(0 6px 18px rgba(63,21,33,.18))";
+        logo.style.opacity = logoOnDark ? "0" : "1";
+        if (sageLogoRef.current) sageLogoRef.current.style.opacity = logoOnDark ? "1" : "0";
       }
     };
     const scheduleSample = () => {
@@ -198,7 +199,12 @@ export function SiteNav({
 
   return (
     <>
-      <header className="halo-nav-in pointer-events-none absolute inset-x-0 top-0 z-[100] overflow-visible">
+      {!inAdmin ? <AnnouncementBar /> : null}
+      <header
+        className={`halo-nav-in pointer-events-none absolute inset-x-0 z-[100] overflow-visible ${
+          inAdmin ? "top-0" : "top-9"
+        }`}
+      >
         <nav
           ref={navRef}
           className="mx-auto flex max-w-[84rem] items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4"
@@ -211,12 +217,60 @@ export function SiteNav({
             {inAdmin ? (
               <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
             ) : (
-              <HaloLogoOriginal
-                imageRef={logoRef}
-                className={`w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.18)] ${
-                  pathname === "/" ? "h-32 md:h-44" : "h-[5.75rem] sm:h-28 md:h-36"
-                }`}
-              />
+              <>
+                <svg width="0" height="0" className="absolute" aria-hidden focusable="false">
+                  <filter id="halo-logo-sage" colorInterpolationFilters="sRGB">
+                    <feColorMatrix
+                      type="matrix"
+                      values="0 0 0 0 0.773  0 0 0 0 0.808  0 0 0 0 0.737  0 0 0 6 -1.2"
+                    />
+                  </filter>
+                  <filter id="halo-logo-clean" colorInterpolationFilters="sRGB">
+                    <feColorMatrix
+                      type="matrix"
+                      values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 6 -1.2"
+                    />
+                  </filter>
+                </svg>
+                {pathname === "/" ? (
+                  <span className="relative -ml-2 block aspect-[752/564] h-24 overflow-hidden sm:-ml-4 md:h-32">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      ref={logoRef}
+                      src="/logo-halo-originale.png"
+                      alt="Halo Store"
+                      style={{ filter: "url(#halo-logo-clean)" }}
+                      className="absolute left-[-21.8%] top-[-46.8%] block h-auto w-[143.6%] max-w-none transition-opacity duration-500 ease-out"
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      ref={sageLogoRef}
+                      src="/logo-halo-originale.png"
+                      alt=""
+                      aria-hidden
+                      style={{ filter: "url(#halo-logo-sage)", opacity: 0 }}
+                      className="absolute left-[-21.8%] top-[-46.8%] block h-auto w-[143.6%] max-w-none transition-opacity duration-500 ease-out"
+                    />
+                  </span>
+                ) : (
+                  <span className="relative block w-fit">
+                    <HaloLogoOriginal
+                      imageRef={logoRef}
+                      style={{ filter: "url(#halo-logo-clean)" }}
+                      className="h-[5.75rem] w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-36"
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      ref={sageLogoRef}
+                      src="/logo-halo-originale.png"
+                      alt=""
+                      aria-hidden
+                      style={{ filter: "url(#halo-logo-sage)", opacity: 0 }}
+                      className="absolute inset-0 block h-full w-full object-contain transition-opacity duration-500 ease-out"
+                    />
+                  </span>
+                )}
+              </>
             )}
           </Link>
 

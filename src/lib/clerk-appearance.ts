@@ -1,9 +1,9 @@
-const sage = "#C5CEBC";
-const sageSoft = "#B7C2B0";
+const sage = "#FFFFFF";
+const sageSoft = "#FFFFFF";
 const wine = "#3F1521";
 const wineSoft = "#5C2432";
 
-const visibleBorder = `2px solid ${wine}`;
+const visibleBorder = "1px solid #DED8DA";
 
 export const clerkAppearance = {
   variables: {

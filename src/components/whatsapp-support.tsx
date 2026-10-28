@@ -32,8 +32,8 @@ export function WhatsAppSupport() {
         <path
           d="M16.04 2.67A13.25 13.25 0 0 0 4.68 22.75L2.9 29.27l6.67-1.75a13.26 13.26 0 1 0 6.47-24.85Z"
           fill="white"
-          stroke="#111111"
-          strokeWidth="1.1"
+          stroke="#25D366"
+          strokeWidth="1.6"
           strokeLinejoin="round"
         />
         <path
