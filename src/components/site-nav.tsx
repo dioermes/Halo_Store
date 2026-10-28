@@ -23,6 +23,7 @@ export function SiteNav({
 }) {
   const pathname = usePathname();
   const inAdmin = pathname.startsWith("/admin");
+  const navOnDarkBackground = !inAdmin && pathname === "/";
   const storefrontLinks =
     homeLinks && homeLinks.length > 0
       ? homeLinks
@@ -66,7 +67,11 @@ export function SiteNav({
   }, [menuOpen]);
 
   const iconBtn =
-    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-ivory transition-colors duration-500 hover:text-halo-bright";
+    `flex h-11 w-11 items-center justify-center rounded-full bg-transparent transition-colors duration-500 ${
+      navOnDarkBackground
+        ? "text-white hover:text-white/70"
+        : "text-black hover:text-black/60"
+    }`;
 
   return (
     <>
@@ -81,10 +86,12 @@ export function SiteNav({
               <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
             ) : (
               <HaloLogoOriginal
-                className={`w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.28)] ${
-                  pathname === "/"
-                    ? "h-32 md:h-44"
-                    : "h-[5.75rem] sm:h-28 md:h-36"
+                className={`w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.18)] ${
+                  navOnDarkBackground
+                    ? "brightness-0 invert"
+                    : ""
+                } ${
+                  pathname === "/" ? "h-32 md:h-44" : "h-[5.75rem] sm:h-28 md:h-36"
                 }`}
               />
             )}

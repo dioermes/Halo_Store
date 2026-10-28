@@ -67,14 +67,15 @@ export function ProductCard({
     if (event.pointerType === "mouse" && images.length > 1) setImageIndex(1);
   };
 
-  const handleLeave = () => {
+  const handleLeave = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") return;
     pointerX.set(0.5);
     pointerY.set(0.5);
     setImageIndex(0);
   };
 
   const handleTouchStart = (event: React.TouchEvent<HTMLAnchorElement>) => {
-    const touch = event.changedTouches[0];
+    const touch = event.touches[0];
     if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
   };
 
@@ -96,7 +97,11 @@ export function ProductCard({
     );
     window.setTimeout(() => {
       didSwipe.current = false;
-    }, 500);
+    }, 800);
+  };
+
+  const handleTouchCancel = () => {
+    touchStart.current = null;
   };
 
   const soldOut = isProductSoldOut(product);
@@ -118,13 +123,14 @@ export function ProductCard({
             href={productPath(product.id)}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
             onClick={(event) => {
               if (!didSwipe.current) return;
               event.preventDefault();
               event.stopPropagation();
               didSwipe.current = false;
             }}
-            className="absolute inset-0 block cursor-pointer"
+            className="absolute inset-0 block cursor-pointer touch-pan-y"
             aria-label={`${product.name}, ${formatPrice(product.price)}`}
           >
             <Image
