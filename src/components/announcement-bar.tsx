@@ -25,7 +25,7 @@ export function AnnouncementBar() {
     <div
       role="region"
       aria-label="Informazioni sul negozio"
-      className="relative z-[101] flex h-9 items-center overflow-hidden bg-black text-[0.7rem] font-medium uppercase tracking-[0.16em] text-white sm:text-xs"
+      className="relative z-101 -mb-px flex h-9 items-center overflow-hidden bg-black text-[0.7rem] font-medium uppercase tracking-[0.16em] text-white sm:text-xs"
     >
       <div className="animate-marquee flex w-max" style={{ animationDuration: "40s" }}>
         <div className="flex">
