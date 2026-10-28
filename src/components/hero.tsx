@@ -34,6 +34,7 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
             media={appearance.heroDesktop}
             alt="Halo Store"
             priority
+            samplePixels
             className="h-full w-full object-cover"
           />
         </div>
@@ -43,6 +44,7 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
             media={appearance.heroMobile}
             alt="Halo Store"
             priority
+            samplePixels
             className="h-full w-full object-cover"
           />
         </div>

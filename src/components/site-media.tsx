@@ -8,11 +8,13 @@ export function SiteMediaView({
   alt,
   className,
   priority = false,
+  samplePixels = false,
 }: {
   media: SiteMedia;
   alt: string;
   className?: string;
   priority?: boolean;
+  samplePixels?: boolean;
 }) {
   if (!media.url) return null;
   if (media.kind === "video") {
@@ -20,6 +22,7 @@ export function SiteMediaView({
       <video
         className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
         src={media.url}
+        crossOrigin={samplePixels ? "anonymous" : undefined}
         autoPlay
         muted
         loop

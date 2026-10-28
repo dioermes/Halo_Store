@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -14,6 +14,79 @@ import { adminNav, isAdminNavActive } from "@/lib/admin-nav";
 import { catalogPath } from "@/lib/categories";
 import type { StoreCategory } from "@/lib/products";
 
+type Rgb = { red: number; green: number; blue: number; alpha: number };
+
+function parseCssColor(value: string): Rgb | null {
+  const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  context.fillStyle = "#000";
+  context.fillStyle = value;
+  const normalized = context.fillStyle;
+  if (normalized === "rgba(0, 0, 0, 0)") return null;
+  context.clearRect(0, 0, 1, 1);
+  context.fillStyle = normalized;
+  context.fillRect(0, 0, 1, 1);
+  const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+  return { red, green, blue, alpha: alpha / 255 };
+}
+
+function luminance({ red, green, blue }: Rgb) {
+  const linear = [red, green, blue].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function sampleMediaPixel(
+  media: HTMLImageElement | HTMLVideoElement,
+  x: number,
+  y: number,
+): Rgb | null {
+  const rect = media.getBoundingClientRect();
+  const sourceWidth = media instanceof HTMLImageElement ? media.naturalWidth : media.videoWidth;
+  const sourceHeight = media instanceof HTMLImageElement ? media.naturalHeight : media.videoHeight;
+  if (!sourceWidth || !sourceHeight || rect.width <= 0 || rect.height <= 0) return null;
+
+  const scale = Math.max(rect.width / sourceWidth, rect.height / sourceHeight);
+  const renderedWidth = sourceWidth * scale;
+  const renderedHeight = sourceHeight * scale;
+  const objectPosition = getComputedStyle(media).objectPosition.split(" ");
+  const positionX = objectPosition[0] === "left" ? 0 : objectPosition[0] === "right" ? 1 : 0.5;
+  const positionY = objectPosition[1] === "top" ? 0 : objectPosition[1] === "bottom" ? 1 : 0.5;
+  const sourceX = (x - rect.left - (rect.width - renderedWidth) * positionX) / scale;
+  const sourceY = (y - rect.top - (rect.height - renderedHeight) * positionY) / scale;
+  if (sourceX < 0 || sourceY < 0 || sourceX >= sourceWidth || sourceY >= sourceHeight) return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  try {
+    context.drawImage(media, sourceX, sourceY, 1, 1, 0, 0, 1, 1);
+    const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+    return { red, green, blue, alpha: alpha / 255 };
+  } catch {
+    return null;
+  }
+}
+
+function backgroundAt(x: number, y: number): Rgb {
+  const elements = document.elementsFromPoint(x, y);
+  for (const element of elements) {
+    if (element.closest("header")) continue;
+    if (element instanceof HTMLImageElement || element instanceof HTMLVideoElement) {
+      const pixel = sampleMediaPixel(element, x, y);
+      if (pixel && pixel.alpha > 0) return pixel;
+    }
+
+    const color = parseCssColor(getComputedStyle(element).backgroundColor);
+    if (color && color.alpha > 0) return color;
+  }
+  return { red: 255, green: 255, blue: 255, alpha: 1 };
+}
+
 export function SiteNav({
   categories = [],
   homeLinks,
@@ -23,7 +96,6 @@ export function SiteNav({
 }) {
   const pathname = usePathname();
   const inAdmin = pathname.startsWith("/admin");
-  const navOnDarkBackground = !inAdmin && pathname === "/";
   const storefrontLinks =
     homeLinks && homeLinks.length > 0
       ? homeLinks
@@ -38,6 +110,8 @@ export function SiteNav({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
   const { count, openBag, lastAdded } = useReservation();
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
@@ -66,17 +140,69 @@ export function SiteNav({
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    let frame = 0;
+    const sample = () => {
+      const logo = logoRef.current;
+      const buttons = [...nav.querySelectorAll<HTMLElement>("[data-nav-icon]")];
+      const logoRect = logo?.getBoundingClientRect();
+      const logoPixel = logoRect
+        ? backgroundAt(logoRect.left + logoRect.width / 2, logoRect.top + logoRect.height / 2)
+        : null;
+      const iconPixels = buttons
+        .map((button) => {
+          const rect = button.getBoundingClientRect();
+          return backgroundAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        })
+        .filter((pixel) => pixel.alpha > 0);
+      const iconLuminance =
+        iconPixels.reduce((total, pixel) => total + luminance(pixel), 0) /
+        Math.max(1, iconPixels.length);
+      const iconsOnDark = iconLuminance < 0.45;
+      nav.style.setProperty("--nav-icon-color", iconsOnDark ? "#fff" : "#000");
+      for (const button of buttons) {
+        button.style.color = "var(--nav-icon-color)";
+      }
+
+      if (logo && logoRect && logoRect.width > 0) {
+        const logoOnDark = logoPixel ? luminance(logoPixel) < 0.45 : iconsOnDark;
+        logo.style.filter = logoOnDark
+          ? "brightness(0) invert(1) drop-shadow(0 6px 18px rgba(0,0,0,.28))"
+          : "drop-shadow(0 6px 18px rgba(63,21,33,.18))";
+      }
+    };
+    const scheduleSample = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(sample);
+    };
+
+    scheduleSample();
+    window.addEventListener("scroll", scheduleSample, { passive: true });
+    window.addEventListener("resize", scheduleSample);
+    window.addEventListener("load", scheduleSample);
+    const interval = window.setInterval(scheduleSample, 1000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(interval);
+      window.removeEventListener("scroll", scheduleSample);
+      window.removeEventListener("resize", scheduleSample);
+      window.removeEventListener("load", scheduleSample);
+    };
+  }, [pathname]);
+
   const iconBtn =
-    `flex h-11 w-11 items-center justify-center rounded-full bg-transparent transition-colors duration-500 ${
-      navOnDarkBackground
-        ? "text-white hover:text-white/70"
-        : "text-black hover:text-black/60"
-    }`;
+    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-black transition-colors duration-300 hover:opacity-70";
 
   return (
     <>
       <header className="halo-nav-in pointer-events-none absolute inset-x-0 top-0 z-[100] overflow-visible">
-        <nav className="mx-auto flex max-w-[84rem] items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4">
+        <nav
+          ref={navRef}
+          className="mx-auto flex max-w-[84rem] items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4"
+        >
           <Link
             href="/"
             className="pointer-events-auto relative z-10 shrink-0"
@@ -86,11 +212,8 @@ export function SiteNav({
               <HaloLogo className="h-12 text-ivory drop-shadow-sm sm:h-16" />
             ) : (
               <HaloLogoOriginal
+                imageRef={logoRef}
                 className={`w-auto drop-shadow-[0_6px_18px_rgba(63,21,33,0.18)] ${
-                  navOnDarkBackground
-                    ? "brightness-0 invert"
-                    : ""
-                } ${
                   pathname === "/" ? "h-32 md:h-44" : "h-[5.75rem] sm:h-28 md:h-36"
                 }`}
               />
@@ -102,6 +225,7 @@ export function SiteNav({
               type="button"
               onClick={() => setMenuOpen(true)}
               className={iconBtn}
+              data-nav-icon
               aria-label="Apri il menu"
             >
               <Menu className="h-5 w-5" aria-hidden />
@@ -113,6 +237,7 @@ export function SiteNav({
                   setSearchOpen(true);
                 }}
                 className={iconBtn}
+                data-nav-icon
                 aria-label="Cerca nel catalogo"
               >
                 <Search className="h-5 w-5" aria-hidden />
@@ -125,6 +250,7 @@ export function SiteNav({
                   : "/sign-in?redirect_url=%2Faccount%2Fpreferiti"
               }
               className={`relative ${iconBtn}`}
+              data-nav-icon
               aria-label={`Preferiti${favoritesCount ? `, ${favoritesCount} capi` : ""}`}
             >
               <Heart className="h-5 w-5" aria-hidden />
@@ -146,6 +272,7 @@ export function SiteNav({
               type="button"
               onClick={openBag}
               className={`relative ${iconBtn}`}
+              data-nav-icon
               aria-label="Apri il carrello"
             >
               <ShoppingBag className="h-5 w-5" aria-hidden />

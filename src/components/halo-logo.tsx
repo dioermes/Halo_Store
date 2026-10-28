@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, Ref } from "react";
 
 /** Proporzioni del ritaglio di public/logo-halo.png */
 export const LOGO_RATIO = "752 / 566";
@@ -33,12 +33,19 @@ export function HaloLogo({ className }: { className?: string }) {
 }
 
 /** Logo a colori originali (bordeaux sul nero). */
-export function HaloLogoOriginal({ className }: { className?: string }) {
+export function HaloLogoOriginal({
+  className,
+  imageRef,
+}: {
+  className?: string;
+  imageRef?: Ref<HTMLImageElement>;
+}) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/logo-halo-originale.png"
       alt="Halo Store"
+      ref={imageRef}
       className={`block w-auto object-contain ${className ?? ""}`}
     />
   );
