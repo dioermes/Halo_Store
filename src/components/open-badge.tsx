@@ -22,7 +22,7 @@ export function OpenBadge({ compact = false }: { compact?: boolean }) {
   if (!state) {
     return (
       <span
-        className={`inline-flex items-center gap-2 rounded-full border border-ink-line px-3 py-1.5 text-xs text-ivory-dim ${
+        className={`inline-flex items-center gap-2 rounded-md border border-ink-line px-3 py-1.5 text-xs text-ivory-dim ${
           compact ? "" : "text-sm"
         }`}
       >
@@ -34,7 +34,7 @@ export function OpenBadge({ compact = false }: { compact?: boolean }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${
+      className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 ${
         state.isOpen
           ? "border-halo/40 bg-halo/10 text-halo-bright"
           : "border-ink-line bg-ink-soft/60 text-ivory-dim"

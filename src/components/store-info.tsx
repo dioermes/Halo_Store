@@ -103,7 +103,7 @@ export function StoreInfo() {
               <div className="mt-10 flex flex-wrap gap-3">
                 <a
                   href={phone.href}
-                  className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
+                  className="inline-flex items-center gap-2 rounded-md bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
                 >
                   <Phone className="h-4 w-4" aria-hidden />
                   Chiama
@@ -112,7 +112,7 @@ export function StoreInfo() {
                   href={storeConfig.maps.directions}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="group inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <Navigation className="h-4 w-4" aria-hidden />
                   Indicazioni stradali
@@ -121,7 +121,7 @@ export function StoreInfo() {
                   href={storeConfig.instagram.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <InstagramGlyph className="h-4 w-4" />
                   Seguici su Instagram
@@ -130,7 +130,7 @@ export function StoreInfo() {
                   href={storeConfig.tiktok.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <TikTokGlyph className="h-4 w-4" />
                   Seguici su TikTok
@@ -162,7 +162,7 @@ function StoreMap() {
         <button
           type="button"
           onClick={() => writeConsent(true)}
-          className="mt-6 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-ink"
+          className="mt-6 rounded-md bg-ivory px-6 py-3 text-sm font-medium text-ink"
         >
           Carica la mappa
         </button>

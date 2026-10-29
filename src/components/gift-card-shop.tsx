@@ -39,7 +39,7 @@ export function GiftCardShop() {
               id="gift-card-title"
               className="mt-2 font-display text-3xl text-[#3f1521] sm:text-4xl"
             >
-              Il regalo perfetto.
+              Il regalo perfetto!
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ivory-dim sm:text-base">
               Scegli l’importo: riceverai via email una card digitale con un codice univoco da
@@ -61,7 +61,7 @@ export function GiftCardShop() {
                     setAdded(false);
                   }}
                   aria-pressed={amount === value}
-                  className={`rounded-full border px-2 py-2.5 text-xs transition-colors sm:text-sm ${
+                  className={`rounded-md border px-2 py-2.5 text-xs transition-colors sm:text-sm ${
                     amount === value
                       ? "border-[#3f1521] bg-[#3f1521] text-white"
                       : "border-[#3f1521]/20 bg-white text-[#3f1521] hover:border-[#3f1521]"
@@ -82,7 +82,7 @@ export function GiftCardShop() {
                 setAdded(true);
                 openBag();
               }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#3f1521] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#65203a] sm:text-sm"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#3f1521] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#65203a] sm:text-sm"
             >
               <ShoppingBag className="h-4 w-4" aria-hidden />
               {added ? "Aggiunta al carrello" : "Aggiungi al carrello"}
