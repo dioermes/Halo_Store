@@ -129,7 +129,7 @@ export async function StructuredData() {
           "Un'ottima esperienza, negozio di abbigliamento davvero eccezionale dove puoi trovare quello che cerchi e non trovi ovunque. Prezzi onesti e alta qualità dei tessuti, titolare educato e a modo. Lo consiglio, ci ritornerò per ogni evento.",
       },
     ],
-    sameAs: [storeConfig.instagram.url],
+    sameAs: [storeConfig.instagram.url, storeConfig.tiktok.url],
   };
 
   return <JsonLd data={data} />;

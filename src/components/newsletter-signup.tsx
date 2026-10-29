@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { InstagramGlyph } from "@/components/icons";
+import { InstagramGlyph, TikTokGlyph } from "@/components/icons";
 import { storeConfig } from "@/lib/store-config";
 
 export function NewsletterSignup({
@@ -121,6 +121,15 @@ export function NewsletterSignup({
           >
             <InstagramGlyph className="h-5 w-5" />
             SEGUICI SU INSTAGRAM
+          </a>
+          <a
+            href={storeConfig.tiktok.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-white hover:text-white/75"
+          >
+            <TikTokGlyph className="h-5 w-5" />
+            SEGUICI SU TIKTOK
           </a>
         </div>
       </div>

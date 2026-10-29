@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MapPin, Navigation, Phone } from "lucide-react";
-import { InstagramGlyph } from "@/components/icons";
+import { InstagramGlyph, TikTokGlyph } from "@/components/icons";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { OpenBadge } from "@/components/open-badge";
 import { useEmbedsAllowed } from "@/components/cookie-banner";
@@ -126,11 +126,20 @@ export function StoreInfo() {
                   <InstagramGlyph className="h-4 w-4" />
                   Seguici su Instagram
                 </a>
+                <a
+                  href={storeConfig.tiktok.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                >
+                  <TikTokGlyph className="h-4 w-4" />
+                  Seguici su TikTok
+                </a>
               </div>
             </Reveal>
           </div>
 
-          <Reveal delay={0.15}>
+          <Reveal delay={0.15} className="lg:self-center">
             <StoreMap />
           </Reveal>
         </div>
@@ -144,7 +153,7 @@ function StoreMap() {
 
   if (!allowed) {
     return (
-      <div className="relative flex h-full min-h-[420px] flex-col items-start justify-end overflow-hidden rounded-3xl border border-ink-line bg-ink-soft p-8">
+      <div className="relative flex h-[340px] flex-col items-start justify-end overflow-hidden rounded-3xl border border-ink-line bg-ink-soft p-8 sm:h-[360px]">
         <p className="font-display text-3xl leading-none text-ivory">Mappa Google</p>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory-dim">
           La mappa è un contenuto di Google: si carica solo se accetti i cookie non
@@ -170,7 +179,7 @@ function StoreMap() {
   }
 
   return (
-    <div className="relative h-full min-h-[420px] overflow-hidden rounded-3xl border border-ink-line">
+    <div className="relative h-[340px] overflow-hidden rounded-3xl border border-ink-line sm:h-[360px]">
       <iframe
         title="Mappa di Halo Store in Via Castellana 18A a Conversano"
         src={storeConfig.maps.embed}

@@ -17,3 +17,21 @@ export function InstagramGlyph({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function TikTokGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={className}
+    >
+      <path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5" />
+      <path d="M14 3c.4 2.6 2.1 4.4 5 4.6" />
+    </svg>
+  );
+}

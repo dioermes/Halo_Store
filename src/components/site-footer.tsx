@@ -1,6 +1,6 @@
 import { MapPin, Phone } from "lucide-react";
 import Link from "next/link";
-import { InstagramGlyph } from "@/components/icons";
+import { InstagramGlyph, TikTokGlyph } from "@/components/icons";
 import { HaloLogoOriginal } from "@/components/halo-logo";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
@@ -63,6 +63,15 @@ export async function SiteFooter() {
               >
                 <InstagramGlyph className="h-4 w-4" />
                 <span>@{storeConfig.instagram.handle}</span>
+              </a>
+              <a
+                href={storeConfig.tiktok.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 flex items-center gap-2 text-sm text-ivory transition-colors hover:text-halo-bright"
+              >
+                <TikTokGlyph className="h-4 w-4" />
+                <span>@{storeConfig.tiktok.handle}</span>
               </a>
             </div>
           </div>

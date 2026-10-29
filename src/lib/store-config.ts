@@ -65,6 +65,10 @@ export const storeConfig = {
     handle: "halostoreconversano",
     url: "https://www.instagram.com/halostoreconversano/",
   },
+  tiktok: {
+    handle: "halostoreconversano",
+    url: "https://www.tiktok.com/@halostoreconversano",
+  },
   maps: {
     /**
      * CID della scheda Google ufficiale "Halo Store" (Via Castellana 18A).
