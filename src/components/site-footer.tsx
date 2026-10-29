@@ -19,9 +19,14 @@ export async function SiteFooter() {
         <div className="flex flex-col gap-16 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
             <HaloLogoOriginal className="h-20 w-auto sm:h-24" />
-            <p className="mt-6 text-sm leading-relaxed text-ivory-dim">
-              {storeConfig.claim}. {storeConfig.tagline} a Conversano, scelto capo per capo.
-            </p>
+            <div className="mt-6 space-y-3 text-sm leading-relaxed text-ivory-dim">
+              <p>Abbigliamento uomo.</p>
+              <p>Outfit di nicchia, capi selezionati e attenzione ai dettagli.</p>
+              <p>
+                Affinché ognuno di voi si senta rappresentato al massimo, affinché ognuno di voi sia
+                HALO.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-2">

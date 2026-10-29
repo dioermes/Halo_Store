@@ -39,6 +39,7 @@ export type HomeSection = {
 export type SiteAppearance = {
   heroDesktop: SiteMedia;
   heroMobile: SiteMedia;
+  showcase: SiteMedia | null;
   newsletterPopupImage: string;
   tagline: string;
   heroButtons: {
@@ -139,6 +140,7 @@ function defaultHomeSections(legacy: {
 const appearanceDefaults: SiteAppearance = {
   heroDesktop: { url: ambientImages.interior, kind: "image" },
   heroMobile: { url: ambientImages.interior, kind: "image" },
+  showcase: null,
   newsletterPopupImage: ambientImages.interior,
   tagline: "Non seguiamo lo stile, lo riscriviamo.",
   heroButtons: {
@@ -295,6 +297,7 @@ function parseAppearance(value: unknown): SiteAppearance {
   return {
     heroDesktop: asMedia(row.heroDesktop, appearanceDefaults.heroDesktop),
     heroMobile: asMedia(row.heroMobile, appearanceDefaults.heroMobile),
+    showcase: asOptionalMedia(row.showcase),
     newsletterPopupImage:
       typeof row.newsletterPopupImage === "string" && row.newsletterPopupImage.trim()
         ? row.newsletterPopupImage.trim()
@@ -415,6 +418,7 @@ function appearanceMediaUrls(appearance: SiteAppearance) {
   return [
     appearance.heroDesktop.url,
     appearance.heroMobile.url,
+    appearance.showcase?.url ?? "",
     appearance.newsletterPopupImage,
     ...appearance.homeSections.map((section) => section.interlude?.url ?? ""),
   ];

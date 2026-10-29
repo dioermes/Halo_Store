@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   saveNewsletterPopupImageAction,
+  saveShowcaseAction,
   saveSiteAppearanceAction,
   saveSiteMediaSlotAction,
 } from "@/app/admin/actions";
@@ -111,6 +112,84 @@ function MediaFields({
       </label>
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
       {saved ? <p className="text-sm text-halo">Salvato. Lo vedi in home dopo un refresh.</p> : null}
+    </fieldset>
+  );
+}
+
+function ShowcaseField({ initial }: { initial: SiteAppearance["showcase"] }) {
+  const [media, setMedia] = useState(initial);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
+
+  return (
+    <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
+      <legend className="px-1 font-display text-2xl">Sezione foto/video</legend>
+      <p className="text-sm text-ivory-dim">
+        Appare a tutta larghezza tra le sezioni best seller e la gift card. Senza file la
+        sezione non si vede. Comprimiamo foto e video da soli in caricamento. Si salva da solo.
+      </p>
+      {media ? (
+        <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
+          {media.kind === "video" ? (
+            <video src={media.url} className="h-full w-full object-cover" muted playsInline controls />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={media.url} alt="" className="h-full w-full object-cover" />
+          )}
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-3">
+        <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm">
+          {busy || "Carica foto o video"}
+          <input
+            type="file"
+            accept="image/*,video/*"
+            className="sr-only"
+            disabled={Boolean(busy)}
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              setBusy("Comprimo…");
+              setError("");
+              setSaved("");
+              try {
+                const uploaded = await uploadMedia(file, setBusy);
+                const next = { url: uploaded.url, kind: uploaded.kind };
+                await saveShowcaseAction(next);
+                setMedia(next);
+                setSaved("Salvato. Lo vedi in home dopo un refresh.");
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+              } finally {
+                setBusy("");
+              }
+            }}
+          />
+        </label>
+        {media ? (
+          <button
+            type="button"
+            disabled={Boolean(busy)}
+            onClick={async () => {
+              setError("");
+              try {
+                await saveShowcaseAction(null);
+                setMedia(null);
+                setSaved("Sezione rimossa dalla home.");
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Rimozione non riuscita");
+              }
+            }}
+            className="rounded-full border border-ink-line px-4 py-2 text-sm"
+          >
+            Rimuovi
+          </button>
+        ) : null}
+      </div>
+      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {saved ? <p className="text-sm text-halo">{saved}</p> : null}
     </fieldset>
   );
 }
@@ -461,6 +540,7 @@ export function SiteEditor({
           className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
         />
       </fieldset>
+      <ShowcaseField initial={appearance.showcase} />
       <NewsletterPopupImageField initialUrl={appearance.newsletterPopupImage} />
       <DisplayFontPicker initialId={appearance.displayFont} />
       <DisplayFontPicker variant="section" initialId={appearance.sectionTitleFont} />
