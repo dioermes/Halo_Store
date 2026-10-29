@@ -2,23 +2,23 @@
 
 import { usePathname } from "next/navigation";
 import { useReservation } from "@/components/reservation-provider";
-
-const supportUrl = "https://wa.me/393319875979";
+import { useStoreContact } from "@/components/store-contact-provider";
 
 export function WhatsAppSupport() {
   const pathname = usePathname();
   const { count } = useReservation();
+  const { whatsapp } = useStoreContact();
 
   if (pathname.startsWith("/admin")) return null;
 
   return (
     <a
-      href={supportUrl}
+      href={`https://wa.me/${whatsapp.number}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contatta Halo Store su WhatsApp"
       title="Contattaci su WhatsApp"
-      className={`fixed right-5 'z-105' flex h-14 w-14 items-center justify-center rounded-full border border-black/40 bg-white text-[#25D366] shadow-[0_2px_12px_rgba(0,0,0,0.16)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366] ${
+      className={`fixed right-5 z-105 flex h-14 w-14 items-center justify-center rounded-full border border-black/40 bg-white text-[#25D366] shadow-[0_2px_12px_rgba(0,0,0,0.16)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366] ${
         count > 0 ? "bottom-24 md:bottom-6" : "bottom-6"
       }`}
     >

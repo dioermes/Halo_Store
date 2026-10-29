@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { storeConfig } from "@/lib/store-config";
+import { getStoreContact } from "@/lib/site";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type Fulfillment, type OrderStatus } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
@@ -47,7 +48,7 @@ function getResend() {
 
 export type SendEmailResult = { ok: true } | { ok: false; reason: string };
 
-async function send(to: string, subject: string, html: string): Promise<SendEmailResult> {
+async function send(to: string, subject: string, rawHtml: string): Promise<SendEmailResult> {
   const resend = getResend();
   if (!resend) {
     console.error("[email skipped] RESEND_API_KEY mancante", subject, to);
@@ -62,6 +63,11 @@ async function send(to: string, subject: string, html: string): Promise<SendEmai
   }
   try {
     const from = fromAddress();
+    // Le mail usano il telefono predefinito: qui lo sostituiamo con quello scelto dal titolare.
+    const contact = await getStoreContact();
+    const html = rawHtml
+      .replaceAll(storeConfig.phone.href, contact.phone.href)
+      .replaceAll(storeConfig.phone.display, contact.phone.display);
     const { data, error } = await resend.emails.send({
       from,
       to,

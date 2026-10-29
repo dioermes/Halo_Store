@@ -17,7 +17,8 @@ import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
-import { displayHomeSectionTitle, getSiteAppearance } from "@/lib/site";
+import { displayHomeSectionTitle, getSiteAppearance, getStoreContact } from "@/lib/site";
+import { StoreContactProvider } from "@/components/store-contact-provider";
 import { displayFontStack } from "@/lib/display-fonts";
 import { displayFontClassNames } from "@/app/fonts";
 
@@ -61,10 +62,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [products, categories, appearance] = await Promise.all([
+  const [products, categories, appearance, contact] = await Promise.all([
     getPublishedProducts(),
     getStoreCategories(),
     getSiteAppearance(),
+    getStoreContact(),
   ]);
 
   return (
@@ -94,6 +96,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           signUpFallbackRedirectUrl="/account"
         >
           <StructuredData />
+          <StoreContactProvider contact={contact}>
           <FavoritesProvider>
             <ReservationProvider products={products}>
               <HaloCursor />
@@ -112,6 +115,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <NewsletterPopup imageUrl={appearance.newsletterPopupImage} />
             </ReservationProvider>
           </FavoritesProvider>
+          </StoreContactProvider>
         </ClerkProvider>
       </body>
     </html>

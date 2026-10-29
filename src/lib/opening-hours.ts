@@ -11,9 +11,9 @@ function toMinutes(value: string) {
   return h * 60 + m;
 }
 
-function scheduleFor(day: number): DaySchedule {
+function scheduleFor(day: number, schedule: DaySchedule[] = openingHours): DaySchedule {
   return (
-    openingHours.find((entry) => entry.day === day) ?? {
+    schedule.find((entry) => entry.day === day) ?? {
       day,
       label: "",
       slots: [],
@@ -31,9 +31,12 @@ export function formatSlots(schedule: DaySchedule) {
     .join("  /  ");
 }
 
-export function getOpenState(now: Date = new Date()): OpenState {
+export function getOpenState(
+  now: Date = new Date(),
+  schedule: DaySchedule[] = openingHours,
+): OpenState {
   const minutes = now.getHours() * 60 + now.getMinutes();
-  const today = scheduleFor(now.getDay());
+  const today = scheduleFor(now.getDay(), schedule);
 
   for (const slot of today.slots) {
     if (minutes >= toMinutes(slot.open) && minutes < toMinutes(slot.close)) {
@@ -49,7 +52,7 @@ export function getOpenState(now: Date = new Date()): OpenState {
   }
 
   for (let offset = 1; offset <= 7; offset += 1) {
-    const next = scheduleFor((now.getDay() + offset) % 7);
+    const next = scheduleFor((now.getDay() + offset) % 7, schedule);
     if (next.slots.length > 0) {
       const when = offset === 1 ? "domani" : next.label.toLowerCase();
       return { isOpen: false, detail: `Riapre ${when} alle ${next.slots[0].open}` };
@@ -60,7 +63,11 @@ export function getOpenState(now: Date = new Date()): OpenState {
 }
 
 /** Prossimi giorni in cui il negozio è aperto, per la scelta del ritiro. */
-export function getUpcomingOpenDays(count = 6, from: Date = new Date()) {
+export function getUpcomingOpenDays(
+  count = 6,
+  from: Date = new Date(),
+  schedule: DaySchedule[] = openingHours,
+) {
   const formatter = new Intl.DateTimeFormat("it-IT", {
     weekday: "long",
     day: "numeric",
@@ -71,7 +78,7 @@ export function getUpcomingOpenDays(count = 6, from: Date = new Date()) {
   for (let offset = 0; offset < 21 && days.length < count; offset += 1) {
     const date = new Date(from);
     date.setDate(from.getDate() + offset);
-    if (scheduleFor(date.getDay()).slots.length === 0) continue;
+    if (scheduleFor(date.getDay(), schedule).slots.length === 0) continue;
 
     const label = formatter.format(date);
     days.push({
@@ -146,10 +153,10 @@ function addRomeDays(
   return romeParts(noon);
 }
 
-export function isOpenAt(date: Date) {
+export function isOpenAt(date: Date, schedule: DaySchedule[] = openingHours) {
   const { day, hour, minute } = romeParts(date);
   const minutes = hour * 60 + minute;
-  return scheduleFor(day).slots.some(
+  return scheduleFor(day, schedule).slots.some(
     (slot) => minutes >= toMinutes(slot.open) && minutes < toMinutes(slot.close),
   );
 }
@@ -189,7 +196,12 @@ export function formatPickupSlot(iso: string) {
 }
 
 /** Fasce di ritiro negli orari di apertura, da ora fino a 48 ore. */
-export function getPickupSlotsWithinHours(hours = 48, from: Date = new Date(), step = 30) {
+export function getPickupSlotsWithinHours(
+  hours = 48,
+  from: Date = new Date(),
+  step = 30,
+  schedule: DaySchedule[] = openingHours,
+) {
   const minT = from.getTime() + 30 * 60 * 1000;
   const maxT = from.getTime() + hours * 60 * 60 * 1000;
   const start = romeParts(from);
@@ -197,7 +209,7 @@ export function getPickupSlotsWithinHours(hours = 48, from: Date = new Date(), s
 
   for (let offset = 0; offset <= 3; offset += 1) {
     const day = addRomeDays(start, offset);
-    for (const window of scheduleFor(day.day).slots) {
+    for (const window of scheduleFor(day.day, schedule).slots) {
       for (let minutes = toMinutes(window.open); minutes < toMinutes(window.close); minutes += step) {
         const utc = romeLocalToUtc(
           day.year,
@@ -222,15 +234,20 @@ export function getPickupSlotsWithinHours(hours = 48, from: Date = new Date(), s
   return slots;
 }
 
-export function isPickupWithinHours(iso: string, hours = 48, from: Date = new Date()) {
+export function isPickupWithinHours(
+  iso: string,
+  hours = 48,
+  from: Date = new Date(),
+  schedule: DaySchedule[] = openingHours,
+) {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return false;
   const minT = from.getTime() + 15 * 60 * 1000;
   const maxT = from.getTime() + hours * 60 * 60 * 1000;
-  return at.getTime() >= minT && at.getTime() <= maxT && isOpenAt(at);
+  return at.getTime() >= minT && at.getTime() <= maxT && isOpenAt(at, schedule);
 }
 
-export function toSchemaOpeningHours() {
+export function toSchemaOpeningHours(schedule: DaySchedule[] = openingHours) {
   const codes = [
     "Sunday",
     "Monday",
@@ -240,7 +257,7 @@ export function toSchemaOpeningHours() {
     "Friday",
     "Saturday",
   ];
-  return openingHours.flatMap((entry) =>
+  return schedule.flatMap((entry) =>
     entry.slots.map((slot) => ({
       "@type": "OpeningHoursSpecification" as const,
       dayOfWeek: codes[entry.day],

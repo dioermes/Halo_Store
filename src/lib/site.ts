@@ -3,6 +3,7 @@ import { deleteCatalogObjects } from "@/lib/catalog-bucket";
 import { createAdminClient, createPublicClient, isAdminConfigured, isSupabaseConfigured } from "@/lib/supabase";
 import { ambientImages, type Product } from "@/lib/products";
 import { DEFAULT_DISPLAY_FONT, resolveDisplayFont } from "@/lib/display-fonts";
+import { parseStoreContact, type StoreContact } from "@/lib/store-contact";
 
 export type SiteMedia = {
   url: string;
@@ -428,6 +429,14 @@ export async function saveSiteAppearance(next: SiteAppearance) {
 export async function patchSiteAppearance(patch: Partial<SiteAppearance>) {
   const current = await getSiteAppearance();
   await saveSiteAppearance({ ...current, ...patch });
+}
+
+export async function getStoreContact(): Promise<StoreContact> {
+  return parseStoreContact(await readSetting("store_contact"));
+}
+
+export async function saveStoreContact(next: StoreContact) {
+  await writeSetting("store_contact", { phone: next.phone.display, whatsapp: next.whatsapp.display, hours: next.hours });
 }
 
 export async function getCatalogMerch(): Promise<CatalogMerch> {

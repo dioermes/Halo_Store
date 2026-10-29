@@ -4,9 +4,11 @@ import { InstagramGlyph } from "@/components/icons";
 import { HaloLogoOriginal } from "@/components/halo-logo";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
+import { getStoreContact } from "@/lib/site";
 
-export function SiteFooter() {
+export async function SiteFooter() {
   const fiscal = fiscalLine();
+  const { phone } = await getStoreContact();
   return (
     <footer className="relative overflow-hidden border-t border-ink-line">
       <div
@@ -37,11 +39,11 @@ export function SiteFooter() {
                 <span>{fullAddress}</span>
               </a>
               <a
-                href={storeConfig.phone.href}
+                href={phone.href}
                 className="mt-3 flex items-center gap-2 text-sm text-ivory transition-colors hover:text-halo-bright"
               >
                 <Phone className="h-4 w-4 shrink-0" aria-hidden />
-                <span>{storeConfig.phone.display}</span>
+                <span>{phone.display}</span>
               </a>
               <a
                 href={storeConfig.support.emailHref}

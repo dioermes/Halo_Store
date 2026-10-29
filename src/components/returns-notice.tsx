@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { storeConfig } from "@/lib/store-config";
+import { useStoreContact } from "@/components/store-contact-provider";
 import { whatsappReturnsHref } from "@/lib/returns";
 
 export function ReturnsNotice({
@@ -7,7 +10,8 @@ export function ReturnsNotice({
 }: {
   fulfillment?: "pickup" | "shipping";
 }) {
-  const whatsapp = whatsappReturnsHref();
+  const { phone, whatsapp: whatsappContact } = useStoreContact();
+  const whatsapp = whatsappReturnsHref(whatsappContact.number);
   const shipping = fulfillment !== "pickup";
   const pickup = fulfillment !== "shipping";
 
@@ -34,8 +38,8 @@ export function ReturnsNotice({
           {storeConfig.support.email}
         </a>
         {" · "}
-        <a href={storeConfig.phone.href} className="text-halo-bright hover:underline">
-          {storeConfig.phone.display}
+        <a href={phone.href} className="text-halo-bright hover:underline">
+          {phone.display}
         </a>
         {whatsapp ? (
           <>

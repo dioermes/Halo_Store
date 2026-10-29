@@ -1,8 +1,10 @@
 import { fiscalLine, storeConfig } from "@/lib/store-config";
 import { whatsappReturnsHref } from "@/lib/returns";
+import { getStoreContact } from "@/lib/site";
 
-export default function TermsPage() {
-  const whatsapp = whatsappReturnsHref();
+export default async function TermsPage() {
+  const { phone, whatsapp: whatsappContact } = await getStoreContact();
+  const whatsapp = whatsappReturnsHref(whatsappContact.number);
   const fiscal = fiscalLine();
 
   return (
@@ -54,15 +56,15 @@ export default function TermsPage() {
       </p>
       <p className="mt-2">
         Telefono:{" "}
-        <a href={storeConfig.phone.href} className="text-halo-bright hover:underline">
-          {storeConfig.phone.display}
+        <a href={phone.href} className="text-halo-bright hover:underline">
+          {phone.display}
         </a>
       </p>
       {whatsapp ? (
         <p className="mt-2">
           WhatsApp:{" "}
           <a href={whatsapp} className="text-halo-bright hover:underline" target="_blank" rel="noreferrer">
-            {storeConfig.phone.display}
+            {phone.display}
           </a>
         </p>
       ) : null}

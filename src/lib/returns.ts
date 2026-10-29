@@ -1,11 +1,11 @@
 import { storeConfig } from "@/lib/store-config";
 
-export function whatsappReturnsHref() {
-  if (!storeConfig.whatsapp.isConfigured) return null;
+export function whatsappReturnsHref(number: string) {
+  if (!number) return null;
   const text = encodeURIComponent(
     "Ciao Halo Store, vorrei assistenza per un reso / cambio. Numero ordine: ",
   );
-  return `https://wa.me/${storeConfig.whatsapp.number}?text=${text}`;
+  return `https://wa.me/${number}?text=${text}`;
 }
 
 export function returnsEmailHtml(fulfillment?: "pickup" | "shipping") {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CookieSettingsButton } from "@/components/cookie-banner";
+import { getStoreContact } from "@/lib/site";
 import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
 
 export const metadata = {
@@ -7,8 +8,9 @@ export const metadata = {
   description: "Informativa sul trattamento dei dati personali di Halo Store, Conversano.",
 };
 
-export default function PrivacyPage() {
-  const { legalName, support, phone } = storeConfig;
+export default async function PrivacyPage() {
+  const { phone } = await getStoreContact();
+  const { legalName, support } = storeConfig;
   const fiscal = fiscalLine();
 
   return (

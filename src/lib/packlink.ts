@@ -1,4 +1,6 @@
 import { storeConfig } from "@/lib/store-config";
+import { phoneDigits } from "@/lib/store-contact";
+import { getStoreContact } from "@/lib/site";
 
 const PACKLINK_BASE = "https://api.packlink.com/v1/";
 
@@ -61,8 +63,8 @@ export function getPacklinkApiKey() {
   return (process.env.PACKLINK_API_KEY ?? "").trim();
 }
 
-export function warehouseFrom() {
-  const phone = storeConfig.phone.display.replace(/\D/g, "");
+export function warehouseFrom(phoneDisplay: string = storeConfig.phone.display) {
+  const phone = phoneDigits(phoneDisplay);
   return {
     name: "Miriana",
     surname: "Buonsante",
@@ -71,7 +73,7 @@ export function warehouseFrom() {
     zip_code: storeConfig.address.postalCode,
     city: storeConfig.address.city,
     country: "IT",
-    phone: phone.startsWith("39") ? phone : `39${phone}`,
+    phone,
     email: storeConfig.support.email,
   };
 }
@@ -355,7 +357,7 @@ export async function createPacklinkShipment(input: {
     };
   }
 
-  const from = warehouseFrom();
+  const from = warehouseFrom((await getStoreContact()).phone.display);
   const names = splitName(input.to.name);
   const body = {
     platform: "PRO",

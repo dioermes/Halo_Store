@@ -5,6 +5,7 @@ import { ensureCustomer } from "@/lib/auth";
 import { getPublishedProducts } from "@/lib/catalog";
 import { findVariant, productImageForColor } from "@/lib/products";
 import { getStoreSettings } from "@/lib/settings";
+import { getStoreContact } from "@/lib/site";
 import { getStripe, integrationIdentifier, isStripeConfigured, siteUrl } from "@/lib/stripe";
 import type { Fulfillment } from "@/lib/orders";
 import { formatPickupSlot, isPickupWithinHours } from "@/lib/opening-hours";
@@ -175,7 +176,8 @@ async function handleCheckout(req: Request) {
         { status: 400 },
       );
     }
-    if (!isPickupWithinHours(body.pickupAt, 48)) {
+    const { hours } = await getStoreContact();
+    if (!isPickupWithinHours(body.pickupAt, 48, new Date(), hours)) {
       return NextResponse.json(
         { error: "Scegli un orario di ritiro entro 48 ore, negli orari di apertura." },
         { status: 400 },

@@ -6,11 +6,13 @@ import { InstagramGlyph } from "@/components/icons";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { OpenBadge } from "@/components/open-badge";
 import { useEmbedsAllowed } from "@/components/cookie-banner";
-import { formatSlots, weekSchedule } from "@/lib/opening-hours";
+import { formatSlots } from "@/lib/opening-hours";
+import { useStoreContact } from "@/components/store-contact-provider";
 import { writeConsent } from "@/lib/consent";
 import { fullAddress, storeConfig } from "@/lib/store-config";
 
 export function StoreInfo() {
+  const { phone, hours } = useStoreContact();
   const [today, setToday] = useState<number | null>(null);
 
   useEffect(() => {
@@ -53,11 +55,11 @@ export function StoreInfo() {
                 </a>
 
                 <a
-                  href={storeConfig.phone.href}
+                  href={phone.href}
                   className="flex items-center gap-3 text-lg transition-colors hover:text-halo-bright"
                 >
                   <Phone className="h-5 w-5 shrink-0 text-halo" aria-hidden />
-                  <span>{storeConfig.phone.display}</span>
+                  <span>{phone.display}</span>
                 </a>
 
                 <div>
@@ -68,7 +70,7 @@ export function StoreInfo() {
 
             <Reveal delay={0.3}>
               <ul className="mt-10 divide-y divide-ink-line border-y border-ink-line">
-                {weekSchedule.map((entry) => {
+                {hours.map((entry) => {
                   const isToday = today === entry.day;
                   const closed = entry.slots.length === 0;
                   return (
@@ -102,7 +104,7 @@ export function StoreInfo() {
             <Reveal delay={0.4}>
               <div className="mt-10 flex flex-wrap gap-3">
                 <a
-                  href={storeConfig.phone.href}
+                  href={phone.href}
                   className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
                 >
                   <Phone className="h-4 w-4" aria-hidden />

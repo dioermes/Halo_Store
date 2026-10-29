@@ -17,6 +17,7 @@ import {
   removeProductMerch,
   saveCatalogMerch,
   saveSiteAppearance,
+  saveStoreContact,
   sanitizeHomeSections,
   setProductMerch,
   type HomeSection,
@@ -26,6 +27,13 @@ import {
   type SiteMediaSlot,
 } from "@/lib/site";
 import { getAllProductsAdmin } from "@/lib/catalog";
+import {
+  defaultStoreContact,
+  parsePhone,
+  parseWhatsapp,
+  SLOTS_PER_DAY,
+  validateSlots,
+} from "@/lib/store-contact";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
 import { notifyStockAlerts } from "@/lib/stock-alerts";
 import { getStripe } from "@/lib/stripe";
@@ -631,6 +639,30 @@ export async function saveSettingsAction(formData: FormData) {
     birthdayValidDays: Math.min(60, Math.max(1, Number(formData.get("birthdayValidDays") ?? 14))),
   });
   revalidatePath("/admin/impostazioni");
+}
+
+export async function saveStoreContactAction(formData: FormData) {
+  await requireOwner();
+  const phone = parsePhone(formData.get("phone"));
+  if (!phone) throw new Error("Inserisci un numero di telefono valido, per esempio +39 331 987 5979.");
+
+  const whatsapp = parseWhatsapp(formData.get("whatsapp"));
+  if (!whatsapp) throw new Error("Inserisci un numero WhatsApp valido, per esempio +39 331 987 5979.");
+
+  const hours = defaultStoreContact.hours.map((day) => {
+    if (formData.get(`closed_${day.day}`) === "on") return { ...day, slots: [] };
+    const raw = Array.from({ length: SLOTS_PER_DAY }, (_, index) => ({
+      open: String(formData.get(`open_${day.day}_${index}`) ?? "").trim(),
+      close: String(formData.get(`close_${day.day}_${index}`) ?? "").trim(),
+    }));
+    const result = validateSlots(day.label, raw);
+    if ("error" in result) throw new Error(result.error);
+    return { ...day, slots: result.slots };
+  });
+
+  await saveStoreContact({ phone, whatsapp, hours });
+  revalidatePath("/", "layout");
+  redirect("/admin/sito?contatti=1");
 }
 
 export async function saveSiteAppearanceAction(formData: FormData) {

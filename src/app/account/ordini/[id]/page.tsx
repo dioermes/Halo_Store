@@ -6,8 +6,9 @@ import { createAdminClient } from "@/lib/supabase";
 import { ensureCustomer } from "@/lib/auth";
 import { formatPrice } from "@/lib/products";
 import { orderStatusLabel, type OrderStatus } from "@/lib/orders";
-import { fullAddress, storeConfig } from "@/lib/store-config";
+import { fullAddress } from "@/lib/store-config";
 import { ReturnsNotice } from "@/components/returns-notice";
+import { getStoreContact } from "@/lib/site";
 
 type OrderItem = {
   id: string;
@@ -40,6 +41,7 @@ export default async function CustomerOrderPage({
   const { id } = await params;
   const customer = await ensureCustomer(user);
   const admin = createAdminClient();
+  const { phone } = await getStoreContact();
   const { data: order } = await admin
     .from("halo_orders")
     .select("*, halo_order_items(*)")
@@ -114,10 +116,10 @@ export default async function CustomerOrderPage({
           {order.shipping_phone ? <p>{order.shipping_phone}</p> : null}
           <p className="mt-3">{fullAddress}</p>
           <a
-            href={storeConfig.phone.href}
+            href={phone.href}
             className="mt-2 inline-block text-halo-bright hover:underline"
           >
-            {storeConfig.phone.display}
+            {phone.display}
           </a>
         </div>
       ) : (

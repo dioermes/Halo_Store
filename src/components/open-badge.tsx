@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getOpenState, type OpenState } from "@/lib/opening-hours";
+import { useStoreContact } from "@/components/store-contact-provider";
 
 /**
  * Stato di apertura calcolato sul fuso dell'utente.
@@ -9,13 +10,14 @@ import { getOpenState, type OpenState } from "@/lib/opening-hours";
  */
 export function OpenBadge({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState<OpenState | null>(null);
+  const { hours } = useStoreContact();
 
   useEffect(() => {
-    const update = () => setState(getOpenState());
+    const update = () => setState(getOpenState(new Date(), hours));
     update();
     const interval = window.setInterval(update, 60_000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [hours]);
 
   if (!state) {
     return (

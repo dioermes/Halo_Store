@@ -1,5 +1,6 @@
 import { storeConfig } from "@/lib/store-config";
 import { toSchemaOpeningHours } from "@/lib/opening-hours";
+import { getStoreContact } from "@/lib/site";
 import { productPath } from "@/lib/product-path";
 import { isProductSoldOut, type Product } from "@/lib/products";
 
@@ -42,7 +43,8 @@ function JsonLd({ data }: { data: unknown }) {
   );
 }
 
-export function StructuredData() {
+export async function StructuredData() {
+  const { hours } = await getStoreContact();
   const data = {
     "@context": "https://schema.org",
     "@type": "ClothingStore",
@@ -68,7 +70,7 @@ export function StructuredData() {
     },
     currenciesAccepted: "EUR",
     priceRange: "€€",
-    openingHoursSpecification: toSchemaOpeningHours(),
+    openingHoursSpecification: toSchemaOpeningHours(hours),
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: storeConfig.rating.value,

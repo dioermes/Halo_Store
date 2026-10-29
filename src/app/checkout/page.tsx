@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { useCart } from "@/components/reservation-provider";
+import { useStoreContact } from "@/components/store-contact-provider";
 import { formatPrice } from "@/lib/products";
 import { storeConfig } from "@/lib/store-config";
 import { getPickupSlotsWithinHours } from "@/lib/opening-hours";
@@ -22,13 +23,14 @@ const fieldClass =
 export default function CheckoutPage() {
   const { items, total, productById, count, clear, remove } = useCart();
   const router = useRouter();
+  const { hours } = useStoreContact();
   const giftCardItems = items.filter((item) => item.giftCardAmountCents);
   const giftCardAmounts = giftCardItems.flatMap((item) =>
     Array.from({ length: item.quantity }, () => item.giftCardAmountCents ?? 0),
   );
   const physicalItems = items.filter((item) => !item.giftCardAmountCents);
   const giftCardOnly = giftCardAmounts.length > 0 && physicalItems.length === 0;
-  const pickupSlots = useMemo(() => getPickupSlotsWithinHours(48), []);
+  const pickupSlots = useMemo(() => getPickupSlotsWithinHours(48, new Date(), 30, hours), [hours]);
   const pickupGroups = useMemo(() => {
     const groups: Array<{ label: string; slots: typeof pickupSlots }> = [];
     for (const slot of pickupSlots) {

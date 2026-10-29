@@ -1,5 +1,6 @@
 import { formatPrice, getProduct } from "@/lib/products";
 import { storeConfig } from "@/lib/store-config";
+import { getStoreContact } from "@/lib/site";
 import type { CartItem } from "@/components/reservation-provider";
 
 export type ReservationDetails = {
@@ -40,11 +41,11 @@ export function buildReservationMessage(
   return lines.join("\n");
 }
 
-export function buildWhatsappUrl(message: string) {
-  return `https://wa.me/${storeConfig.whatsapp.number}?text=${encodeURIComponent(message)}`;
+export function buildWhatsappUrl(message: string, number: string) {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
-export function notifyOwnerNewOrder(order: {
+export async function notifyOwnerNewOrder(order: {
   id: string;
   total_cents: number;
   fulfillment: string;
@@ -68,7 +69,8 @@ export function notifyOwnerNewOrder(order: {
   ];
   if (order.customer_note) lines.push(order.customer_note);
   const message = lines.join("\n");
-  if (storeConfig.whatsapp.isConfigured) {
-    console.info("[owner-whatsapp]", buildWhatsappUrl(message));
+  const { whatsapp } = await getStoreContact();
+  if (whatsapp.number) {
+    console.info("[owner-whatsapp]", buildWhatsappUrl(message, whatsapp.number));
   }
 }
