@@ -76,7 +76,7 @@ function sampleMediaPixel(
 function backgroundAt(x: number, y: number): Rgb {
   const elements = document.elementsFromPoint(x, y);
   for (const element of elements) {
-    if (element.closest("header")) continue;
+    if (element.closest("header, [data-announcement], [data-adaptive-button]")) continue;
     if (element instanceof HTMLImageElement || element instanceof HTMLVideoElement) {
       const pixel = sampleMediaPixel(element, x, y);
       if (pixel && pixel.alpha > 0) return pixel;
@@ -169,6 +169,24 @@ export function SiteNav({
         button.style.color = "var(--nav-icon-color)";
       }
 
+      const bar = document.querySelector<HTMLElement>("[data-announcement]");
+      if (bar) {
+        const rect = bar.getBoundingClientRect();
+        const points = [0.1, 0.3, 0.5, 0.7, 0.9].map((ratio) =>
+          luminance(backgroundAt(rect.left + rect.width * ratio, rect.top + rect.height / 2)),
+        );
+        const average = points.reduce((total, value) => total + value, 0) / points.length;
+        bar.style.color = average < 0.45 ? "#fff" : "#000";
+      }
+
+      for (const button of document.querySelectorAll<HTMLElement>("[data-adaptive-button]")) {
+        const rect = button.getBoundingClientRect();
+        const value = luminance(
+          backgroundAt(rect.left + rect.width / 2, rect.top + rect.height / 2),
+        );
+        button.style.setProperty("--adaptive-fg", value < 0.45 ? "#fff" : "#000");
+      }
+
       if (logo && logoRect && logoRect.width > 0) {
         const logoOnDark = logoPixel ? luminance(logoPixel) < 0.45 : iconsOnDark;
         logo.style.opacity = logoOnDark ? "0" : "1";
@@ -199,7 +217,7 @@ export function SiteNav({
 
   return (
     <>
-      {!inAdmin ? <AnnouncementBar /> : null}
+      {!inAdmin ? <AnnouncementBar overlay={pathname === "/"} /> : null}
       <header
         className={`halo-nav-in pointer-events-none absolute inset-x-0 z-[100] overflow-visible ${
           inAdmin ? "top-0" : "top-9"

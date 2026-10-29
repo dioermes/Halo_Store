@@ -20,12 +20,16 @@ function Group({ hidden }: { hidden?: boolean }) {
   );
 }
 
-export function AnnouncementBar() {
+export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
   return (
     <div
       role="region"
       aria-label="Informazioni sul negozio"
-      className="relative z-101 -mb-px flex h-9 items-center overflow-hidden bg-black text-[0.7rem] font-medium uppercase tracking-[0.16em] text-white sm:text-xs"
+      data-announcement
+      style={{ color: "#fff" }}
+      className={`z-101 flex h-9 items-center overflow-hidden bg-transparent text-[0.7rem] font-medium uppercase tracking-[0.16em] transition-colors duration-500 sm:text-xs ${
+        overlay ? "pointer-events-none absolute inset-x-0 top-0" : "relative"
+      }`}
     >
       <div className="animate-marquee flex w-max" style={{ animationDuration: "40s" }}>
         <div className="flex">

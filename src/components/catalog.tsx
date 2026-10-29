@@ -109,7 +109,7 @@ function CategoryRail({
       <div className="relative">
         <div
           ref={scrollerRef}
-          className={`overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${bleed ? "px-5" : ""}`}
+          className={`overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden ${bleed ? "px-5" : ""}`}
         >
           <div
             className={`flex w-max gap-1.5 ${overflow ? "" : "min-w-full justify-center"}`}
@@ -146,12 +146,12 @@ function CategoryRail({
           <>
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-ink to-transparent"
+              className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-linear-to-r from-ink to-transparent"
               style={{ opacity: scrollLeft > 4 ? 1 : 0 }}
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-ink to-transparent"
+              className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-linear-to-l from-ink to-transparent"
               style={{ opacity: scrollLeft < scrollMax - 4 ? 1 : 0 }}
             />
           </>
