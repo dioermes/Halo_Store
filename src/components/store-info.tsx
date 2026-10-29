@@ -42,34 +42,9 @@ export function StoreInfo() {
               />
             </h2>
 
-            <Reveal delay={0.2}>
-              <div className="mt-12 space-y-7">
-                <a
-                  href={storeConfig.maps.place}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-start gap-3 text-lg transition-colors hover:text-halo-bright"
-                >
-                  <MapPin className="mt-1 h-5 w-5 shrink-0 text-halo" aria-hidden />
-                  <span>{fullAddress}</span>
-                </a>
-
-                <a
-                  href={phone.href}
-                  className="flex items-center gap-3 text-lg transition-colors hover:text-halo-bright"
-                >
-                  <Phone className="h-5 w-5 shrink-0 text-halo" aria-hidden />
-                  <span>{phone.display}</span>
-                </a>
-
-                <div>
-                  <OpenBadge />
-                </div>
-              </div>
-            </Reveal>
-
             <Reveal delay={0.3}>
-              <ul className="mt-10 divide-y divide-ink-line border-y border-ink-line">
+              <div className="mt-10"><OpenBadge /></div>
+              <ul className="mt-5 divide-y divide-ink-line border-y border-ink-line">
                 {hours.map((entry) => {
                   const isToday = today === entry.day;
                   const closed = entry.slots.length === 0;
@@ -101,6 +76,29 @@ export function StoreInfo() {
               </ul>
             </Reveal>
 
+            <Reveal delay={0.2}>
+              <div className="mt-10 space-y-7">
+                <a
+                  href={storeConfig.maps.place}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-start gap-3 text-lg transition-colors hover:text-halo-bright"
+                >
+                  <MapPin className="mt-1 h-5 w-5 shrink-0 text-halo" aria-hidden />
+                  <span>{fullAddress}</span>
+                </a>
+
+                <a
+                  href={phone.href}
+                  className="flex items-center gap-3 text-lg transition-colors hover:text-halo-bright"
+                >
+                  <Phone className="h-5 w-5 shrink-0 text-halo" aria-hidden />
+                  <span>{phone.display}</span>
+                </a>
+
+              </div>
+            </Reveal>
+
             <Reveal delay={0.4}>
               <div className="mt-10 flex flex-wrap gap-3">
                 <a
@@ -126,7 +124,7 @@ export function StoreInfo() {
                   className="inline-flex items-center gap-2 rounded-full border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <InstagramGlyph className="h-4 w-4" />
-                  Guarda gli arrivi su Instagram
+                  Seguici su Instagram
                 </a>
               </div>
             </Reveal>

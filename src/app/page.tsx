@@ -2,6 +2,7 @@ import { Hero } from "@/components/hero";
 import { HomeCollections } from "@/components/home-collections";
 import { GiftCardShop } from "@/components/gift-card-shop";
 import { StoreInfo } from "@/components/store-info";
+import { HelpFaq } from "@/components/help-faq";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getStoreSettings } from "@/lib/settings";
 import { getPublishedProducts } from "@/lib/catalog";
@@ -26,6 +27,7 @@ export default async function Home() {
       <HomeCollections sections={appearance.homeSections} />
       <GiftCardShop />
       <StoreInfo />
+      <HelpFaq />
       <NewsletterSignup
         imageUrl={appearance.newsletterPopupImage}
         percent={settings.newsletterDiscountPercent}
