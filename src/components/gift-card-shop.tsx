@@ -18,7 +18,7 @@ export function GiftCardShop() {
       aria-labelledby="gift-card-title"
     >
       <div className="w-full">
-        <div className="relative h-[38svh] min-h-[240px] max-h-[420px] overflow-hidden bg-[#c5cebc] sm:h-[58vw] sm:min-h-[360px] sm:max-h-[720px]">
+        <div className="relative h-[38svh] min-h-60 max-h-105 overflow-hidden bg-[#c5cebc] sm:h-[58vw] sm:min-h-90 sm:max-h-180">
           <video
             src="/halo-gift-card-bianca-video.mp4"
             className="absolute inset-0 h-full w-full object-cover"
@@ -32,7 +32,7 @@ export function GiftCardShop() {
 
         <div className="mx-auto max-w-5xl px-5 py-9 text-center sm:px-8 sm:py-12">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-[#6b3a45]">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-ivory-dim">
               <strong>Gift Card</strong>
             </p>
             <h2
@@ -41,14 +41,14 @@ export function GiftCardShop() {
             >
               Il regalo perfetto.
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[#6b3a45] sm:text-base">
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ivory-dim sm:text-base">
               Scegli l’importo: riceverai via email una card digitale con un codice univoco da
               inoltrare. Il credito si usa anche in più acquisti, fino a esaurimento.
             </p>
           </div>
 
-          <div className="mx-auto mt-8 w-full max-w-[520px]">
-            <p className="text-xs uppercase tracking-[0.18em] text-[#6b3a45]">
+          <div className="mx-auto mt-8 w-full max-w-130">
+            <p className="text-xs uppercase tracking-[0.18em] text-ivory-dim">
               Scegli l’importo
             </p>
             <div className="mt-3 grid grid-cols-4 gap-2">
@@ -72,7 +72,7 @@ export function GiftCardShop() {
               ))}
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-[#3f1521]/15 pt-4">
-              <span className="text-sm text-[#6b3a45]">Totale gift card</span>
+              <span className="text-sm text-ivory-dim">Totale gift card</span>
               <span className="font-display text-2xl text-[#3f1521]">{formatPrice(amount)}</span>
             </div>
             <button
