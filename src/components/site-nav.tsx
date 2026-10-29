@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { Heart, Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-react";
 import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
 import { useFavorites } from "@/components/favorites-provider";
@@ -124,6 +124,7 @@ export function SiteNav({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLImageElement>(null);
   const sageLogoRef = useRef<HTMLImageElement>(null);
@@ -143,10 +144,26 @@ export function SiteNav({
   }, [pathname]);
 
   useEffect(() => {
+    if (!profileOpen) return;
+    const close = (event: Event) => {
+      if (event instanceof KeyboardEvent && event.key !== "Escape") return;
+      if (event instanceof MouseEvent && (event.target as Element).closest("[data-profile-menu]")) return;
+      setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [profileOpen]);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => {
       setMenuOpen(false);
       setSearchOpen(false);
       setCatalogOpen(false);
+      setProfileOpen(false);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [pathname]);
@@ -218,7 +235,7 @@ export function SiteNav({
   }, [pathname]);
 
   const iconBtn =
-    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-[#3F1521] transition-colors duration-300 hover:opacity-70";
+    "flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#3F1521] transition-colors duration-300 hover:opacity-70 sm:h-11 sm:w-11";
 
   return (
     <>
@@ -256,7 +273,7 @@ export function SiteNav({
                   </filter>
                 </svg>
                 {pathname === "/" ? (
-                  <span className="relative -ml-2 block aspect-[752/564] h-24 overflow-hidden sm:-ml-4 md:h-32">
+                  <span className="relative -ml-2 block aspect-[752/564] h-24 overflow-hidden sm:-ml-4 md:h-44">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       ref={logoRef}
@@ -280,7 +297,7 @@ export function SiteNav({
                     <HaloLogoOriginal
                       imageRef={logoRef}
                       style={{ filter: "url(#halo-logo-clean)" }}
-                      className="h-[5.75rem] w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-36"
+                      className="h-[5.75rem] w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-40"
                     />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -305,8 +322,59 @@ export function SiteNav({
               data-nav-icon
               aria-label="Apri il menu"
             >
-              <Menu className="h-5 w-5" aria-hidden />
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
             </button>
+            {!inAdmin && !isSignedIn ? (
+              <Link
+                href="/sign-in?redirect_url=%2Faccount"
+                className={iconBtn}
+                data-nav-icon
+                aria-label="Accedi"
+              >
+                <User className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+              </Link>
+            ) : null}
+            {!inAdmin && isSignedIn ? (
+              <div className="relative" data-profile-menu>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className={iconBtn}
+                  data-nav-icon
+                  aria-label="Il mio account"
+                  aria-expanded={profileOpen}
+                  aria-haspopup="menu"
+                >
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+                </button>
+                {profileOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full z-50 mt-2 w-40 overflow-hidden rounded-md border border-ink-line bg-ink shadow-lg"
+                  >
+                    <Link
+                      href="/account"
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                      className="block px-4 py-3 text-sm text-ivory hover:bg-ink-line/40"
+                    >
+                      Profilo
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        void signOut({ redirectUrl: "/" });
+                      }}
+                      className="block w-full border-t border-ink-line px-4 py-3 text-left text-sm text-ivory hover:bg-ink-line/40"
+                    >
+                      Esci
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {!inAdmin ? (
               <button
                 type="button"
@@ -317,7 +385,7 @@ export function SiteNav({
                 data-nav-icon
                 aria-label="Cerca nel catalogo"
               >
-                <Search className="h-5 w-5" aria-hidden />
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
               </button>
             ) : null}
             <Link
@@ -330,7 +398,7 @@ export function SiteNav({
               data-nav-icon
               aria-label={`Preferiti${favoritesCount ? `, ${favoritesCount} capi` : ""}`}
             >
-              <Heart className="h-5 w-5" aria-hidden />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
               <AnimatePresence>
                 {favoritesCount > 0 ? (
                   <motion.span
@@ -352,7 +420,7 @@ export function SiteNav({
               data-nav-icon
               aria-label="Apri il carrello"
             >
-              <ShoppingBag className="h-5 w-5" aria-hidden />
+              <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
               <AnimatePresence>
                 {count > 0 && (
                   <motion.span

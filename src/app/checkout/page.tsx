@@ -8,6 +8,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe
 import { useCart } from "@/components/reservation-provider";
 import { useStoreContact } from "@/components/store-contact-provider";
 import { formatPrice } from "@/lib/products";
+import { shippingFor } from "@/lib/shipping";
 import { storeConfig } from "@/lib/store-config";
 import { getPickupSlotsWithinHours } from "@/lib/opening-hours";
 import { ReturnsNotice } from "@/components/returns-notice";
@@ -70,7 +71,7 @@ export default function CheckoutPage() {
   } | null>(null);
   const [giftCardBusy, setGiftCardBusy] = useState(false);
   const [suggestedCode, setSuggestedCode] = useState("HALO10");
-  const [shippingCents, setShippingCents] = useState(700);
+  const [baseShippingCents, setShippingCents] = useState(700);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reserved, setReserved] = useState<{
@@ -91,6 +92,7 @@ export default function CheckoutPage() {
       .catch(() => undefined);
   }, []);
 
+  const shippingCents = shippingFor(Math.round(total * 100), baseShippingCents);
   const discountEuro = promo ? promo.discountCents / 100 : 0;
   const giftCardEuro = giftCard ? giftCard.discountCents / 100 : 0;
   const grandTotal =
@@ -359,7 +361,9 @@ export default function CheckoutPage() {
               <p className="mt-1 text-sm text-ivory-dim">
                 {option === "pickup"
                   ? `${storeConfig.address.street}`
-                  : `Costi di spedizione ${formatPrice(shippingCents / 100)}`}
+                  : shippingCents === 0
+                    ? "Spedizione gratuita"
+                    : `Costi di spedizione ${formatPrice(shippingCents / 100)}`}
               </p>
             </button>
           ))}
@@ -689,7 +693,7 @@ export default function CheckoutPage() {
           {fulfillment === "shipping" ? (
             <p className="mt-6 flex justify-between border-t border-ink-line pt-4 text-sm">
               <span>Spedizione</span>
-              <span>{formatPrice(shippingCents / 100)}</span>
+              <span>{shippingCents === 0 ? "Gratuita" : formatPrice(shippingCents / 100)}</span>
             </p>
           ) : null}
           {promo && (

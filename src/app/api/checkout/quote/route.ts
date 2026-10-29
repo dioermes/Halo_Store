@@ -5,6 +5,7 @@ import { findVariant } from "@/lib/products";
 import { getStoreSettings } from "@/lib/settings";
 import { resolvePromo } from "@/lib/promo";
 import { quoteGiftCard } from "@/lib/gift-cards";
+import { shippingFor } from "@/lib/shipping";
 
 export const runtime = "nodejs";
 
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   const settings = await getStoreSettings();
-  const shippingCents = body.fulfillment === "shipping" ? settings.shippingItalyCents : 0;
+  const shippingCents = body.fulfillment === "shipping" ? shippingFor(subtotalCents, settings.shippingItalyCents) : 0;
   let giftCardCents = 0;
   let giftCardRemainingCents = 0;
   if (body.giftCardCode?.trim()) {

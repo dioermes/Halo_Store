@@ -28,8 +28,7 @@ export default async function AccountFavoritesPage() {
     .filter((product) => product !== undefined);
 
   return (
-    <section className="mx-auto max-w-7xl px-5 pb-20 pt-32 sm:px-8">
-      <p className="text-xs uppercase tracking-[0.34em] text-halo">Il tuo account</p>
+    <section className="mx-auto max-w-7xl px-5 pb-20 pt-44 sm:px-8 md:pt-56">
       <h1 className="mt-4 font-display text-5xl">I tuoi preferiti</h1>
       {favoriteProducts.length ? (
         <div className="halo-product-grid mt-10">

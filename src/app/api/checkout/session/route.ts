@@ -14,6 +14,7 @@ import { notifyOwnerNewOrder } from "@/lib/whatsapp";
 import { settleCustomerPendingPayments, type FulfilledOrder } from "@/lib/fulfill-checkout";
 import { releasePromoForOrder, reservePromo, resolvePromo } from "@/lib/promo";
 import { quoteGiftCard } from "@/lib/gift-cards";
+import { shippingFor } from "@/lib/shipping";
 import { GIFT_CARD_AMOUNTS_EUR } from "@/lib/gift-card-constants";
 
 type CartPayload = {
@@ -244,7 +245,7 @@ async function handleCheckout(req: Request) {
   }
 
   const subtotal = lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0);
-  const shippingCents = body.fulfillment === "shipping" ? settings.shippingItalyCents : 0;
+  const shippingCents = body.fulfillment === "shipping" ? shippingFor(subtotal, settings.shippingItalyCents) : 0;
   const giftCardQuote = body.giftCardCode?.trim()
     ? await quoteGiftCard(body.giftCardCode, subtotal + shippingCents)
     : null;
