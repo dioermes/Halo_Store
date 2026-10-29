@@ -23,16 +23,6 @@
 html {
   scroll-behavior: smooth;
   background-color: var(--color-ink);
-  scrollbar-width: thin;
-  scrollbar-color: #5e1730 #f1ece8;
-}
-
-html::-webkit-scrollbar {
-  width: 10px;
-}
-
-html::-webkit-scrollbar-track {
-  background: #f1ece8;
 }
 
 html::-webkit-scrollbar-thumb {
@@ -43,6 +33,31 @@ html::-webkit-scrollbar-thumb {
 
 html::-webkit-scrollbar-thumb:hover {
   background: #3f1521;
+}
+
+html::-webkit-scrollbar-track {
+  background: #f1ece8;
+}
+
+@media (min-width: 640px) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #5e1730 #f1ece8;
+  }
+
+  html::-webkit-scrollbar {
+    width: 10px;
+  }
+}
+
+@media (max-width: 639px) {
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .halo-page-bg,
