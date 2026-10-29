@@ -26,7 +26,7 @@ export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
       role="region"
       aria-label="Informazioni sul negozio"
       data-announcement
-      style={{ color: "#fff" }}
+      style={{ color: "#C5CEBC" }}
       className={`z-101 flex h-9 items-center overflow-hidden bg-transparent text-[0.7rem] font-medium uppercase tracking-[0.16em] transition-colors duration-500 sm:text-xs ${
         overlay ? "pointer-events-none absolute inset-x-0 top-0" : "relative"
       }`}

@@ -167,7 +167,7 @@ export function SiteNav({
         iconPixels.reduce((total, pixel) => total + luminance(pixel), 0) /
         Math.max(1, iconPixels.length);
       const iconsOnDark = iconLuminance < 0.45;
-      nav.style.setProperty("--nav-icon-color", iconsOnDark ? "#fff" : "#000");
+      nav.style.setProperty("--nav-icon-color", iconsOnDark ? "#C5CEBC" : "#3F1521");
       for (const button of buttons) {
         button.style.color = "var(--nav-icon-color)";
       }
@@ -179,7 +179,7 @@ export function SiteNav({
           luminance(backgroundAt(rect.left + rect.width * ratio, rect.top + rect.height / 2)),
         );
         const average = points.reduce((total, value) => total + value, 0) / points.length;
-        bar.style.color = average < 0.45 ? "#fff" : "#000";
+        bar.style.color = average < 0.45 ? "#C5CEBC" : "#3F1521";
       }
 
       if (logo && logoRect && logoRect.width > 0) {
@@ -208,7 +208,7 @@ export function SiteNav({
   }, [pathname]);
 
   const iconBtn =
-    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-black transition-colors duration-300 hover:opacity-70";
+    "flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-[#3F1521] transition-colors duration-300 hover:opacity-70";
 
   return (
     <>
