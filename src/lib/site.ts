@@ -40,6 +40,7 @@ export type SiteAppearance = {
   heroDesktop: SiteMedia;
   heroMobile: SiteMedia;
   newsletterPopupImage: string;
+  tagline: string;
   heroButtons: {
     shopNow: HeroButton;
     newIn: HeroButton;
@@ -139,6 +140,7 @@ const appearanceDefaults: SiteAppearance = {
   heroDesktop: { url: ambientImages.interior, kind: "image" },
   heroMobile: { url: ambientImages.interior, kind: "image" },
   newsletterPopupImage: ambientImages.interior,
+  tagline: "Non seguiamo lo stile, lo riscriviamo.",
   heroButtons: {
     shopNow: { label: "SHOP NOW", destinationType: "url", destination: "/catalogo" },
     newIn: { label: "NEW IN", destinationType: "url", destination: "/#nuovi-arrivi" },
@@ -297,6 +299,10 @@ function parseAppearance(value: unknown): SiteAppearance {
       typeof row.newsletterPopupImage === "string" && row.newsletterPopupImage.trim()
         ? row.newsletterPopupImage.trim()
         : appearanceDefaults.newsletterPopupImage,
+    tagline:
+      typeof row.tagline === "string"
+        ? row.tagline.trim().slice(0, 140)
+        : appearanceDefaults.tagline,
     heroButtons: { shopNow: parseButton("shopNow"), newIn: parseButton("newIn") },
     homeSections: parseHomeSections(row),
     soldOutBadgeBg: asHexColor(

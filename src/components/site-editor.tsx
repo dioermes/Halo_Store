@@ -448,6 +448,19 @@ export function SiteEditor({
         hint="Formato verticale, a tutto schermo sul telefono."
         appearance={appearance}
       />
+      <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
+        <legend className="px-1 font-display text-2xl">Frase sotto il video</legend>
+        <p className="text-sm leading-relaxed text-ivory-dim">
+          Appare nella fascia bianca tra il video e le sezioni della home. Lasciala vuota per nascondere la fascia.
+        </p>
+        <input
+          name="tagline"
+          defaultValue={appearance.tagline}
+          maxLength={140}
+          placeholder="Es. Non seguiamo lo stile, lo riscriviamo."
+          className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
+        />
+      </fieldset>
       <NewsletterPopupImageField initialUrl={appearance.newsletterPopupImage} />
       <DisplayFontPicker initialId={appearance.displayFont} />
       <DisplayFontPicker variant="section" initialId={appearance.sectionTitleFont} />

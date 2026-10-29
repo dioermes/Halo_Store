@@ -2,6 +2,7 @@ import { Hero } from "@/components/hero";
 import { HomeCollections } from "@/components/home-collections";
 import { GiftCardShop } from "@/components/gift-card-shop";
 import { StoreInfo } from "@/components/store-info";
+import { TaglineBand } from "@/components/tagline-band";
 import { HelpFaq } from "@/components/help-faq";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getStoreSettings } from "@/lib/settings";
@@ -24,6 +25,7 @@ export default async function Home() {
     <>
       <ProductListStructuredData products={products} />
       <Hero appearance={appearance} />
+      {appearance.tagline ? <TaglineBand text={appearance.tagline} /> : null}
       <HomeCollections sections={appearance.homeSections} />
       <GiftCardShop />
       <StoreInfo />

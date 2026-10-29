@@ -734,6 +734,7 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     heroDesktop: media("heroDesktop"),
     heroMobile: media("heroMobile"),
     newsletterPopupImage: current.newsletterPopupImage,
+    tagline: String(formData.get("tagline") ?? "").trim().slice(0, 140),
     heroButtons: {
       shopNow: heroButton("shopNow"),
       newIn: heroButton("newIn"),
