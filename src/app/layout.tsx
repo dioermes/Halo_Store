@@ -9,7 +9,7 @@ import { ReservationProvider } from "@/components/reservation-provider";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ReservationBag } from "@/components/reservation-bag";
-import { StructuredData } from "@/components/structured-data";
+import { StructuredData, NavigationData } from "@/components/structured-data";
 import { CookieBanner } from "@/components/cookie-banner";
 import { NewsletterPopup } from "@/components/newsletter-popup";
 import { WhatsAppSupport } from "@/components/whatsapp-support";
@@ -52,7 +52,6 @@ export const metadata: Metadata = {
     description: "Capi che non trovi ovunque. Acquista online.",
     images: ["/catalogo/amb-interno.jpg"],
   },
-  alternates: { canonical: "/" },
   other: { "geo.placename": fullAddress },
 };
 
@@ -115,6 +114,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           signUpFallbackRedirectUrl="/account"
         >
           <StructuredData />
+          <NavigationData categories={categories} />
           <StoreContactProvider contact={contact}>
           <FavoritesProvider>
             <ReservationProvider products={products}>

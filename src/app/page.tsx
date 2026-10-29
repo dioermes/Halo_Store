@@ -8,6 +8,8 @@ import { getPublishedProducts } from "@/lib/catalog";
 import { getSiteAppearance } from "@/lib/site";
 import { ProductListStructuredData } from "@/components/structured-data";
 
+export const metadata = { alternates: { canonical: "/" } };
+
 export const dynamic = "force-dynamic";
 
 export default async function Home() {

@@ -2,6 +2,12 @@ import { fiscalLine, storeConfig } from "@/lib/store-config";
 import { whatsappReturnsHref } from "@/lib/returns";
 import { getStoreContact } from "@/lib/site";
 
+export const metadata = {
+  title: "Vendite e recesso",
+  description: "Condizioni di vendita, resi e diritto di recesso di Halo Store, Conversano.",
+  alternates: { canonical: "/termini" },
+};
+
 export default async function TermsPage() {
   const { phone, whatsapp: whatsappContact } = await getStoreContact();
   const whatsapp = whatsappReturnsHref(whatsappContact.number);

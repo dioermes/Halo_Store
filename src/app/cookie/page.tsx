@@ -5,6 +5,7 @@ import { storeConfig } from "@/lib/store-config";
 export const metadata = {
   title: "Cookie",
   description: "Quali cookie e tracciatori usa Halo Store e come sceglierli.",
+  alternates: { canonical: "/cookie" },
 };
 
 export default function CookiePage() {

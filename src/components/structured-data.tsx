@@ -2,6 +2,8 @@ import { storeConfig } from "@/lib/store-config";
 import { toSchemaOpeningHours } from "@/lib/opening-hours";
 import { getStoreContact } from "@/lib/site";
 import { productPath } from "@/lib/product-path";
+import { catalogPath } from "@/lib/categories";
+import type { StoreCategory } from "@/lib/products";
 import { isProductSoldOut, type Product } from "@/lib/products";
 
 function absUrl(path: string) {
@@ -39,6 +41,43 @@ function JsonLd({ data }: { data: unknown }) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function NavigationData({ categories }: { categories: StoreCategory[] }) {
+  const items = [
+    { name: "Catalogo", url: absUrl("/catalogo") },
+    ...categories.map((row) => ({ name: row.label, url: absUrl(catalogPath(row.id)) })),
+    { name: "Vendite e recesso", url: absUrl("/termini") },
+    { name: "Privacy", url: absUrl("/privacy") },
+  ].filter((item, index, list) => list.findIndex((other) => other.url === item.url) === index);
+
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": `${absUrl("/")}#website`,
+            name: storeConfig.name,
+            alternateName: "Halo Store Conversano",
+            url: absUrl("/"),
+            inLanguage: "it-IT",
+          },
+          {
+            "@type": "ItemList",
+            name: "Menu principale",
+            itemListElement: items.map((item, index) => ({
+              "@type": "SiteNavigationElement",
+              position: index + 1,
+              name: item.name,
+              url: item.url,
+            })),
+          },
+        ],
+      }}
     />
   );
 }

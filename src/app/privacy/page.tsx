@@ -6,6 +6,7 @@ import { fiscalLine, fullAddress, storeConfig } from "@/lib/store-config";
 export const metadata = {
   title: "Privacy",
   description: "Informativa sul trattamento dei dati personali di Halo Store, Conversano.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default async function PrivacyPage() {

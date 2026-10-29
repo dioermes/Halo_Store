@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Catalogo",
   description: "Tutto il catalogo Halo Store a Conversano.",
+  alternates: { canonical: "/catalogo" },
 };
 
 export default async function CatalogoPage({
