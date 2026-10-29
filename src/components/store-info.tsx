@@ -100,40 +100,40 @@ export function StoreInfo() {
             </Reveal>
 
             <Reveal delay={0.4}>
-              <div className="mt-10 flex flex-wrap gap-3">
+              <div className="mt-10 flex gap-1.5 sm:gap-2">
                 <a
                   href={phone.href}
-                  className="inline-flex items-center gap-2 rounded-md bg-ivory px-6 py-3.5 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-[#C5CEBC] px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm font-medium text-ivory transition-transform duration-300 hover:scale-[1.03]"
                 >
-                  <Phone className="h-4 w-4" aria-hidden />
+                  <Phone className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden />
                   Chiama
                 </a>
                 <a
                   href={storeConfig.maps.directions}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="group inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-[#C5CEBC] bg-[#C5CEBC] px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-[#b3bfa8] hover:bg-[#b3bfa8]"
                 >
-                  <Navigation className="h-4 w-4" aria-hidden />
-                  Indicazioni stradali
+                  <Navigation className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden />
+                  Indicazioni<span className="hidden sm:inline"> stradali</span>
                 </a>
                 <a
                   href={storeConfig.instagram.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-[#C5CEBC] bg-[#C5CEBC] px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-[#b3bfa8] hover:bg-[#b3bfa8]"
                 >
-                  <InstagramGlyph className="h-4 w-4" />
-                  Seguici su Instagram
+                  <InstagramGlyph className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline lg:hidden">Seguici su </span>Instagram
                 </a>
                 <a
                   href={storeConfig.tiktok.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-ink-line px-6 py-3.5 text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-[#C5CEBC] bg-[#C5CEBC] px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-[#b3bfa8] hover:bg-[#b3bfa8]"
                 >
-                  <TikTokGlyph className="h-4 w-4" />
-                  Seguici su TikTok
+                  <TikTokGlyph className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline lg:hidden">Seguici su </span>TikTok
                 </a>
               </div>
             </Reveal>
