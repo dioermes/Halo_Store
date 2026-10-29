@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -71,6 +71,19 @@ function sampleMediaPixel(
   } catch {
     return null;
   }
+}
+
+/** Sotto questa luminanza il vinaccio perde contrasto e serve il salvia (punto di pari contrasto). */
+const DARK_BACKGROUND_LUMINANCE = 0.18;
+
+function areaLuminance(rect: DOMRect) {
+  const values: number[] = [];
+  for (const fx of [0.2, 0.5, 0.8]) {
+    for (const fy of [0.3, 0.5, 0.7]) {
+      values.push(luminance(backgroundAt(rect.left + rect.width * fx, rect.top + rect.height * fy)));
+    }
+  }
+  return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
 function backgroundAt(x: number, y: number): Rgb {
@@ -154,9 +167,6 @@ export function SiteNav({
       const logo = logoRef.current;
       const buttons = [...nav.querySelectorAll<HTMLElement>("[data-nav-icon]")];
       const logoRect = logo?.getBoundingClientRect();
-      const logoPixel = logoRect
-        ? backgroundAt(logoRect.left + logoRect.width / 2, logoRect.top + logoRect.height / 2)
-        : null;
       const iconPixels = buttons
         .map((button) => {
           const rect = button.getBoundingClientRect();
@@ -166,7 +176,7 @@ export function SiteNav({
       const iconLuminance =
         iconPixels.reduce((total, pixel) => total + luminance(pixel), 0) /
         Math.max(1, iconPixels.length);
-      const iconsOnDark = iconLuminance < 0.45;
+      const iconsOnDark = iconLuminance < DARK_BACKGROUND_LUMINANCE;
       nav.style.setProperty("--nav-icon-color", iconsOnDark ? "#C5CEBC" : "#3F1521");
       for (const button of buttons) {
         button.style.color = "var(--nav-icon-color)";
@@ -179,11 +189,11 @@ export function SiteNav({
           luminance(backgroundAt(rect.left + rect.width * ratio, rect.top + rect.height / 2)),
         );
         const average = points.reduce((total, value) => total + value, 0) / points.length;
-        bar.style.color = average < 0.45 ? "#C5CEBC" : "#3F1521";
+        bar.style.color = average < DARK_BACKGROUND_LUMINANCE ? "#C5CEBC" : "#3F1521";
       }
 
       if (logo && logoRect && logoRect.width > 0) {
-        const logoOnDark = logoPixel ? luminance(logoPixel) < 0.45 : iconsOnDark;
+        const logoOnDark = areaLuminance(logoRect) < DARK_BACKGROUND_LUMINANCE;
         logo.style.opacity = logoOnDark ? "0" : "1";
         if (sageLogoRef.current) sageLogoRef.current.style.opacity = logoOnDark ? "1" : "0";
       }
