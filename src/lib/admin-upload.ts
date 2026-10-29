@@ -62,6 +62,10 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
     payload = await compressImage(file);
   }
 
+  if (payload.size > MAX_BYTES) {
+    throw new Error("Il video compresso supera 50 MB. Usa un clip più corto e riprova.");
+  }
+
   onStatus?.("Carico…");
   const signResponse = await fetch("/api/admin/upload/sign", {
     method: "POST",

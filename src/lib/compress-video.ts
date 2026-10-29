@@ -37,7 +37,7 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
     const inputName = "input.bin";
     const outputName = "output.mp4";
     await runtime.writeFile(inputName, await fetchFile(file));
-    const encode = (edge: number, crf: number) =>
+    const encode = (edge: number, crf: number, maxRate: string, bufferSize: string) =>
       runtime.exec([
         "-i",
         inputName,
@@ -51,6 +51,10 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
         "yuv420p",
         "-crf",
         String(crf),
+        "-maxrate",
+        maxRate,
+        "-bufsize",
+        bufferSize,
         "-preset",
         "veryfast",
         "-movflags",
@@ -60,12 +64,11 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
         outputName,
       ]);
     try {
-      await encode(1920, 21);
+      await encode(1080, 23, "3500k", "7000k");
       const first = await runtime.readFile(outputName);
-      // Se supera il limite di upload, riprova con meno qualita
       if (first.length > 45 * 1024 * 1024) {
-        onStatus?.("Video lungo, ottimizzo ancora…");
-        await encode(1280, 26);
+        onStatus?.("Video lungo, riduco dimensione e bitrate…");
+        await encode(960, 25, "2500k", "5000k");
       }
     } catch {
       throw new Error("Compressione video non riuscita. Prova un clip più corto.");
