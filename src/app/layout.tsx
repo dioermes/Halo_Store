@@ -19,7 +19,7 @@ import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
 import { displayHomeSectionTitle, getSiteAppearance, getStoreContact } from "@/lib/site";
 import { StoreContactProvider } from "@/components/store-contact-provider";
-import { displayFontStack } from "@/lib/display-fonts";
+import { displayFontStack, resolveBodyFont, resolveDisplayFont } from "@/lib/display-fonts";
 import { displayFontClassNames } from "@/app/fonts";
 
 export const metadata: Metadata = {
@@ -75,13 +75,32 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${displayFontClassNames} h-full antialiased`}
-      style={{ "--font-display": displayFontStack(appearance.displayFont) } as CSSProperties}
+      style={
+        {
+          "--font-display": displayFontStack(appearance.displayFont),
+          "--display-weight": resolveDisplayFont(appearance.displayFont).weight ?? 400,
+          "--font-sans": displayFontStack(appearance.bodyFont),
+          ...(appearance.sectionTitleFont
+            ? {
+                "--font-section": displayFontStack(appearance.sectionTitleFont),
+                "--section-weight": resolveDisplayFont(appearance.sectionTitleFont).weight ?? 400,
+              }
+            : {}),
+          ...(appearance.productNameFont
+            ? {
+                "--font-product": displayFontStack(appearance.productNameFont),
+                "--product-weight": resolveDisplayFont(appearance.productNameFont).weight ?? 400,
+              }
+            : {}),
+        } as CSSProperties
+      }
     >
       <body
         className="min-h-full"
         suppressHydrationWarning
         style={
           {
+            fontWeight: resolveBodyFont(appearance.bodyFont).weight ?? 400,
             "--sold-out-bg": appearance.soldOutBadgeBg,
             "--sold-out-fg": appearance.soldOutBadgeFg,
           } as CSSProperties

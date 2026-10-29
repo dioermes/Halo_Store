@@ -37,7 +37,7 @@ import {
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
 import { notifyStockAlerts } from "@/lib/stock-alerts";
 import { getStripe } from "@/lib/stripe";
-import { resolveDisplayFont } from "@/lib/display-fonts";
+import { resolveBodyFont, resolveDisplayFont, resolveOptionalFont } from "@/lib/display-fonts";
 import type { OrderStatus } from "@/lib/orders";
 import { releasePromoForOrder } from "@/lib/promo";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
@@ -742,6 +742,9 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     soldOutBadgeBg: asHexColor(formData.get("soldOutBadgeBg"), current.soldOutBadgeBg),
     soldOutBadgeFg: asHexColor(formData.get("soldOutBadgeFg"), current.soldOutBadgeFg),
     displayFont: resolveDisplayFont(formData.get("displayFont")).id,
+    bodyFont: resolveBodyFont(formData.get("bodyFont")).id,
+    sectionTitleFont: resolveOptionalFont(formData.get("sectionTitleFont")),
+    productNameFont: resolveOptionalFont(formData.get("productNameFont")),
   };
   await saveSiteAppearance(next);
   revalidatePath("/");

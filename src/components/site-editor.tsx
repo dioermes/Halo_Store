@@ -450,6 +450,9 @@ export function SiteEditor({
       />
       <NewsletterPopupImageField initialUrl={appearance.newsletterPopupImage} />
       <DisplayFontPicker initialId={appearance.displayFont} />
+      <DisplayFontPicker variant="section" initialId={appearance.sectionTitleFont} />
+      <DisplayFontPicker variant="product" initialId={appearance.productNameFont} />
+      <DisplayFontPicker variant="body" initialId={appearance.bodyFont} />
       <HeroButtonsEditor
         appearance={appearance}
         tags={siteTags}

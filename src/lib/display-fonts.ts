@@ -6,6 +6,8 @@ export type DisplayFont = {
   variable: string;
   fallback: "serif" | "sans-serif" | "cursive";
   group: DisplayFontGroup;
+  /** Peso di default quando il carattere è un taglio specifico (es. Roboto Light). */
+  weight?: number;
 };
 
 /** Catalogo admin: tutti i file .woff2 sono nel bundle, nessuno scarica da Google. */
@@ -18,6 +20,9 @@ export const displayFonts: DisplayFont[] = [
   { id: "eb-garamond", label: "EB Garamond", variable: "--font-eb-garamond", fallback: "serif", group: "Serif" },
   { id: "cinzel", label: "Cinzel", variable: "--font-cinzel", fallback: "serif", group: "Serif" },
   { id: "libre-baskerville", label: "Libre Baskerville", variable: "--font-libre-baskerville", fallback: "serif", group: "Serif" },
+  { id: "geist", label: "Geist", variable: "--font-geist-sans", fallback: "sans-serif", group: "Sans" },
+  { id: "bebas-neue", label: "Bebas Neue Regular", variable: "--font-bebas-neue", fallback: "sans-serif", group: "Sans" },
+  { id: "roboto-light", label: "Roboto Light", variable: "--font-roboto", fallback: "sans-serif", group: "Sans", weight: 300 },
   { id: "syne", label: "Syne", variable: "--font-syne", fallback: "sans-serif", group: "Sans" },
   { id: "outfit", label: "Outfit", variable: "--font-outfit", fallback: "sans-serif", group: "Sans" },
   { id: "oswald", label: "Oswald", variable: "--font-oswald", fallback: "sans-serif", group: "Sans" },
@@ -31,10 +36,27 @@ const byId = new Map(displayFonts.map((font) => [font.id, font]));
 
 export const DEFAULT_DISPLAY_FONT = "instrument-serif";
 
+export const DEFAULT_BODY_FONT = "geist";
+
+/** Valore dei selettori specifici (sezioni, prodotti): nessun override, vale il carattere dei titoli. */
+export const INHERIT_FONT = "";
+
+export function resolveOptionalFont(id: unknown): string {
+  return typeof id === "string" && byId.has(id) ? id : INHERIT_FONT;
+}
+
 export function resolveDisplayFont(id: unknown): DisplayFont {
   if (typeof id === "string" && byId.has(id)) return byId.get(id)!;
   return byId.get(DEFAULT_DISPLAY_FONT)!;
 }
+
+export function resolveBodyFont(id: unknown): DisplayFont {
+  if (typeof id === "string" && byId.has(id)) return byId.get(id)!;
+  return byId.get(DEFAULT_BODY_FONT)!;
+}
+
+/** Caratteri adatti al testo corrente: niente corsivi decorativi (Script). */
+export const bodyFonts = displayFonts.filter((font) => font.group !== "Script");
 
 export function displayFontStack(id: unknown) {
   const font = resolveDisplayFont(id);

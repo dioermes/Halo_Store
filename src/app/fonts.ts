@@ -1,10 +1,26 @@
 import localFont from "next/font/local";
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Bebas_Neue, Geist, Instrument_Serif, Roboto } from "next/font/google";
 
 export const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
+});
+
+export const bebasNeue = Bebas_Neue({
+  variable: "--font-bebas-neue",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  preload: false,
+});
+
+export const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
+  display: "swap",
+  preload: false,
 });
 
 export const instrumentSerif = Instrument_Serif({
@@ -164,6 +180,8 @@ export const parisienne = localFont({
 
 export const displayFontClassNames = [
   geistSans.variable,
+  bebasNeue.variable,
+  roboto.variable,
   instrumentSerif.variable,
   cormorant.variable,
   playfair.variable,

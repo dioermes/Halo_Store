@@ -35,7 +35,7 @@ export function FeaturedRail({
   return (
     <section id={id} className="halo-section relative scroll-mt-28 border-t border-ink-line/45">
       <div className="halo-shell">
-        <h2 className="halo-display text-center text-[clamp(2.75rem,6.4vw,5rem)]">
+        <h2 className="halo-display halo-section-title text-center text-[clamp(2.75rem,6.4vw,5rem)]">
           <RevealWords text={title} className="block" />
         </h2>
 

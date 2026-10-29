@@ -209,7 +209,7 @@ export function ReservationBag() {
                                 </div>
                               )}
                               <div className="flex flex-1 flex-col justify-center">
-                                <p className="font-display text-xl leading-none">
+                                <p className="font-display halo-product-name text-xl leading-none">
                                   {product?.name ?? "Gift card Halo Store"}
                                 </p>
                                 <p className="mt-1.5 text-xs text-ivory-dim">

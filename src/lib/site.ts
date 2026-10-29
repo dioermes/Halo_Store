@@ -2,7 +2,13 @@ import { unstable_noStore as noStore } from "next/cache";
 import { deleteCatalogObjects } from "@/lib/catalog-bucket";
 import { createAdminClient, createPublicClient, isAdminConfigured, isSupabaseConfigured } from "@/lib/supabase";
 import { ambientImages, type Product } from "@/lib/products";
-import { DEFAULT_DISPLAY_FONT, resolveDisplayFont } from "@/lib/display-fonts";
+import {
+  DEFAULT_BODY_FONT,
+  DEFAULT_DISPLAY_FONT,
+  resolveBodyFont,
+  resolveDisplayFont,
+  resolveOptionalFont,
+} from "@/lib/display-fonts";
 import { parseStoreContact, type StoreContact } from "@/lib/store-contact";
 
 export type SiteMedia = {
@@ -42,6 +48,9 @@ export type SiteAppearance = {
   soldOutBadgeBg: string;
   soldOutBadgeFg: string;
   displayFont: string;
+  bodyFont: string;
+  sectionTitleFont: string;
+  productNameFont: string;
 };
 
 export type CatalogTag = {
@@ -138,6 +147,9 @@ const appearanceDefaults: SiteAppearance = {
   soldOutBadgeBg: "#dc2626",
   soldOutBadgeFg: "#ffffff",
   displayFont: DEFAULT_DISPLAY_FONT,
+  bodyFont: DEFAULT_BODY_FONT,
+  sectionTitleFont: "",
+  productNameFont: "",
 };
 
 const merchDefaults: CatalogMerch = {
@@ -296,6 +308,9 @@ function parseAppearance(value: unknown): SiteAppearance {
       appearanceDefaults.soldOutBadgeFg,
     ),
     displayFont: resolveDisplayFont(row.displayFont).id,
+    bodyFont: resolveBodyFont(row.bodyFont).id,
+    sectionTitleFont: resolveOptionalFont(row.sectionTitleFont),
+    productNameFont: resolveOptionalFont(row.productNameFont),
   };
 }
 

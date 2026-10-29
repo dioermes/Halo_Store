@@ -363,7 +363,7 @@ export function Catalog({
     >
       <div className="halo-shell">
         <div className="text-center">
-          <h2 className="halo-display text-[clamp(2.75rem,6.4vw,5rem)]">
+          <h2 className="halo-display halo-section-title text-[clamp(2.75rem,6.4vw,5rem)]">
             <RevealWords text="Il catalogo" className="block" />
           </h2>
         </div>

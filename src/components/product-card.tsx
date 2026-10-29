@@ -216,7 +216,7 @@ export function ProductCard({
           className="flex min-h-[4.75rem] flex-col items-center px-2 pt-2 text-center sm:min-h-[5.25rem] sm:pt-2.5"
           aria-label={`${product.name}, ${formatPrice(product.price)}`}
         >
-          <p className="font-display text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">
+          <p className="font-display halo-product-name text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">
             {product.name}
           </p>
           <div className="mt-1">

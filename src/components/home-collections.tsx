@@ -38,7 +38,7 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
           />
           <div
             aria-hidden
-            className="absolute inset-0 'bg-linear-to-t' from-black/65 via-transparent to-transparent"
+            className="absolute inset-0 bg-linear-to-t from-black/65 via-transparent to-transparent"
           />
           <span className="absolute inset-x-4 bottom-5 z-10 text-xs font-semibold uppercase tracking-[0.16em] text-white sm:inset-x-5 sm:bottom-6 sm:text-sm">
             {section.title}

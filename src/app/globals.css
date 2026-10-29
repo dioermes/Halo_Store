@@ -87,6 +87,16 @@ input[type="range"] {
   text-wrap: balance;
 }
 
+@utility halo-section-title {
+  font-family: var(--font-section, var(--font-display));
+  font-weight: var(--section-weight, var(--display-weight, 400));
+}
+
+@utility halo-product-name {
+  font-family: var(--font-product, var(--font-display));
+  font-weight: var(--product-weight, var(--display-weight, 400));
+}
+
 @utility halo-product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

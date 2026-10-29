@@ -140,7 +140,7 @@ export function ProductDetail({
             {isProductSoldOut(product) ? <SoldOutLabel className="inline-block" /> : null}
 
             <div className="mt-4 flex items-start justify-between gap-3">
-              <TitleTag id={titleId} className="font-display text-5xl leading-none">
+              <TitleTag id={titleId} className="font-display halo-product-name text-5xl leading-none">
                 {product.name}
               </TitleTag>
               {product.uuid ? (
