@@ -17,7 +17,7 @@ import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
 import { getStoreCategories } from "@/lib/categories";
-import { displayHomeSectionTitle, getSiteAppearance, getStoreContact } from "@/lib/site";
+import { getSiteAppearance, getStoreContact } from "@/lib/site";
 import { StoreContactProvider } from "@/components/store-contact-provider";
 import { displayFontStack, resolveBodyFont, resolveDisplayFont } from "@/lib/display-fonts";
 import { displayFontClassNames } from "@/app/fonts";
@@ -119,13 +119,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <FavoritesProvider>
             <ReservationProvider products={products}>
               <HaloCursor />
-              <SiteNav
-                categories={categories}
-                homeLinks={appearance.homeSections.map((section) => ({
-                  href: `/#${section.id}`,
-                  label: displayHomeSectionTitle(section.title),
-                }))}
-              />
+              <SiteNav categories={categories} />
               <main id="top">{children}</main>
               <SiteFooter />
               <ReservationBag />

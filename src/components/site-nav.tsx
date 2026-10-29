@@ -8,6 +8,7 @@ import { Heart, Menu, Search, ShoppingBag, User, X, ChevronDown } from "lucide-r
 import { useClerk, useAuth } from "@clerk/nextjs";
 import { useReservation } from "@/components/reservation-provider";
 import { useFavorites } from "@/components/favorites-provider";
+import { useStoreContact } from "@/components/store-contact-provider";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { HaloLogo, HaloLogoOriginal } from "@/components/halo-logo";
 import { SiteSearch } from "@/components/site-search";
@@ -101,26 +102,9 @@ function backgroundAt(x: number, y: number): Rgb {
   return { red: 255, green: 255, blue: 255, alpha: 1 };
 }
 
-export function SiteNav({
-  categories = [],
-  homeLinks,
-}: {
-  categories?: StoreCategory[];
-  homeLinks?: { href: string; label: string }[];
-}) {
+export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
   const pathname = usePathname();
   const inAdmin = pathname.startsWith("/admin");
-  const storefrontLinks =
-    homeLinks && homeLinks.length > 0
-      ? homeLinks
-      : [
-          { href: "/#nuovi-arrivi", label: "Nuovi arrivi" },
-          { href: "/#best-seller", label: "I piÃ¹ venduti" },
-          { href: "/#saldi", label: "Saldi" },
-        ];
-  const links = inAdmin
-    ? adminNav
-    : [...storefrontLinks, { href: "/#gift-card", label: "Gift card" }];
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -131,7 +115,20 @@ export function SiteNav({
   const { count, openBag, lastAdded } = useReservation();
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
+  const { whatsapp } = useStoreContact();
   const { count: favoritesCount } = useFavorites();
+  const links = inAdmin
+    ? adminNav
+    : [
+        { href: "/", label: "Home" },
+        {
+          href: isSignedIn ? "/account/preferiti" : "/sign-in?redirect_url=%2Faccount%2Fpreferiti",
+          label: "Preferiti",
+        },
+        { href: "/catalogo?tag=newArrival", label: "Nuovi arrivi" },
+        { href: "/catalogo?tag=bestseller", label: "Best seller" },
+        { href: "/catalogo?tag=sale", label: "Saldi" },
+      ];
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -564,19 +561,49 @@ export function SiteNav({
                 </motion.li>
               ) : null}
               {!inAdmin ? (
-                <motion.li
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                >
-                  <Link
-                    href="/#dove-siamo"
-                    onClick={() => setMenuOpen(false)}
-                    className="block border-b border-ink-line py-5 font-display text-4xl"
+                <>
+                  <motion.li
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
                   >
-                    Dove siamo
-                  </Link>
-                </motion.li>
+                    <Link
+                      href="/#gift-card"
+                      onClick={() => setMenuOpen(false)}
+                      className="block border-b border-ink-line py-5 font-display text-4xl"
+                    >
+                      Gift card
+                    </Link>
+                  </motion.li>
+                  <motion.li
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.34, duration: 0.5 }}
+                  >
+                    <Link
+                      href="/#dove-siamo"
+                      onClick={() => setMenuOpen(false)}
+                      className="block border-b border-ink-line py-5 font-display text-4xl"
+                    >
+                      Dove siamo
+                    </Link>
+                  </motion.li>
+                  <motion.li
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.38, duration: 0.5 }}
+                  >
+                    <a
+                      href={`https://wa.me/${whatsapp.number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMenuOpen(false)}
+                      className="block border-b border-ink-line py-5 font-display text-4xl"
+                    >
+                      Assistenza clienti
+                    </a>
+                  </motion.li>
+                </>
               ) : null}
               {!isSignedIn ? (
                 <>
@@ -620,7 +647,7 @@ export function SiteNav({
                       onClick={() => setMenuOpen(false)}
                       className="block border-b border-ink-line py-5 font-display text-4xl"
                     >
-                      Account
+                      Profilo
                     </Link>
                   </motion.li>
                   <motion.li
