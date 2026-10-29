@@ -277,13 +277,17 @@ export function Catalog({
   const [color, setColor] = useState("");
   const ceiling = useRef(0);
   const categoryRef = useRef(active);
+  const selectedActive =
+    active !== "tutti" && !categories.some((category) => category.id === active)
+      ? "tutti"
+      : active;
 
   const scoped = useMemo(
     () =>
-      active === "tutti"
+      selectedActive === "tutti"
         ? products
-        : products.filter((product) => productHasCategory(product, active)),
-    [active, products],
+        : products.filter((product) => productHasCategory(product, selectedActive)),
+    [selectedActive, products],
   );
   const tagged = useMemo(
     () =>
@@ -296,9 +300,11 @@ export function Catalog({
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
   const colors = useMemo(() => collectColors(tagged), [tagged]);
+  const selectedColor =
+    color && colors.some((name) => name.toLowerCase() === color.toLowerCase()) ? color : "";
 
   const selectCategory = (id: string) => {
-    if (id === active) return;
+    if (id === selectedActive) return;
     const nextMax = pricesInCategory(products, id);
     categoryRef.current = id;
     ceiling.current = nextMax;
@@ -310,7 +316,7 @@ export function Catalog({
 
   const clearTag = () => {
     setActiveTag("");
-    setCatalogUrl(active, "");
+    setCatalogUrl(selectedActive, "");
   };
 
   useEffect(() => {
@@ -330,35 +336,24 @@ export function Catalog({
   }, [products, tags]);
 
   useEffect(() => {
-    if (active !== "tutti" && !categories.some((category) => category.id === active)) {
-      setActive("tutti");
-    }
-  }, [active, categories]);
-
-  useEffect(() => {
     setMaxSelected((current) => {
-      const categoryChanged = categoryRef.current !== active;
-      categoryRef.current = active;
+      const categoryChanged = categoryRef.current !== selectedActive;
+      categoryRef.current = selectedActive;
       const atCeiling = current >= ceiling.current - 0.5 || current === 0;
       ceiling.current = maxPrice;
       if (categoryChanged || atCeiling) return maxPrice;
       return Math.min(maxPrice, Math.max(minPrice, current));
     });
-  }, [active, minPrice, maxPrice]);
-
-  useEffect(() => {
-    if (!color) return;
-    if (!colors.some((name) => name.toLowerCase() === color.toLowerCase())) setColor("");
-  }, [color, colors]);
+  }, [selectedActive, minPrice, maxPrice]);
 
   const visible = useMemo(
     () =>
       tagged.filter((product) => {
         if (product.price > maxSelected) return false;
-        if (color && !productHasColor(product, color)) return false;
+        if (selectedColor && !productHasColor(product, selectedColor)) return false;
         return true;
       }),
-    [color, maxSelected, tagged],
+    [selectedColor, maxSelected, tagged],
   );
 
   return (
@@ -376,14 +371,14 @@ export function Catalog({
         <div className="mt-14 lg:hidden">
           <CategoryRail
             filters={filters}
-            active={active}
+            active={selectedActive}
             onChange={selectCategory}
             layoutId="filtro-attivo-mobile"
             bleed
           />
           <div className="mt-8 grid grid-cols-2 items-end gap-8">
             <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
-            <ColorSwatches colors={colors} value={color} onChange={setColor} scroll />
+            <ColorSwatches colors={colors} value={selectedColor} onChange={setColor} scroll />
           </div>
         </div>
 
@@ -391,11 +386,11 @@ export function Catalog({
           <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
           <CategoryRail
             filters={filters}
-            active={active}
+            active={selectedActive}
             onChange={selectCategory}
             layoutId="filtro-attivo"
           />
-          <ColorSwatches colors={colors} value={color} onChange={setColor} />
+          <ColorSwatches colors={colors} value={selectedColor} onChange={setColor} />
         </div>
 
         <p className="mt-10 text-center text-xs uppercase tracking-[0.24em] text-ivory-dim">
@@ -421,7 +416,7 @@ export function Catalog({
           </p>
         ) : (
           <motion.div
-            key={active}
+            key={selectedActive}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}

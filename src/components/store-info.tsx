@@ -14,7 +14,8 @@ export function StoreInfo() {
   const [today, setToday] = useState<number | null>(null);
 
   useEffect(() => {
-    setToday(new Date().getDay());
+    const timer = window.setTimeout(() => setToday(new Date().getDay()), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (

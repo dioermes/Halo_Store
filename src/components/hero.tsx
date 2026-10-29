@@ -58,8 +58,7 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
         </Link>
         <Link
           href={destination(appearance.heroButtons.newIn)}
-          data-adaptive-button
-          className="flex min-h-11 items-center justify-center border border-ivory bg-transparent px-6 text-xs font-semibold tracking-[0.18em] text-[color:var(--adaptive-fg,#fff)] transition-colors duration-500 hover:border-[#C5CEBC] hover:bg-[#C5CEBC] hover:text-ivory sm:px-8"
+          className="flex min-h-11 items-center justify-center border border-ivory bg-transparent px-6 text-xs font-semibold tracking-[0.18em] text-ivory transition-colors duration-500 hover:border-[#C5CEBC] hover:bg-[#C5CEBC] hover:text-ivory sm:px-8"
         >
           {appearance.heroButtons.newIn.label}
         </Link>

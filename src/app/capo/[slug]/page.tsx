@@ -59,7 +59,7 @@ export default async function CapoPage({ params }: { params: Promise<{ slug: str
     <article className="halo-section">
       <div className="halo-shell">
         <ProductJsonLd product={product} />
-        <ProductDetail product={product} layout="page" />
+        <ProductDetail key={product.id} product={product} layout="page" />
       </div>
     </article>
   );

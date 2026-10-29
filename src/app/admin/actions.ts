@@ -13,7 +13,6 @@ import {
   getSiteAppearance,
   parseHomeSectionsPayload,
   patchSiteAppearance,
-  productKey,
   removeCatalogTag,
   removeProductMerch,
   saveCatalogMerch,

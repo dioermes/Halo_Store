@@ -76,7 +76,7 @@ function sampleMediaPixel(
 function backgroundAt(x: number, y: number): Rgb {
   const elements = document.elementsFromPoint(x, y);
   for (const element of elements) {
-    if (element.closest("header, [data-announcement], [data-adaptive-button]")) continue;
+    if (element.closest("header, [data-announcement]")) continue;
     if (element instanceof HTMLImageElement || element instanceof HTMLVideoElement) {
       const pixel = sampleMediaPixel(element, x, y);
       if (pixel && pixel.alpha > 0) return pixel;
@@ -130,9 +130,12 @@ export function SiteNav({
   }, [pathname]);
 
   useEffect(() => {
-    setMenuOpen(false);
-    setSearchOpen(false);
-    setCatalogOpen(false);
+    const timer = window.setTimeout(() => {
+      setMenuOpen(false);
+      setSearchOpen(false);
+      setCatalogOpen(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   useEffect(() => {
@@ -177,14 +180,6 @@ export function SiteNav({
         );
         const average = points.reduce((total, value) => total + value, 0) / points.length;
         bar.style.color = average < 0.45 ? "#fff" : "#000";
-      }
-
-      for (const button of document.querySelectorAll<HTMLElement>("[data-adaptive-button]")) {
-        const rect = button.getBoundingClientRect();
-        const value = luminance(
-          backgroundAt(rect.left + rect.width / 2, rect.top + rect.height / 2),
-        );
-        button.style.setProperty("--adaptive-fg", value < 0.45 ? "#fff" : "#000");
       }
 
       if (logo && logoRect && logoRect.width > 0) {

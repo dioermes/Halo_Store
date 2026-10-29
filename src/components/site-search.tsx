@@ -34,7 +34,9 @@ export function SiteSearch({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open) setQuery("");
+    if (open) return;
+    const timer = window.setTimeout(() => setQuery(""), 0);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   const results = useMemo(() => {

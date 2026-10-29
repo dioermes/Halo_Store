@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Check, Maximize2, X } from "lucide-react";
 import {
@@ -44,16 +44,6 @@ export function ProductDetail({
   const [alertEmail, setAlertEmail] = useState("");
   const [alertError, setAlertError] = useState("");
   const [alertBusy, setAlertBusy] = useState(false);
-
-  useEffect(() => {
-    setSize(product.sizes.length === 1 ? product.sizes[0] : null);
-    setColor(product.colors[0] ?? "");
-    setJustAdded(false);
-    setGalleryOpen(false);
-    setAlertSent(false);
-    setAlertError("");
-    setAlertBusy(false);
-  }, [product]);
 
   const needsSize = product.sizes.length > 1 && !size;
   const available = size ? variantAvailable(product, size, color) : 0;
@@ -390,6 +380,7 @@ export function ProductDetail({
       <AnimatePresence>
         {galleryOpen && (
           <ProductGallery
+            key={`${product.id}-${color}`}
             product={product}
             color={color}
             onColorChange={(next) => {

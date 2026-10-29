@@ -127,7 +127,7 @@ function NewsletterPopupImageField({ initialUrl }: { initialUrl: string }) {
       <p className="text-sm text-ivory-dim">
         Scegli la foto mostrata a sinistra nel popup. Testo e campi del modulo sono fissi.
       </p>
-      <div className="relative aspect-[4/5] max-w-xs overflow-hidden rounded-xl border border-ink-line bg-ink">
+      <div className="relative aspect-4/5 max-w-xs overflow-hidden rounded-xl border border-ink-line bg-ink">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt="Anteprima foto popup newsletter" className="h-full w-full object-cover" />
       </div>

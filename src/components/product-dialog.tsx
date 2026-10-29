@@ -92,7 +92,7 @@ export function ProductDialog({
             transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
             className="relative w-full md:max-w-6xl"
           >
-            <ProductDetail product={product} layout="dialog" closeRef={closeRef} onClose={onClose} />
+            <ProductDetail key={product.id} product={product} layout="dialog" closeRef={closeRef} onClose={onClose} />
           </motion.div>
         </div>
       )}

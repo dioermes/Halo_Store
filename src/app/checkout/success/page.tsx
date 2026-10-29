@@ -33,10 +33,7 @@ function SuccessBody() {
   const [order, setOrder] = useState<OrderPayload | null>(null);
 
   useEffect(() => {
-    if (!sessionId) {
-      setPhase("fail");
-      return;
-    }
+    if (!sessionId) return;
     let cancelled = false;
     let attempts = 0;
 
@@ -68,7 +65,7 @@ function SuccessBody() {
     };
   }, [sessionId, clear]);
 
-  if (phase === "wait") {
+  if (sessionId && phase === "wait") {
     return (
       <section className="mx-auto max-w-xl px-5 py-28 text-center">
         <p className="text-xs uppercase tracking-[0.34em] text-halo">Pagamento</p>
@@ -80,7 +77,7 @@ function SuccessBody() {
     );
   }
 
-  if (phase === "ok" && order) {
+  if (sessionId && phase === "ok" && order) {
     return (
       <section className="mx-auto max-w-2xl px-5 py-24">
         <p className="text-xs uppercase tracking-[0.34em] text-halo">Grazie</p>

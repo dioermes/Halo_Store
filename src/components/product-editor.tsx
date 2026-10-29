@@ -297,7 +297,12 @@ export function ProductEditor({
   const [published, setPublished] = useState(product?.published !== false);
   const [isNewArrival, setIsNewArrival] = useState(Boolean(product?.isNewArrival));
   const [isBestseller, setIsBestseller] = useState(Boolean(product?.isBestseller));
-  const [isOnSale, setIsOnSale] = useState(Boolean(product?.isOnSale));
+  const [isOnSale, setIsOnSale] = useState(
+    Boolean(
+      product?.isOnSale ||
+        isPricedOnSale(product?.price ?? 0, product?.compareAt),
+    ),
+  );
   const [catalogTags, setCatalogTags] = useState<CatalogTag[]>(initialTags);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(product?.customTagIds ?? []);
   const [newTagLabel, setNewTagLabel] = useState("");
@@ -322,12 +327,15 @@ export function ProductEditor({
 
   useEffect(() => {
     if (!saved) return;
-    setJustSaved(true);
+    const showTimer = window.setTimeout(() => setJustSaved(true), 0);
     if (product?.uuid) {
       router.replace(`/admin/catalogo/${product.uuid}`, { scroll: false });
     }
     const timer = window.setTimeout(() => setJustSaved(false), 7000);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(timer);
+    };
   }, [saved, product?.uuid, router]);
 
   const extras = useMemo(() => {
@@ -349,18 +357,10 @@ export function ProductEditor({
       : [],
   );
 
-  useEffect(() => {
-    if (!slugTouched) setSlug(slugify(name));
-  }, [name, slugTouched]);
-
   const discounted = isPricedOnSale(
     typeof price === "number" ? price : 0,
     typeof compareAt === "number" ? compareAt : undefined,
   );
-
-  useEffect(() => {
-    if (discounted) setIsOnSale(true);
-  }, [discounted]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -545,7 +545,11 @@ export function ProductEditor({
             Nome
             <input
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                const nextName = event.target.value;
+                setName(nextName);
+                if (!slugTouched) setSlug(slugify(nextName));
+              }}
               placeholder="Aurora"
               required
               className={fieldClass}
@@ -793,9 +797,19 @@ export function ProductEditor({
                 min="0"
                 step="1"
                 value={price}
-                onChange={(event) =>
-                  setPrice(event.target.value === "" ? "" : Number(event.target.value))
-                }
+                onChange={(event) => {
+                  const nextPrice =
+                    event.target.value === "" ? "" : Number(event.target.value);
+                  setPrice(nextPrice);
+                  if (
+                    isPricedOnSale(
+                      typeof nextPrice === "number" ? nextPrice : 0,
+                      typeof compareAt === "number" ? compareAt : undefined,
+                    )
+                  ) {
+                    setIsOnSale(true);
+                  }
+                }}
                 className={fieldClass}
               />
             </label>
@@ -806,9 +820,19 @@ export function ProductEditor({
                 min="0"
                 step="1"
                 value={compareAt}
-                onChange={(event) =>
-                  setCompareAt(event.target.value === "" ? "" : Number(event.target.value))
-                }
+                onChange={(event) => {
+                  const nextCompareAt =
+                    event.target.value === "" ? "" : Number(event.target.value);
+                  setCompareAt(nextCompareAt);
+                  if (
+                    isPricedOnSale(
+                      typeof price === "number" ? price : 0,
+                      typeof nextCompareAt === "number" ? nextCompareAt : undefined,
+                    )
+                  ) {
+                    setIsOnSale(true);
+                  }
+                }}
                 className={fieldClass}
               />
             </label>

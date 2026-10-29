@@ -94,15 +94,18 @@ export function ReservationProvider({
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored =
-        window.localStorage.getItem(STORAGE_KEY) ??
-        window.localStorage.getItem(LEGACY_KEY);
-      if (stored) setItems(parseItems(JSON.parse(stored), products));
-    } catch {
-      // storage non disponibile
-    }
-    setHydrated(true);
+    const timer = window.setTimeout(() => {
+      try {
+        const stored =
+          window.localStorage.getItem(STORAGE_KEY) ??
+          window.localStorage.getItem(LEGACY_KEY);
+        if (stored) setItems(parseItems(JSON.parse(stored), products));
+      } catch {
+        // storage non disponibile
+      }
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [products]);
 
   useEffect(() => {

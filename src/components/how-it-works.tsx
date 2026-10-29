@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { Hand, Store, Shirt } from "lucide-react";
 import { Reveal, RevealWords } from "@/components/reveal";
@@ -91,12 +92,12 @@ export function HowItWorks() {
 
         <Reveal delay={0.3}>
           <div className="mt-16 flex flex-wrap items-center gap-4">
-            <a
+            <Link
               href="/catalogo"
               className="rounded-full bg-ivory px-7 py-4 text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
             >
               Scegli i tuoi capi
-            </a>
+            </Link>
             <button
               type="button"
               onClick={openBag}

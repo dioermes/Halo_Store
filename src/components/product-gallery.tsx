@@ -29,10 +29,6 @@ export function ProductGallery({
   const filterOnMain = !hasColorPhoto && index === 0 ? look.filter : undefined;
 
   useEffect(() => {
-    setIndex(0);
-  }, [color, product.id]);
-
-  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
