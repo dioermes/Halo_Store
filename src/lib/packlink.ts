@@ -177,7 +177,9 @@ async function packlinkFetch(path: string, init: RequestInit = {}) {
     }
   }
   if (!res.ok) {
-    throw new Error(packlinkErrorMessage(res.status, json, text));
+    console.error("[packlink]", init.method ?? "GET", path, res.status, text.slice(0, 1500), init.body ?? "");
+    const message = packlinkErrorMessage(res.status, json, text);
+    throw new Error(/^bad request$/i.test(message.trim()) ? `Packlink ha rifiutato i dati (400 Bad Request, ${path}). Controlla indirizzo, CAP e telefono del cliente.` : message);
   }
   return json;
 }
