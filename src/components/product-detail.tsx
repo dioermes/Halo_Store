@@ -154,9 +154,15 @@ export function ProductDetail({
             <p className="mt-3 text-ivory-dim">{product.subtitle}</p>
 
             <div className="mt-5 flex items-baseline gap-3">
-              <span className="font-display text-3xl text-halo-bright">{formatPrice(product.price)}</span>
-              {product.compareAt && (
-                <span className="text-sm text-ivory-dim line-through">{formatPrice(product.compareAt)}</span>
+              {isProductSoldOut(product) ? (
+                <span className="font-display text-3xl uppercase text-halo-bright">Esaurito</span>
+              ) : (
+                <>
+                  <span className="font-display text-3xl text-halo-bright">{formatPrice(product.price)}</span>
+                  {product.compareAt && (
+                    <span className="text-sm text-ivory-dim line-through">{formatPrice(product.compareAt)}</span>
+                  )}
+                </>
               )}
             </div>
 

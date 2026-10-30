@@ -216,16 +216,22 @@ export function ProductCard({
         <Link
           href={productPath(product.id)}
           className="flex min-h-19 flex-col items-center px-2 pt-2 text-center sm:min-h-21 sm:pt-2.5"
-          aria-label={`${product.name}, ${formatPrice(product.price)}`}
+          aria-label={soldOut ? `${product.name}, esaurito` : `${product.name}, ${formatPrice(product.price)}`}
         >
           <p className="font-display halo-product-name text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">
             {product.name}
           </p>
           <div className="mt-1">
-            {product.compareAt ? (
-              <p className="text-xs text-ivory-dim line-through">{formatPrice(product.compareAt)}</p>
-            ) : null}
-            <p className="font-display text-lg text-halo-bright sm:text-xl">{formatPrice(product.price)}</p>
+            {soldOut ? (
+              <p className="font-display text-lg uppercase text-halo-bright sm:text-xl">Esaurito</p>
+            ) : (
+              <>
+                {product.compareAt ? (
+                  <p className="text-xs text-ivory-dim line-through">{formatPrice(product.compareAt)}</p>
+                ) : null}
+                <p className="font-display text-lg text-halo-bright sm:text-xl">{formatPrice(product.price)}</p>
+              </>
+            )}
           </div>
         </Link>
       </div>
