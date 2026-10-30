@@ -238,13 +238,13 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
     <>
       {!inAdmin ? <AnnouncementBar overlay={pathname === "/"} /> : null}
       <header
-        className={`halo-nav-in pointer-events-none absolute inset-x-0 z-[100] overflow-visible ${
+        className={`halo-nav-in pointer-events-none absolute inset-x-0 'z-100' overflow-visible ${
           inAdmin ? "top-0" : "top-9"
         }`}
       >
         <nav
           ref={navRef}
-          className="mx-auto flex max-w-[84rem] items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4"
+          className="mx-auto flex max-w-336 items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4"
         >
           <Link
             href="/"
@@ -270,7 +270,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
                   </filter>
                 </svg>
                 {pathname === "/" ? (
-                  <span className="relative -ml-2 block aspect-[752/564] h-24 overflow-hidden sm:-ml-4 md:h-44">
+                  <span className="relative -ml-2 block aspect-752/564 h-24 overflow-hidden sm:-ml-4 md:h-44">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       ref={logoRef}
@@ -294,7 +294,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
                     <HaloLogoOriginal
                       imageRef={logoRef}
                       style={{ filter: "url(#halo-logo-clean)" }}
-                      className="h-[5.75rem] w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-40"
+                      className="h-23 w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-40"
                     />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -454,7 +454,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-ivory/20 backdrop-blur-sm"
+            className="fixed inset-0 z-110 bg-ivory/20 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
             aria-label="Menu di navigazione"

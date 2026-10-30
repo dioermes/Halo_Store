@@ -13,7 +13,7 @@ export function TaglineBand({ text }: { text: string }) {
 
   return (
     <section aria-label="Frase del negozio" className="bg-ink px-4 py-4">
-      <div className="mx-auto max-w-5xl [container-type:inline-size]">
+      <div className="mx-auto max-w-5xl '@container'">
         <div className="relative mx-auto w-[67%]">
           <motion.div
             initial={{ clipPath: reduceMotion ? "inset(-20% -20% -20% -20%)" : "inset(-20% 100% -20% -20%)" }}
@@ -36,7 +36,7 @@ export function TaglineBand({ text }: { text: string }) {
               lengthAdjust="spacingAndGlyphs"
               fontSize="100"
               fill="none"
-              className="stroke-[#cdd2d6] [stroke-width:1.25] sm:stroke-[#d9dde1] sm:[stroke-width:1]"
+              className="stroke-[#cdd2d6] stroke-[1.25] sm:stroke-[#d9dde1] sm:stroke-1"
               strokeLinejoin="round"
               textRendering="geometricPrecision"
               vectorEffect="non-scaling-stroke"

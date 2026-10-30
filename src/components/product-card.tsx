@@ -118,7 +118,7 @@ export function ProductCard({
       className="group relative h-full w-full"
     >
       <div className="flex h-full w-full flex-col">
-        <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <div className="relative aspect-4/5 w-full overflow-hidden">
           <Link
             href={productPath(product.id)}
             onTouchStart={handleTouchStart}
@@ -138,7 +138,7 @@ export function ProductCard({
               alt={`${product.name}, ${product.subtitle}`}
               fill
               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
-              className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
+              className="object-cover transition-transform duration-700 ease-halo group-hover:scale-[1.03]"
             />
             {!reduceMotion && (
               <motion.div
@@ -215,7 +215,7 @@ export function ProductCard({
 
         <Link
           href={productPath(product.id)}
-          className="flex min-h-[4.75rem] flex-col items-center px-2 pt-2 text-center sm:min-h-[5.25rem] sm:pt-2.5"
+          className="flex min-h-19 flex-col items-center px-2 pt-2 text-center sm:min-h-21 sm:pt-2.5"
           aria-label={`${product.name}, ${formatPrice(product.price)}`}
         >
           <p className="font-display halo-product-name text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">

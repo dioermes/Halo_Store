@@ -178,9 +178,9 @@ function LivePreview({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-ink-line bg-ink-soft">
-      <div className="relative aspect-[4/5]">
+      <div className="relative aspect-4/5">
         <PreviewShot src={photo} alt={name || "Anteprima capo"} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-ink/80 via-ink/10 to-transparent" />
         {badge && (
           <span className="absolute left-3 top-3 rounded-full border border-halo/40 bg-ink/70 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-halo-bright backdrop-blur">
             {badge}
@@ -741,7 +741,7 @@ export function ProductEditor({
                 value={newTagLabel}
                 onChange={(event) => setNewTagLabel(event.target.value)}
                 placeholder="Nome tag, es. Collezione estate"
-                className={`${fieldClass} mt-0 min-w-[12rem] flex-1`}
+                className={`${fieldClass} mt-0 min-w-48 flex-1`}
               />
               <button
                 type="button"
@@ -974,7 +974,7 @@ export function ProductEditor({
             {colors.map((color, index) => (
               <div key={color.key} className="rounded-2xl border border-ink-line bg-ink/50 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <label className="min-w-[12rem] flex-1 text-sm text-ivory-dim">
+                  <label className="min-w-48 flex-1 text-sm text-ivory-dim">
                     Colore {index + 1}
                     <input
                       value={color.name}
@@ -1133,14 +1133,14 @@ export function ProductEditor({
               exit={{ opacity: 0 }}
               aria-label="Chiudi"
               onClick={() => setPreviewOpen(false)}
-              className="fixed inset-0 z-[70] bg-ink/70 backdrop-blur-sm"
+              className="fixed inset-0 z-70 bg-ink/70 backdrop-blur-sm"
             />
             <motion.aside
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-y-0 right-0 z-[80] flex w-[min(22rem,calc(100vw-1.25rem))] flex-col border-l border-ink-line bg-ink"
+              className="fixed inset-y-0 right-0 z-80 flex w-[min(22rem,calc(100vw-1.25rem))] flex-col border-l border-ink-line bg-ink"
             >
               <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
                 <p className="text-sm text-ivory-dim">Anteprima</p>

@@ -446,7 +446,7 @@ export function Catalog({
                   cols === n ? "border-ivory bg-ivory text-ink" : "border-ink-line text-ivory hover:border-ivory"
                 }`}
               >
-                <span className="flex h-4 gap-[2px]">
+                <span className="flex h-4 'gap-0.5'">
                   {Array.from({ length: n }).map((_, i) => (
                     <span key={i} className="h-full rounded-[1px] bg-current" style={{ width: n === 1 ? 14 : n === 2 ? 7 : 3 }} />
                   ))}
@@ -465,7 +465,7 @@ export function Catalog({
         </div>
 
         {drawerOpen ? (
-          <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-label="Filtri">
+          <div className="fixed inset-0 z-120" role="dialog" aria-modal="true" aria-label="Filtri">
             <button
               type="button"
               aria-label="Chiudi filtri"

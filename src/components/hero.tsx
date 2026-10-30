@@ -23,7 +23,7 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate min-h-[100svh] overflow-hidden bg-ink"
+      className="relative isolate min-h-svh overflow-hidden bg-ink"
       aria-label="Halo Store"
     >
       <h1 className="sr-only">Halo Store</h1>
