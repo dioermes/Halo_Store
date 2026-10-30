@@ -238,7 +238,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
     <>
       {!inAdmin ? <AnnouncementBar overlay={pathname === "/"} /> : null}
       <header
-        className={`halo-nav-in pointer-events-none absolute inset-x-0 'z-100' overflow-visible ${
+        className={`halo-nav-in pointer-events-none absolute inset-x-0 z-100 overflow-visible ${
           inAdmin ? "top-0" : "top-9"
         }`}
       >

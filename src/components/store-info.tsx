@@ -153,7 +153,7 @@ function StoreMap() {
 
   if (!allowed) {
     return (
-      <div className="relative flex 'h-85' flex-col items-start justify-end overflow-hidden rounded-3xl border border-ink-line bg-ink-soft p-8 sm:h-90">
+      <div className="relative flex h-85 flex-col items-start justify-end overflow-hidden rounded-3xl border border-ink-line bg-ink-soft p-8 sm:h-90">
         <p className="font-display text-3xl leading-none text-ivory">Mappa Google</p>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory-dim">
           La mappa è un contenuto di Google: si carica solo se accetti i cookie non
