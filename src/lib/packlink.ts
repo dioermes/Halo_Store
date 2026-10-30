@@ -182,15 +182,42 @@ async function packlinkFetch(path: string, init: RequestInit = {}) {
   return json;
 }
 
+function flattenErrorText(value: unknown, depth = 0): string {
+  if (value == null || depth > 4) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => flattenErrorText(item, depth + 1)).filter(Boolean).join("; ");
+  }
+  if (typeof value === "object") {
+    const rec = value as Record<string, unknown>;
+    const field = flattenErrorText(rec.property ?? rec.field ?? rec.path, depth + 1);
+    const text = flattenErrorText(
+      rec.message ?? rec.error ?? rec.detail ?? rec.description ?? rec.messages,
+      depth + 1,
+    );
+    if (text) return field ? `${field}: ${text}` : text;
+    return Object.entries(rec)
+      .map(([key, item]) => {
+        const nested = flattenErrorText(item, depth + 1);
+        return nested ? `${key}: ${nested}` : "";
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return "";
+}
+
 function packlinkErrorMessage(status: number, json: unknown, text: string) {
   if (status === 401 || status === 403) {
     return "Chiave Packlink non accettata. Controlla PACKLINK_API_KEY in Impostazioni Packlink PRO.";
   }
   if (json && typeof json === "object") {
     const rec = json as Record<string, unknown>;
-    const msg = rec.message ?? rec.error ?? rec.detail;
-    if (typeof msg === "string" && msg.trim()) return msg;
-    if (Array.isArray(rec.messages) && rec.messages[0]) return String(rec.messages[0]);
+    const found = [rec.message, rec.error, rec.detail, rec.messages, rec.errors]
+      .map((value) => flattenErrorText(value))
+      .find(Boolean);
+    if (found) return found.slice(0, 400);
   }
   if (typeof json === "string" && json.trim()) return json.slice(0, 280);
   return `Packlink ha risposto ${status}${text ? `: ${text.slice(0, 180)}` : ""}`;

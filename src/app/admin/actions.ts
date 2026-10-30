@@ -497,6 +497,19 @@ export async function deleteProductAction(formData: FormData) {
   revalidatePath("/admin/sito");
 }
 
+async function refundStripePayment(paymentIntent: string | null | undefined, orderId: string) {
+  if (!paymentIntent) return;
+  try {
+    await getStripe().refunds.create(
+      { payment_intent: paymentIntent },
+      { idempotencyKey: `halo-refund-${orderId}` },
+    );
+  } catch (error) {
+    if ((error as { code?: string }).code === "charge_already_refunded") return;
+    throw error;
+  }
+}
+
 export async function updateOrderAction(formData: FormData) {
   const client = await admin();
   const id = String(formData.get("id"));
@@ -518,10 +531,7 @@ export async function updateOrderAction(formData: FormData) {
 
   if (status === "refunded" && current.status !== "refunded") {
     await releasePromoForOrder(id);
-    if (current.stripe_payment_intent) {
-      const stripe = getStripe();
-      await stripe.refunds.create({ payment_intent: current.stripe_payment_intent });
-    }
+    await refundStripePayment(current.stripe_payment_intent, id);
     if (current.gift_card_discount_cents > 0) {
       const { error } = await client.rpc("halo_restore_gift_card_hold", { p_order_id: id });
       if (error) throw new Error(error.message);
@@ -529,12 +539,9 @@ export async function updateOrderAction(formData: FormData) {
   }
   if (status === "cancelled" && current.status !== "cancelled") {
     await releasePromoForOrder(id);
-    if (
-      current.gift_card_discount_cents > 0 &&
-      (current.status === "pending_payment" ||
-        (current.fulfillment === "pickup" &&
-          (current.status === "preparing" || current.status === "ready_for_pickup")))
-    ) {
+    const wasPaid = current.status !== "pending_payment";
+    if (wasPaid) await refundStripePayment(current.stripe_payment_intent, id);
+    if (current.gift_card_discount_cents > 0) {
       const { error } = await client.rpc("halo_restore_gift_card_hold", { p_order_id: id });
       if (error) throw new Error(error.message);
     }
