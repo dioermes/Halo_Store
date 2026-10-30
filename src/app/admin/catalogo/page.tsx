@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminCategoryBar } from "@/components/admin-category-bar";
 import { getAllProductsAdmin } from "@/lib/catalog";
 import { getStoreCategories, labelFromCategoryId } from "@/lib/categories";
-import { formatPrice, productHasCategory, stockBySize } from "@/lib/products";
+import { formatPrice, isProductSoldOut, productHasCategory, stockBySize } from "@/lib/products";
 import { togglePublishedFormAction } from "@/app/admin/actions";
 import { DeleteProductButton } from "@/components/delete-product-button";
 
@@ -79,6 +79,11 @@ export default async function AdminCatalogPage({
                       {product.name}
                     </p>
                     <ul className="mt-2 flex flex-wrap gap-1.5">
+                      {isProductSoldOut(product) ? (
+                        <li className="rounded-full bg-halo px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink sm:text-xs">
+                          Esaurito
+                        </li>
+                      ) : null}
                       {meta.map((item) => (
                         <li
                           key={`${product.uuid ?? product.id}-${item}`}

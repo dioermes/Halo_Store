@@ -734,6 +734,7 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     heroDesktop: media("heroDesktop"),
     heroMobile: media("heroMobile"),
     showcase: current.showcase,
+    giftCardMedia: current.giftCardMedia,
     newsletterPopupImage: current.newsletterPopupImage,
     tagline: String(formData.get("tagline") ?? "").trim().slice(0, 140),
     heroButtons: {
@@ -766,6 +767,18 @@ export async function saveSiteMediaSlotAction(
     throw new Error("Media non valido.");
   }
   await patchSiteAppearance({ [slot]: { url, kind } });
+  revalidatePath("/");
+  revalidatePath("/admin/sito");
+}
+
+export async function saveGiftCardMediaAction(
+  media: { url: string; kind: "image" | "video" } | null,
+) {
+  await requireOwner();
+  if (media && !media.url) throw new Error("Media non valido.");
+  await patchSiteAppearance({
+    giftCardMedia: media ?? { url: "/halo-gift-card-bianca-video.mp4", kind: "video" },
+  });
   revalidatePath("/");
   revalidatePath("/admin/sito");
 }

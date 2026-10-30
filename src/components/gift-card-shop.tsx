@@ -5,8 +5,10 @@ import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/reservation-provider";
 import { GIFT_CARD_AMOUNTS_EUR } from "@/lib/gift-card-constants";
 import { formatPrice } from "@/lib/products";
+import { SiteMediaView } from "@/components/site-media";
+import type { SiteMedia } from "@/lib/site";
 
-export function GiftCardShop() {
+export function GiftCardShop({ media }: { media: SiteMedia }) {
   const { addGiftCard, openBag } = useCart();
   const [amount, setAmount] = useState<number>(25);
   const [added, setAdded] = useState(false);
@@ -19,15 +21,7 @@ export function GiftCardShop() {
     >
       <div className="w-full">
         <div className="relative h-[38svh] min-h-60 max-h-105 overflow-hidden bg-[#c5cebc] sm:h-[58vw] sm:min-h-90 sm:max-h-180">
-          <video
-            src="/halo-gift-card-bianca-video.mp4"
-            className="absolute inset-0 h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-label="Video gift card Halo Store"
-          />
+          <SiteMediaView key={media.url} media={media} alt="Video gift card Halo Store" />
         </div>
 
         <div className="mx-auto max-w-5xl px-5 py-9 text-center sm:px-8 sm:py-12">

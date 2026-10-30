@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  saveGiftCardMediaAction,
   saveNewsletterPopupImageAction,
   saveShowcaseAction,
   saveSiteAppearanceAction,
@@ -116,7 +117,21 @@ function MediaFields({
   );
 }
 
-function ShowcaseField({ initial }: { initial: SiteAppearance["showcase"] }) {
+function ShowcaseField({
+  initial,
+  title = "Sezione foto/video",
+  description = "Appare a tutta larghezza tra le sezioni best seller e la gift card. Senza file la sezione non si vede. Comprimiamo foto e video da soli in caricamento. Si salva da solo.",
+  save = saveShowcaseAction,
+  removeLabel = "Rimuovi",
+  removedMessage = "Sezione rimossa dalla home.",
+}: {
+  initial: SiteAppearance["showcase"];
+  title?: string;
+  description?: string;
+  save?: (media: { url: string; kind: "image" | "video" } | null) => Promise<void>;
+  removeLabel?: string;
+  removedMessage?: string;
+}) {
   const [media, setMedia] = useState(initial);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -124,11 +139,8 @@ function ShowcaseField({ initial }: { initial: SiteAppearance["showcase"] }) {
 
   return (
     <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
-      <legend className="px-1 font-display text-2xl">Sezione foto/video</legend>
-      <p className="text-sm text-ivory-dim">
-        Appare a tutta larghezza tra le sezioni best seller e la gift card. Senza file la
-        sezione non si vede. Comprimiamo foto e video da soli in caricamento. Si salva da solo.
-      </p>
+      <legend className="px-1 font-display text-2xl">{title}</legend>
+      <p className="text-sm text-ivory-dim">{description}</p>
       {media ? (
         <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
           {media.kind === "video" ? (
@@ -157,7 +169,7 @@ function ShowcaseField({ initial }: { initial: SiteAppearance["showcase"] }) {
               try {
                 const uploaded = await uploadMedia(file, setBusy);
                 const next = { url: uploaded.url, kind: uploaded.kind };
-                await saveShowcaseAction(next);
+                await save(next);
                 setMedia(next);
                 setSaved("Salvato. Lo vedi in home dopo un refresh.");
               } catch (err) {
@@ -175,16 +187,16 @@ function ShowcaseField({ initial }: { initial: SiteAppearance["showcase"] }) {
             onClick={async () => {
               setError("");
               try {
-                await saveShowcaseAction(null);
+                await save(null);
                 setMedia(null);
-                setSaved("Sezione rimossa dalla home.");
+                setSaved(removedMessage);
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Rimozione non riuscita");
               }
             }}
             className="rounded-full border border-ink-line px-4 py-2 text-sm"
           >
-            Rimuovi
+            {removeLabel}
           </button>
         ) : null}
       </div>
@@ -541,6 +553,15 @@ export function SiteEditor({
         />
       </fieldset>
       <ShowcaseField initial={appearance.showcase} />
+      <ShowcaseField
+        key="gift-card"
+        initial={appearance.giftCardMedia}
+        title="Video gift card"
+        description="Foto o video in cima alla sezione gift card della home. Comprimiamo i file da soli in caricamento. Si salva da solo."
+        save={saveGiftCardMediaAction}
+        removeLabel="Ripristina originale"
+        removedMessage="Ripristinato il video originale."
+      />
       <NewsletterPopupImageField initialUrl={appearance.newsletterPopupImage} />
       <DisplayFontPicker initialId={appearance.displayFont} />
       <DisplayFontPicker variant="section" initialId={appearance.sectionTitleFont} />

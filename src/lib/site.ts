@@ -40,6 +40,7 @@ export type SiteAppearance = {
   heroDesktop: SiteMedia;
   heroMobile: SiteMedia;
   showcase: SiteMedia | null;
+  giftCardMedia: SiteMedia;
   newsletterPopupImage: string;
   tagline: string;
   heroButtons: {
@@ -141,6 +142,7 @@ const appearanceDefaults: SiteAppearance = {
   heroDesktop: { url: ambientImages.interior, kind: "image" },
   heroMobile: { url: ambientImages.interior, kind: "image" },
   showcase: null,
+  giftCardMedia: { url: "/halo-gift-card-bianca-video.mp4", kind: "video" },
   newsletterPopupImage: ambientImages.interior,
   tagline: "Non seguiamo lo stile, lo riscriviamo.",
   heroButtons: {
@@ -298,6 +300,7 @@ function parseAppearance(value: unknown): SiteAppearance {
     heroDesktop: asMedia(row.heroDesktop, appearanceDefaults.heroDesktop),
     heroMobile: asMedia(row.heroMobile, appearanceDefaults.heroMobile),
     showcase: asOptionalMedia(row.showcase),
+    giftCardMedia: asOptionalMedia(row.giftCardMedia) ?? appearanceDefaults.giftCardMedia,
     newsletterPopupImage:
       typeof row.newsletterPopupImage === "string" && row.newsletterPopupImage.trim()
         ? row.newsletterPopupImage.trim()
@@ -419,6 +422,7 @@ function appearanceMediaUrls(appearance: SiteAppearance) {
     appearance.heroDesktop.url,
     appearance.heroMobile.url,
     appearance.showcase?.url ?? "",
+    appearance.giftCardMedia.url,
     appearance.newsletterPopupImage,
     ...appearance.homeSections.map((section) => section.interlude?.url ?? ""),
   ];

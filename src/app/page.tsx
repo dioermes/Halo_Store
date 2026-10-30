@@ -30,7 +30,7 @@ export default async function Home() {
       {appearance.tagline ? <TaglineBand text={appearance.tagline} /> : null}
       <HomeCollections sections={appearance.homeSections} />
       {appearance.showcase ? <HomeShowcase media={appearance.showcase} /> : null}
-      <GiftCardShop />
+      <GiftCardShop media={appearance.giftCardMedia} />
       <StoreInfo />
       <HelpFaq />
       <NewsletterSignup
