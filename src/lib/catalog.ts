@@ -52,6 +52,7 @@ type ProductRow = {
   badge: string | null;
   published: boolean;
   sort_order: number;
+  created_at?: string | null;
   halo_product_images?: ImageRow[];
   halo_variants?: VariantRow[];
 };
@@ -117,6 +118,7 @@ export function mapProductRow(
     stock,
     variants,
     published: row.published,
+    createdAt: row.created_at ?? undefined,
   };
 }
 

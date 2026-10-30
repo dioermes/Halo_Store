@@ -166,13 +166,15 @@ export function ProductCard({
               <div
                 role="img"
                 aria-label={`Colori disponibili: ${availableColors.join(", ")}`}
-                className="pointer-events-none absolute bottom-2 right-2 z-10 flex flex-wrap justify-end gap-1.5"
+                className={`pointer-events-none absolute                 right-2 z-10 flex flex-wrap justify-end gap-1.5 md:right-3 md:gap-2 ${
+                                  images.length > 1 ? "bottom-6 md:bottom-3" : "bottom-2 md:bottom-3"
+                }`}
               >
                 {availableColors.map((color) => (
                   <span
                     key={color}
                     title={color}
-                    className="h-3 w-3 border border-white/80 shadow-[0_1px_4px_rgba(0,0,0,0.65)]"
+                    className="h-3 w-3 border border-white/80 shadow-[0_1px_4px_rgba(0,0,0,0.65)] md:h-4 md:w-4"
                     style={{ backgroundColor: getColorLook(color).hex }}
                   />
                 ))}

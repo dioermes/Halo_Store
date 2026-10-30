@@ -51,6 +51,7 @@ export type Product = {
   stock: number;
   variants?: ProductVariant[];
   published?: boolean;
+  createdAt?: string;
 };
 
 export type ColorLook = {

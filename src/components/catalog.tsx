@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { motion } from "motion/react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { RevealWords } from "@/components/reveal";
 import { ProductCard } from "@/components/product-card";
 import {
@@ -61,118 +62,130 @@ function productHasColor(product: Product, color: string) {
   return (product.variants ?? []).some((variant) => variant.color.toLowerCase() === key);
 }
 
-function CategoryRail({
-  filters,
-  active,
-  onChange,
-  layoutId,
-  bleed = false,
-}: {
-  filters: StoreCategory[];
-  active: string;
-  onChange: (id: string) => void;
-  layoutId: string;
-  bleed?: boolean;
-}) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [overflow, setOverflow] = useState(false);
-  const [scrollMax, setScrollMax] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+type SortId =
+  | "featured"
+  | "relevant"
+  | "bestseller"
+  | "az"
+  | "za"
+  | "priceAsc"
+  | "priceDesc"
+  | "dateAsc"
+  | "dateDesc";
 
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
+const sortOptions: { id: SortId; label: string }[] = [
+  { id: "featured", label: "In primo piano" },
+  { id: "relevant", label: "Più rilevanti" },
+  { id: "bestseller", label: "Best seller" },
+  { id: "az", label: "In ordine alfabetico, A-Z" },
+  { id: "za", label: "In ordine alfabetico, Z-A" },
+  { id: "priceAsc", label: "Prezzo crescente" },
+  { id: "priceDesc", label: "Prezzo decrescente" },
+  { id: "dateAsc", label: "Data, da meno a più recente" },
+  { id: "dateDesc", label: "Data, da più a meno recente" },
+];
 
-    const measure = () => {
-      const max = Math.max(0, el.scrollWidth - el.clientWidth);
-      setOverflow(max > 2);
-      setScrollMax(max);
-      setScrollLeft(el.scrollLeft);
-    };
+const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-    measure();
-    const frame = window.requestAnimationFrame(measure);
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    el.addEventListener("scroll", measure, { passive: true });
-    window.addEventListener("resize", measure);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      observer.disconnect();
-      el.removeEventListener("scroll", measure);
-      window.removeEventListener("resize", measure);
-    };
-  }, [filters]);
+function collectSizes(products: Product[]) {
+  const unique = new Set<string>();
+  for (const product of products) {
+    for (const size of product.sizes) {
+      const trimmed = size.trim();
+      if (trimmed) unique.add(trimmed);
+    }
+  }
+  const rank = (size: string) => {
+    const index = SIZE_ORDER.indexOf(size.toUpperCase());
+    return index >= 0 ? index : null;
+  };
+  return [...unique].sort((a, b) => {
+    const ra = rank(a);
+    const rb = rank(b);
+    if (ra !== null && rb !== null) return ra - rb;
+    if (ra !== null) return -1;
+    if (rb !== null) return 1;
+    return a.localeCompare(b, "it", { numeric: true });
+  });
+}
 
+function relevance(product: Product) {
   return (
-    <div className={bleed ? "-mx-5" : undefined}>
-      <div className="relative">
-        <div
-          ref={scrollerRef}
-          className={`overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden ${bleed ? "px-5" : ""}`}
-        >
-          <div
-            className={`flex w-max gap-1.5 ${overflow ? "" : "min-w-full justify-center"}`}
-            role="tablist"
-            aria-label="Categorie del catalogo"
-          >
-            {filters.map((category) => {
-              const isActive = active === category.id;
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => onChange(category.id)}
-                  className={`relative min-h-11 shrink-0 rounded-full px-5 py-2.5 text-sm transition-colors duration-500 ${
-                    isActive ? "text-ink" : "text-ivory-dim hover:text-ivory"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId={layoutId}
-                      className="absolute inset-0 rounded-full bg-ivory"
-                      transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                    />
-                  )}
-                  <span className="relative">{category.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        {overflow ? (
-          <>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-linear-to-r from-ink to-transparent"
-              style={{ opacity: scrollLeft > 4 ? 1 : 0 }}
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-linear-to-l from-ink to-transparent"
-              style={{ opacity: scrollLeft < scrollMax - 4 ? 1 : 0 }}
-            />
-          </>
-        ) : null}
-      </div>
-      {overflow ? (
-        <input
-          type="range"
-          min={0}
-          max={scrollMax}
-          value={scrollLeft}
-          aria-label="Scorri le categorie"
-          className="halo-slider mx-auto mt-3 block w-24"
-          onChange={(event) => {
-            const el = scrollerRef.current;
-            if (!el) return;
-            el.scrollLeft = Number(event.target.value);
-          }}
-        />
-      ) : null}
+    (product.isBestseller ? 4 : 0) +
+    (product.isNewArrival ? 2 : 0) +
+    (product.isOnSale ? 1 : 0)
+  );
+}
+
+function sortProducts(list: Product[], sort: SortId) {
+  if (sort === "featured") return list;
+  const indexed = list.map((product, index) => ({ product, index }));
+  const time = (product: Product) => (product.createdAt ? Date.parse(product.createdAt) || 0 : 0);
+  const compare: Record<Exclude<SortId, "featured">, (a: Product, b: Product) => number> = {
+    relevant: (a, b) => relevance(b) - relevance(a),
+    bestseller: (a, b) => Number(Boolean(b.isBestseller)) - Number(Boolean(a.isBestseller)),
+    az: (a, b) => a.name.localeCompare(b.name, "it"),
+    za: (a, b) => b.name.localeCompare(a.name, "it"),
+    priceAsc: (a, b) => a.price - b.price,
+    priceDesc: (a, b) => b.price - a.price,
+    dateAsc: (a, b) => time(a) - time(b),
+    dateDesc: (a, b) => time(b) - time(a),
+  };
+  return indexed
+    .sort((a, b) => compare[sort](a.product, b.product) || a.index - b.index)
+    .map((entry) => entry.product);
+}
+
+function FilterGroup({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-ink-line/60 py-6">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between text-left text-sm font-semibold uppercase tracking-[0.08em] text-ivory"
+      >
+        {title}
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? <div className="mt-5">{children}</div> : null}
     </div>
+  );
+}
+
+function RadioRow({
+  label,
+  checked,
+  onSelect,
+}: {
+  label: string;
+  checked: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={checked}
+      onClick={onSelect}
+      className="flex w-full items-center gap-3 py-2 text-left text-sm uppercase text-ivory"
+    >
+      <span
+        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
+          checked ? "border-ivory bg-ivory" : "border-ink-line"
+        }`}
+      />
+      {label}
+    </button>
   );
 }
 
@@ -275,6 +288,20 @@ export function Catalog({
   const [activeTag, setActiveTag] = useState(initialTag);
   const [maxSelected, setMaxSelected] = useState(0);
   const [color, setColor] = useState("");
+  const [size, setSize] = useState("");
+  const [sort, setSort] = useState<SortId>("featured");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [colsChoice, setCols] = useState<1 | 2 | 4 | null>(null);
+  const isDesktop = useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia("(min-width: 1024px)");
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    () => false,
+  );
+  const cols = colsChoice === 4 && !isDesktop ? 2 : (colsChoice ?? (isDesktop ? 4 : 2));
   const ceiling = useRef(0);
   const categoryRef = useRef(active);
   const selectedActive =
@@ -300,8 +327,10 @@ export function Catalog({
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
   const colors = useMemo(() => collectColors(tagged), [tagged]);
+  const sizes = useMemo(() => collectSizes(tagged), [tagged]);
   const selectedColor =
     color && colors.some((name) => name.toLowerCase() === color.toLowerCase()) ? color : "";
+  const selectedSize = size && sizes.includes(size) ? size : "";
 
   const selectCategory = (id: string) => {
     if (id === selectedActive) return;
@@ -348,13 +377,46 @@ export function Catalog({
 
   const visible = useMemo(
     () =>
-      tagged.filter((product) => {
-        if (product.price > maxSelected) return false;
-        if (selectedColor && !productHasColor(product, selectedColor)) return false;
-        return true;
-      }),
-    [selectedColor, maxSelected, tagged],
+      sortProducts(
+        tagged.filter((product) => {
+          if (product.price > maxSelected) return false;
+          if (selectedColor && !productHasColor(product, selectedColor)) return false;
+          if (selectedSize && !product.sizes.includes(selectedSize)) return false;
+          return true;
+        }),
+        sort,
+      ),
+    [selectedColor, selectedSize, sort, maxSelected, tagged],
   );
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrawerOpen(false);
+    };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [drawerOpen]);
+
+  const activeFilters =
+    (sort !== "featured" ? 1 : 0) +
+    (maxSelected < maxPrice ? 1 : 0) +
+    (selectedActive !== "tutti" ? 1 : 0) +
+    (selectedSize ? 1 : 0) +
+    (selectedColor ? 1 : 0);
+
+  const resetFilters = () => {
+    setSort("featured");
+    setSize("");
+    setColor("");
+    setMaxSelected(maxPrice);
+    if (selectedActive !== "tutti") selectCategory("tutti");
+  };
 
   return (
     <section
@@ -368,34 +430,158 @@ export function Catalog({
           </h2>
         </div>
 
-        <div className="mt-14 lg:hidden">
-          <CategoryRail
-            filters={filters}
-            active={selectedActive}
-            onChange={selectCategory}
-            layoutId="filtro-attivo-mobile"
-            bleed
-          />
-          <div className="mt-8 grid grid-cols-2 items-end gap-8">
-            <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
-            <ColorSwatches colors={colors} value={selectedColor} onChange={setColor} scroll />
+        <div className="mt-12 flex items-center justify-between gap-4">
+          <p className="text-xs uppercase tracking-[0.24em] text-ivory-dim">
+            {visible.length} {visible.length === 1 ? "capo" : "capi"}
+          </p>
+          <div className="flex items-center gap-1" role="group" aria-label="Colonne del catalogo">
+            {([4, 2, 1] as const).map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={cols === n}
+                aria-label={n === 1 ? "Una colonna" : `${n} colonne`}
+                onClick={() => setCols(n)}
+                className={`${n === 4 ? "hidden lg:flex" : "flex"} h-9 w-9 items-center justify-center rounded-md border transition-colors ${
+                  cols === n ? "border-ivory bg-ivory text-ink" : "border-ink-line text-ivory hover:border-ivory"
+                }`}
+              >
+                <span className="flex h-4 gap-[2px]">
+                  {Array.from({ length: n }).map((_, i) => (
+                    <span key={i} className="h-full rounded-[1px] bg-current" style={{ width: n === 1 ? 14 : n === 2 ? 7 : 3 }} />
+                  ))}
+                </span>
+              </button>
+            ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-ink-line px-4 py-2.5 text-xs uppercase tracking-[0.18em] text-ivory transition-colors hover:border-halo/60"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtri{activeFilters ? ` (${activeFilters})` : ""}
+          </button>
         </div>
 
-        <div className="mt-16 hidden items-center gap-10 lg:grid lg:grid-cols-[minmax(10rem,15rem)_minmax(0,1fr)_minmax(10rem,15rem)]">
-          <PriceFilter minPrice={minPrice} maxPrice={maxPrice} value={maxSelected} onChange={setMaxSelected} />
-          <CategoryRail
-            filters={filters}
-            active={selectedActive}
-            onChange={selectCategory}
-            layoutId="filtro-attivo"
-          />
-          <ColorSwatches colors={colors} value={selectedColor} onChange={setColor} />
-        </div>
+        {drawerOpen ? (
+          <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-label="Filtri">
+            <button
+              type="button"
+              aria-label="Chiudi filtri"
+              onClick={() => setDrawerOpen(false)}
+              className="absolute inset-0 bg-black/40"
+            />
+            <motion.aside
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-ink text-ivory shadow-2xl"
+            >
+              <div className="relative flex items-center justify-center border-b border-ink-line/60 py-5">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  aria-label="Chiudi"
+                  className="absolute left-5 flex h-9 w-9 items-center justify-center rounded-full bg-ivory/10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <span className="text-sm uppercase tracking-[0.12em]">Filtri</span>
+              </div>
 
-        <p className="mt-10 text-center text-xs uppercase tracking-[0.24em] text-ivory-dim">
-          {visible.length} {visible.length === 1 ? "capo" : "capi"}
-        </p>
+              <div className="halo-scrollbar flex-1 overflow-y-auto px-6">
+                <FilterGroup title="Ordina">
+                  <div role="radiogroup" aria-label="Ordina per">
+                    {sortOptions.map((option) => (
+                      <RadioRow
+                        key={option.id}
+                        label={option.label}
+                        checked={sort === option.id}
+                        onSelect={() => setSort(option.id)}
+                      />
+                    ))}
+                  </div>
+                </FilterGroup>
+
+                <FilterGroup title="Prezzo">
+                  <PriceFilter
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    value={maxSelected}
+                    onChange={setMaxSelected}
+                  />
+                </FilterGroup>
+
+                <FilterGroup title="Categoria">
+                  <div role="radiogroup" aria-label="Categoria">
+                    {filters.map((category) => (
+                      <RadioRow
+                        key={category.id}
+                        label={category.label}
+                        checked={selectedActive === category.id}
+                        onSelect={() => selectCategory(category.id)}
+                      />
+                    ))}
+                  </div>
+                </FilterGroup>
+
+                {sizes.length > 0 ? (
+                  <FilterGroup title="Taglia">
+                    <div className="flex flex-wrap gap-2">
+                      {sizes.map((name) => {
+                        const isActive = selectedSize === name;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => setSize(isActive ? "" : name)}
+                            className={`min-w-11 rounded-md border px-3 py-2 text-sm transition-colors ${
+                              isActive
+                                ? "border-ivory bg-ivory text-ink"
+                                : "border-ink-line text-ivory hover:border-ivory"
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FilterGroup>
+                ) : null}
+
+                {colors.length > 0 ? (
+                  <FilterGroup title="Colore">
+                    <ColorSwatches
+                      colors={colors}
+                      value={selectedColor}
+                      onChange={setColor}
+                      align="start"
+                    />
+                  </FilterGroup>
+                ) : null}
+              </div>
+
+              <div className="flex gap-3 border-t border-ink-line/60 p-5">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="flex-1 rounded-md border border-ink-line py-3 text-xs uppercase tracking-[0.18em]"
+                >
+                  Azzera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex-1 rounded-md bg-ivory py-3 text-xs uppercase tracking-[0.18em] text-ink"
+                >
+                  Mostra {visible.length} {visible.length === 1 ? "capo" : "capi"}
+                </button>
+              </div>
+            </motion.aside>
+          </div>
+        ) : null}
         {activeTag ? (
           <div className="mt-4 flex justify-center">
             <button
@@ -420,7 +606,8 @@ export function Catalog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="halo-product-grid mt-14 lg:mt-16"
+            className={`halo-product-grid mt-14 lg:mt-16 ${cols === 1 ? "mx-auto max-w-xl" : ""}`}
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
           >
             {visible.map((product, index) => (
               <ProductCard key={product.uuid ?? product.id} product={product} index={index} />
