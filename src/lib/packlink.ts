@@ -19,7 +19,16 @@ export type PacklinkQuote = {
   currency: string;
   transit: string;
   dropoff: boolean;
+  parcelshop?: boolean;
   availableDates: Array<{ date: string; window: string }>;
+};
+
+export type PacklinkPoint = {
+  id: string;
+  name: string;
+  address: string;
+  zip: string;
+  city: string;
 };
 
 export type PacklinkShipment = {
@@ -240,16 +249,25 @@ function str(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function normalizeWindow(raw: string) {
+  const times = raw.match(/\d{1,2}:\d{2}/g);
+  if (!times || times.length < 2) return "09:00-18:00";
+  return `${times[0].padStart(5, "0")}-${times[1].padStart(5, "0")}`;
+}
+
 function parseAvailableDates(raw: unknown): Array<{ date: string; window: string }> {
   const rec = asRecord(raw);
   if (!rec) return nextCollectionDates();
   const dates = Object.entries(rec)
-    .map(([date, window]) => {
+    .map(([rawDate, window]) => {
+      const date = rawDate.replace(/\//g, "-");
       const win = asRecord(window);
+      const hours = asRecord(win?.hours) ?? asRecord(win?.timeframes);
       const label =
         str(win?.value) ||
+        (hours ? Object.keys(hours)[0] ?? "" : "") ||
         (str(win?.from) && str(win?.till) ? `${str(win?.from)}-${str(win?.till)}` : str(window));
-      return { date, window: label || "09:00-18:00" };
+      return { date, window: normalizeWindow(label) };
     })
     .filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.date))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -270,7 +288,8 @@ function parseQuote(raw: unknown): PacklinkQuote | null {
     priceEuro: round2(priceEuro),
     currency: str(price?.currency, str(rec.currency, "EUR")),
     transit: str(rec.transit_time, str(rec.first_estimated_delivery_date)),
-    dropoff: Boolean(rec.dropoff || rec.delivery_to_parcelshop),
+    dropoff: Boolean(rec.dropoff),
+    parcelshop: Boolean(rec.delivery_to_parcelshop) || /shop2shop|locker|punto/i.test(str(rec.name)),
     availableDates: parseAvailableDates(rec.available_dates),
   };
 }
@@ -319,7 +338,9 @@ export async function getPacklinkQuotes(input: {
 
   const json = await packlinkFetch(`services?${params.toString()}`);
   const list = Array.isArray(json) ? json : asRecord(json)?.services;
-  const quotes = (Array.isArray(list) ? list : []).map(parseQuote).filter((q): q is PacklinkQuote => Boolean(q));
+  const quotes = (Array.isArray(list) ? list : [])
+    .map(parseQuote)
+    .filter((q): q is PacklinkQuote => Boolean(q));
   if (!quotes.length) {
     throw new Error("Nessun corriere disponibile per questo CAP e queste misure.");
   }
@@ -329,6 +350,7 @@ export async function getPacklinkQuotes(input: {
 function sanitizeContent(value: string) {
   return value
     .replace(/[;:%&/ºª€$@#()=?¿¡!\\'`´^*Êè]/g, " ")
+    .replace(/[^\x20-\x7E]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 60);
@@ -347,7 +369,39 @@ function digitsPhone(raw: string | null | undefined, fallback: string) {
   return fallback;
 }
 
+export async function getPacklinkPoints(input: {
+  serviceId: string;
+  country: string;
+  zip: string;
+}): Promise<PacklinkPoint[]> {
+  if (!getPacklinkApiKey()) {
+    return [
+      { id: "DEMO-1", name: "Punto di prova", address: "Via Roma 1", zip: input.zip, city: "Città" },
+    ];
+  }
+  const json = await packlinkFetch(
+    `dropoffs/${encodeURIComponent(input.serviceId)}/${encodeURIComponent(input.country)}/${encodeURIComponent(input.zip)}`,
+  );
+  const list = Array.isArray(json) ? json : asRecord(json)?.dropoffs;
+  return (Array.isArray(list) ? list : [])
+    .map((item): PacklinkPoint | null => {
+      const rec = asRecord(item);
+      if (!rec) return null;
+      const id = rec.id ?? rec.code;
+      if (id == null) return null;
+      return {
+        id: String(id),
+        name: str(rec.commerce_name, str(rec.name, str(rec.commercial_name, "Punto di ritiro"))),
+        address: str(rec.address, str(rec.street)),
+        zip: str(rec.zip, str(rec.zip_code, input.zip)),
+        city: str(rec.city),
+      };
+    })
+    .filter((p): p is PacklinkPoint => Boolean(p));
+}
+
 export async function createPacklinkShipment(input: {
+  point?: PacklinkPoint | null;
   quote: PacklinkQuote;
   parcel: PacklinkParcel;
   collectionDate: string;
@@ -395,11 +449,21 @@ export async function createPacklinkShipment(input: {
     service: input.quote.name,
     carrier: input.quote.carrierName,
     service_id: /^\d+$/.test(input.quote.id) ? Number(input.quote.id) : input.quote.id,
-    collection_date: input.collectionDate,
-    collection_time: input.collectionTime,
+    collection_date: input.collectionDate.replace(/-/g, "/"),
+    collection_time: normalizeWindow(input.collectionTime),
     content: sanitizeContent(input.content || "Abbigliamento"),
     contentvalue: round2(Math.max(1, input.contentValueEuro)),
     contentValue_currency: "EUR",
+    content_second_hand: false,
+    additional_data: input.point
+      ? {
+          postal_zone_id: input.point.id,
+          postal_zone_name: input.point.name,
+          zip_code: input.point.zip,
+          address: input.point.address,
+          city: input.point.city,
+        }
+      : {},
     shipment_custom_reference: input.customReference.slice(0, 50),
     from,
     to: {

@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       lengthCm?: number;
       widthCm?: number;
       heightCm?: number;
+      point?: { id?: string; name?: string; address?: string; zip?: string; city?: string } | null;
     };
     const orderId = String(body.orderId ?? "");
     const serviceId = String(body.serviceId ?? "");
@@ -59,6 +60,19 @@ export async function POST(req: Request) {
     const quote = quotes.find((item) => item.id === serviceId);
     if (!quote) return NextResponse.json({ error: "Quel corriere non è più disponibile. Ricarica i prezzi." }, { status: 400 });
 
+    const point = body.point?.id
+      ? {
+          id: String(body.point.id),
+          name: String(body.point.name ?? ""),
+          address: String(body.point.address ?? ""),
+          zip: String(body.point.zip ?? ""),
+          city: String(body.point.city ?? ""),
+        }
+      : null;
+    if (quote.parcelshop && !point) {
+      return NextResponse.json({ error: "Scegli il punto di ritiro dove consegnare il pacco." }, { status: 400 });
+    }
+
     const collectionDate = body.collectionDate || quote.availableDates[0]?.date;
     const collectionTime = body.collectionTime || quote.availableDates[0]?.window || "09:00-18:00";
     if (!collectionDate) return NextResponse.json({ error: "Scegli una data di ritiro." }, { status: 400 });
@@ -70,6 +84,7 @@ export async function POST(req: Request) {
 
     const created = await createPacklinkShipment({
       quote,
+      point: quote.parcelshop ? point : null,
       parcel,
       collectionDate,
       collectionTime,

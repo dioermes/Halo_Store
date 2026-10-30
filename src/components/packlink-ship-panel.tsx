@@ -8,6 +8,7 @@ import {
   defaultParcel,
   formatEuro,
   type PacklinkOrderState,
+  type PacklinkPoint,
   type PacklinkQuote,
 } from "@/lib/packlink";
 
@@ -33,11 +34,50 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
   const [error, setError] = useState("");
   const [state, setState] = useState(initial);
   const [events, setEvents] = useState<string[]>([]);
+  const [mode, setMode] = useState<"home" | "point">("home");
+  const [pointZip, setPointZip] = useState(toZip);
+  const [points, setPoints] = useState<PacklinkPoint[]>([]);
+  const [pointId, setPointId] = useState("");
+  const [pointsBusy, setPointsBusy] = useState(false);
 
   const selected = useMemo(
     () => quotes.find((quote) => quote.id === serviceId) ?? null,
     [quotes, serviceId],
   );
+  const visibleQuotes = useMemo(
+    () => quotes.filter((quote) => Boolean(quote.parcelshop) === (mode === "point")),
+    [quotes, mode],
+  );
+  const point = points.find((item) => item.id === pointId) ?? null;
+
+  function changeMode(next: "home" | "point") {
+    setMode(next);
+    setPoints([]);
+    setPointId("");
+    const first = quotes.find((quote) => Boolean(quote.parcelshop) === (next === "point"));
+    setServiceId(first?.id ?? "");
+    setCollectionDate(first?.availableDates[0]?.date ?? "");
+  }
+
+  async function loadPoints() {
+    if (!serviceId) return;
+    setPointsBusy(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/admin/packlink/points?serviceId=${encodeURIComponent(serviceId)}&zip=${encodeURIComponent(pointZip)}`,
+      );
+      const data = (await res.json()) as { error?: string; points?: PacklinkPoint[] };
+      if (!res.ok) throw new Error(data.error || "Punti di ritiro non disponibili.");
+      setPoints(data.points ?? []);
+      setPointId(data.points?.[0]?.id ?? "");
+      if (!data.points?.length) setError("Nessun punto di ritiro trovato per questo CAP.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Punti di ritiro non disponibili.");
+    } finally {
+      setPointsBusy(false);
+    }
+  }
 
   async function loadQuotes() {
     setBusy("quotes");
@@ -56,10 +96,14 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
       });
       const data = (await res.json()) as { error?: string; quotes?: PacklinkQuote[]; live?: boolean };
       if (!res.ok) throw new Error(data.error || "Preventivi non disponibili.");
-      setQuotes(data.quotes ?? []);
+      const list = data.quotes ?? [];
+      setQuotes(list);
       setLiveQuotes(Boolean(data.live));
-      const first = data.quotes?.[0];
+      setPoints([]);
+      setPointId("");
+      const first = list.find((quote) => Boolean(quote.parcelshop) === (mode === "point")) ?? list[0];
       if (first) {
+        setMode(first.parcelshop ? "point" : "home");
         setServiceId(first.id);
         setCollectionDate(first.availableDates[0]?.date ?? "");
       }
@@ -86,6 +130,7 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
           lengthCm: Number(lengthCm),
           widthCm: Number(widthCm),
           heightCm: Number(heightCm),
+          point: selected?.parcelshop ? point : null,
         }),
       });
       const data = (await res.json()) as { error?: string; state?: PacklinkOrderState };
@@ -249,7 +294,24 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
               <legend className="text-sm text-ivory-dim">
                 {liveQuotes ? "Prezzi Packlink" : "Prezzi di prova"}
               </legend>
-              {quotes.map((quote) => (
+              <div className="flex gap-2">
+                {(["home", "point"] as const).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => changeMode(key)}
+                    className={`flex-1 rounded-full border px-4 py-2 text-sm ${
+                      mode === key ? "border-halo bg-halo/10 text-halo-bright" : "border-ink-line text-ivory-dim"
+                    }`}
+                  >
+                    {key === "home" ? "Consegna a casa" : "Punto di ritiro"}
+                  </button>
+                ))}
+              </div>
+              {visibleQuotes.length === 0 ? (
+                <p className="text-sm text-ivory-dim">Nessun corriere disponibile per questa modalità.</p>
+              ) : null}
+              {visibleQuotes.map((quote) => (
                 <label
                   key={quote.id}
                   className={`flex cursor-pointer items-start justify-between gap-3 rounded-2xl border px-4 py-3 ${
@@ -264,6 +326,8 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
                       checked={serviceId === quote.id}
                       onChange={() => {
                         setServiceId(quote.id);
+                        setPoints([]);
+                        setPointId("");
                         setCollectionDate(quote.availableDates[0]?.date ?? "");
                       }}
                     />
@@ -278,6 +342,45 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
                   <span className="shrink-0 text-halo-bright">{formatEuro(quote.priceEuro)}</span>
                 </label>
               ))}
+              {selected?.parcelshop ? (
+                <div className="grid gap-2 rounded-2xl border border-ink-line p-4">
+                  <p className="text-sm text-ivory-dim">
+                    Questo servizio consegna in un punto di ritiro: scegli quello vicino al cliente.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={pointZip}
+                      onChange={(e) => setPointZip(e.target.value)}
+                      inputMode="numeric"
+                      maxLength={5}
+                      aria-label="CAP del punto di ritiro"
+                      className="w-28 rounded-xl border border-ink-line bg-ink/60 px-3 py-2 text-sm text-ivory"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void loadPoints()}
+                      disabled={pointsBusy}
+                      className="flex items-center gap-2 rounded-full border border-ink-line px-4 py-2 text-sm"
+                    >
+                      {pointsBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Cerca punti
+                    </button>
+                  </div>
+                  {points.length ? (
+                    <select
+                      value={pointId}
+                      onChange={(e) => setPointId(e.target.value)}
+                      className="w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-sm text-ivory"
+                    >
+                      {points.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} · {item.address} {item.city}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                </div>
+              ) : null}
               {selected?.availableDates.length ? (
                 <label className="text-sm text-ivory-dim">
                   Data ritiro
@@ -297,7 +400,7 @@ export function PacklinkShipPanel({ orderId, toZip, toCity, configured, initial 
               <button
                 type="button"
                 onClick={() => void createShipment()}
-                disabled={busy !== null || !serviceId}
+                disabled={busy !== null || !serviceId || Boolean(selected?.parcelshop && !point)}
                 className="flex items-center justify-center gap-2 rounded-full border border-halo py-3 text-sm text-halo-bright disabled:opacity-70"
               >
                 {busy === "ship" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
