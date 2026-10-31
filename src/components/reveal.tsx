@@ -44,11 +44,13 @@ export function RevealWords({
   text,
   className,
   wordClassName,
+  wordColors,
   delay = 0,
 }: {
   text: string;
   className?: string;
   wordClassName?: string;
+  wordColors?: string[];
   delay?: number;
 }) {
   const reduceMotion = useReducedMotion();
@@ -66,6 +68,7 @@ export function RevealWords({
         <span key={`${word}-${index}`} className="mask-reveal inline-block">
           <motion.span
             className={`inline-block ${wordClassName ?? ""}`}
+            style={wordColors?.[index] ? { color: wordColors[index] } : undefined}
             variants={{
               hidden: reduceMotion
                 ? { y: 0, opacity: 0 }

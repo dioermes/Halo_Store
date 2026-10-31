@@ -43,6 +43,7 @@ export type SiteAppearance = {
   giftCardMedia: SiteMedia;
   newsletterPopupImage: string;
   tagline: string;
+  taglineColors: string[];
   heroButtons: {
     shopNow: HeroButton;
     newIn: HeroButton;
@@ -145,6 +146,7 @@ const appearanceDefaults: SiteAppearance = {
   giftCardMedia: { url: "/halo-gift-card-bianca-video.mp4", kind: "video" },
   newsletterPopupImage: ambientImages.interior,
   tagline: "Non seguiamo lo stile, lo riscriviamo.",
+  taglineColors: [],
   heroButtons: {
     shopNow: { label: "SHOP NOW", destinationType: "url", destination: "/catalogo" },
     newIn: { label: "NEW IN", destinationType: "url", destination: "/#nuovi-arrivi" },
@@ -309,6 +311,9 @@ function parseAppearance(value: unknown): SiteAppearance {
       typeof row.tagline === "string"
         ? row.tagline.trim().slice(0, 140)
         : appearanceDefaults.tagline,
+    taglineColors: Array.isArray(row.taglineColors)
+      ? row.taglineColors.filter((color): color is string => typeof color === "string").slice(0, 40)
+      : [],
     heroButtons: { shopNow: parseButton("shopNow"), newIn: parseButton("newIn") },
     homeSections: parseHomeSections(row),
     soldOutBadgeBg: asHexColor(

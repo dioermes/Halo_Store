@@ -27,7 +27,9 @@ export default async function Home() {
     <>
       <ProductListStructuredData products={products} />
       <Hero appearance={appearance} />
-      {appearance.tagline ? <TaglineBand text={appearance.tagline} /> : null}
+      {appearance.tagline ? (
+        <TaglineBand text={appearance.tagline} colors={appearance.taglineColors} />
+      ) : null}
       <HomeCollections sections={appearance.homeSections} />
       {appearance.showcase ? <HomeShowcase media={appearance.showcase} /> : null}
       <GiftCardShop media={appearance.giftCardMedia} />

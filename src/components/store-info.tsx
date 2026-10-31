@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, Navigation, Phone } from "lucide-react";
+import { ChevronDown, MapPin, Navigation, Phone } from "lucide-react";
 import { InstagramGlyph, TikTokGlyph } from "@/components/icons";
 import { Reveal, RevealWords } from "@/components/reveal";
 import { OpenBadge } from "@/components/open-badge";
@@ -14,6 +14,7 @@ import { fullAddress, storeConfig } from "@/lib/store-config";
 export function StoreInfo() {
   const { phone, hours } = useStoreContact();
   const [today, setToday] = useState<number | null>(null);
+  const [hoursOpen, setHoursOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setToday(new Date().getDay()), 0);
@@ -44,7 +45,27 @@ export function StoreInfo() {
 
             <Reveal delay={0.3}>
               <div className="mt-10"><OpenBadge /></div>
-              <ul className="mt-5 divide-y divide-ink-line border-y border-ink-line">
+              <button
+                type="button"
+                onClick={() => setHoursOpen((open) => !open)}
+                aria-expanded={hoursOpen}
+                aria-controls="orari-negozio"
+                className="mt-5 flex w-full items-center justify-between gap-4 border-y border-ink-line py-3.5 text-left text-sm text-ivory transition-colors hover:text-halo-bright"
+              >
+                {hoursOpen ? "Clicca qui per nascondere gli orari" : "Clicca qui per vedere gli orari"}
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-300 ${hoursOpen ? "rotate-180" : ""}`}
+                  aria-hidden
+                />
+              </button>
+              <div
+                id="orari-negozio"
+                className={`grid transition-[grid-template-rows] duration-300 ease-halo ${
+                  hoursOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                }`}
+              >
+              <div className="overflow-hidden">
+              <ul className="divide-y divide-ink-line border-b border-ink-line">
                 {hours.map((entry) => {
                   const isToday = today === entry.day;
                   const closed = entry.slots.length === 0;
@@ -74,6 +95,8 @@ export function StoreInfo() {
                   );
                 })}
               </ul>
+              </div>
+              </div>
             </Reveal>
 
             <Reveal delay={0.2}>

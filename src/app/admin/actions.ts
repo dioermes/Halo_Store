@@ -35,6 +35,7 @@ import {
   validateSlots,
 } from "@/lib/store-contact";
 import { sendMarketingEmail, sendOrderStatusEmail, statusMailNeeded } from "@/lib/email";
+import { resolveTaglineColors } from "@/lib/tagline";
 import { notifyStockAlerts } from "@/lib/stock-alerts";
 import { getStripe } from "@/lib/stripe";
 import { resolveBodyFont, resolveDisplayFont, resolveOptionalFont } from "@/lib/display-fonts";
@@ -716,6 +717,13 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     }
     return { label, destinationType, destination };
   };
+  const tagline = String(formData.get("tagline") ?? "").trim().slice(0, 140);
+  let taglineColors: unknown = [];
+  try {
+    taglineColors = JSON.parse(String(formData.get("taglineColors") ?? "[]"));
+  } catch {
+    taglineColors = [];
+  }
   let parsed: unknown = current.homeSections;
   try {
     parsed = JSON.parse(String(formData.get("homeSections") ?? "[]"));
@@ -743,7 +751,8 @@ export async function saveSiteAppearanceAction(formData: FormData) {
     showcase: current.showcase,
     giftCardMedia: current.giftCardMedia,
     newsletterPopupImage: current.newsletterPopupImage,
-    tagline: String(formData.get("tagline") ?? "").trim().slice(0, 140),
+    tagline,
+    taglineColors: resolveTaglineColors(tagline, taglineColors),
     heroButtons: {
       shopNow: heroButton("shopNow"),
       newIn: heroButton("newIn"),

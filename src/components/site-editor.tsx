@@ -9,6 +9,7 @@ import {
   saveSiteMediaSlotAction,
 } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
+import { resolveTaglineColors, taglineWords } from "@/lib/tagline";
 import {
   merchKindFromFile,
   type CatalogTag,
@@ -291,6 +292,68 @@ function ColorField({
   );
 }
 
+function TaglineFields({ appearance }: { appearance: SiteAppearance }) {
+  const [text, setText] = useState(appearance.tagline);
+  const [colors, setColors] = useState<string[]>(
+    resolveTaglineColors(appearance.tagline, appearance.taglineColors),
+  );
+  const words = taglineWords(text);
+  const shown = words.map(
+    (_, index) => colors[index] ?? resolveTaglineColors(text, [])[index],
+  );
+
+  function setColor(index: number, value: string) {
+    setColors(shown.map((color, i) => (i === index ? value : color)));
+  }
+
+  return (
+    <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
+      <legend className="px-1 font-display text-2xl">Frase sotto il video</legend>
+      <p className="text-sm leading-relaxed text-ivory-dim">
+        Appare nella fascia bianca tra il video e le sezioni della home. Lasciala vuota per nascondere la fascia.
+        La scritta HALO dietro si adatta alla lunghezza della frase.
+      </p>
+      <input
+        name="tagline"
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        maxLength={140}
+        placeholder="Es. Non seguiamo lo stile, lo riscriviamo."
+        className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
+      />
+      <input type="hidden" name="taglineColors" value={JSON.stringify(shown)} />
+      {words.length ? (
+        <>
+          <p className="text-sm text-ivory-dim">Colore di ogni parola</p>
+          <p className="flex flex-wrap gap-x-2 rounded-xl border border-ink-line bg-white px-4 py-3 text-2xl uppercase leading-none">
+            {words.map((word, index) => (
+              <span key={`${word}-${index}`} style={{ color: shown[index] }}>
+                {word}
+              </span>
+            ))}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {words.map((word, index) => (
+              <label
+                key={`${word}-${index}`}
+                className="flex items-center gap-3 rounded-xl border border-ink-line px-3 py-2 text-sm text-ivory-dim"
+              >
+                <input
+                  type="color"
+                  value={shown[index]}
+                  onChange={(event) => setColor(index, event.target.value)}
+                  className="h-9 w-12 cursor-pointer rounded-lg border border-ink-line bg-ink/60 p-1"
+                />
+                <span className="truncate">{word}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </fieldset>
+  );
+}
+
 function SoldOutColorFields({ appearance }: { appearance: SiteAppearance }) {
   const [bg, setBg] = useState(appearance.soldOutBadgeBg);
   const [fg, setFg] = useState(appearance.soldOutBadgeFg);
@@ -539,19 +602,7 @@ export function SiteEditor({
         hint="Formato verticale, a tutto schermo sul telefono."
         appearance={appearance}
       />
-      <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
-        <legend className="px-1 font-display text-2xl">Frase sotto il video</legend>
-        <p className="text-sm leading-relaxed text-ivory-dim">
-          Appare nella fascia bianca tra il video e le sezioni della home. Lasciala vuota per nascondere la fascia.
-        </p>
-        <input
-          name="tagline"
-          defaultValue={appearance.tagline}
-          maxLength={140}
-          placeholder="Es. Non seguiamo lo stile, lo riscriviamo."
-          className="rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory"
-        />
-      </fieldset>
+      <TaglineFields appearance={appearance} />
       <ShowcaseField initial={appearance.showcase} />
       <ShowcaseField
         key="gift-card"
