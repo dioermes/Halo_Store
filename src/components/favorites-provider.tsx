@@ -36,7 +36,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     let active = true;
     void fetch("/api/account/favorites")
       .then(async (response) => {
-        const payload = (await response.json()) as { productIds?: string[]; error?: string };
+        const payload = (await response.json().catch(() => ({}))) as { productIds?: string[]; error?: string };
         if (!response.ok) throw new Error(payload.error ?? "Non è stato possibile caricare i preferiti.");
         if (active) {
           setProductIds(payload.productIds ?? []);
@@ -81,7 +81,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ productId }),
         });
-        const payload = (await response.json()) as { error?: string };
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
         if (!response.ok) throw new Error(payload.error ?? "Non è stato possibile aggiornare i preferiti.");
         setProductIds((current) =>
           shouldFavorite

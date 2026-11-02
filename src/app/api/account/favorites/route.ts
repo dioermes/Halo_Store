@@ -14,6 +14,15 @@ async function getCustomer() {
 }
 
 export async function GET() {
+  try {
+    return await listFavorites();
+  } catch (caught) {
+    console.error("[account favorites]", caught);
+    return NextResponse.json({ error: "Non è stato possibile caricare i preferiti." }, { status: 500 });
+  }
+}
+
+async function listFavorites() {
   const customer = await getCustomer();
   if (!customer) return NextResponse.json({ error: "Accedi per visualizzare i preferiti." }, { status: 401 });
 
