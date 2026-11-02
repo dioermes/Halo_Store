@@ -64,11 +64,11 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
         outputName,
       ]);
     try {
-      await encode(1440, 21, "6000k", "12000k");
+      await encode(1280, 27, "2000k", "4000k");
       const first = await runtime.readFile(outputName);
-      if (first.length > 45 * 1024 * 1024) {
-        onStatus?.("Video lungo, ottimizzo dimensione mantenendo la qualità…");
-        await encode(1080, 23, "4500k", "9000k");
+      if (first.length > 8 * 1024 * 1024) {
+        onStatus?.("Video lungo, riduco ancora il peso…");
+        await encode(960, 30, "1200k", "2400k");
       }
     } catch {
       throw new Error("Compressione video non riuscita. Prova un clip più corto.");
