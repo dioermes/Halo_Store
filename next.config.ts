@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
      */
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
+      ...(process.env.R2_PUBLIC_URL
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
+              pathname: "/**",
+            },
+          ]
+        : []),
       {
         protocol: "https",
         hostname: "arxdubgfweajgurymsms.supabase.co",

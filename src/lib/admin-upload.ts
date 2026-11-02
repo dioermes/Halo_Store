@@ -9,7 +9,13 @@ async function readJson(response: Response) {
     );
   }
   try {
-    return JSON.parse(raw) as { error?: string; signedUrl?: string; publicUrl?: string };
+    return JSON.parse(raw) as {
+      error?: string;
+      signedUrl?: string;
+      publicUrl?: string;
+      provider?: string;
+      contentType?: string;
+    };
   } catch {
     throw new Error(
       response.status === 413
@@ -80,7 +86,14 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
   const body = new FormData();
   body.append("cacheControl", "31536000");
   body.append("", payload);
-  const upload = await fetch(signed.signedUrl, { method: "PUT", body });
+  const upload =
+    signed.provider === "r2"
+      ? await fetch(signed.signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": signed.contentType ?? payload.type },
+          body: payload,
+        })
+      : await fetch(signed.signedUrl, { method: "PUT", body });
   if (!upload.ok) {
     throw new Error(
       upload.status === 413

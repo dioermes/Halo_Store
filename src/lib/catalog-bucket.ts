@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase";
+import { deleteR2Objects } from "@/lib/r2";
 
 export const CATALOG_BUCKET = "halo-catalog";
 
@@ -41,6 +42,7 @@ export function catalogObjectPath(url: string): string | null {
 }
 
 export async function deleteCatalogObjects(urls: string[]) {
+  await deleteR2Objects(urls);
   const unique = [...new Set(urls.map(catalogObjectPath).filter((path): path is string => Boolean(path)))];
   if (!unique.length) return;
   const admin = createAdminClient();

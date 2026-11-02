@@ -2,10 +2,22 @@ import { NextResponse } from "next/server";
 import { requireOwner } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase";
 import { CATALOG_BUCKET, ensureCatalogBucket } from "@/lib/catalog-bucket";
+import { createR2UploadUrl, r2Enabled } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
-const EXTENSIONS = new Set(["mp4", "webm", "mov", "webp", "jpg", "jpeg", "png", "avif", "gif"]);
+const MIME_BY_EXT: Record<string, string> = {
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
+  webp: "image/webp",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  avif: "image/avif",
+  gif: "image/gif",
+};
+const EXTENSIONS = new Set(Object.keys(MIME_BY_EXT));
 
 export async function POST(req: Request) {
   try {
@@ -23,6 +35,12 @@ export async function POST(req: Request) {
         .replace(/^-|-$/g, "")
         .slice(0, 60) || "media";
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}-${slug}.${cleanExt}`;
+
+    if (r2Enabled()) {
+      const contentType = MIME_BY_EXT[cleanExt];
+      const { signedUrl, publicUrl } = await createR2UploadUrl(path, contentType);
+      return NextResponse.json({ signedUrl, publicUrl, provider: "r2", contentType });
+    }
 
     const admin = createAdminClient();
     await ensureCatalogBucket();
