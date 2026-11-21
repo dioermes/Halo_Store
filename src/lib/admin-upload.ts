@@ -1,4 +1,4 @@
-const MAX_BYTES = 50 * 1024 * 1024;
+const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_EDGE = 1400;
 
 async function readJson(response: Response) {
@@ -53,7 +53,7 @@ function extensionOf(file: File) {
 
 export async function uploadAdminFile(file: File, onStatus?: (message: string) => void) {
   if (file.size > MAX_BYTES) {
-    throw new Error("Il file supera 50 MB. Usa un video più corto e riprova.");
+    throw new Error("Il file supera 80 MB. Usa un video più corto e riprova.");
   }
   if (!file.type.startsWith("video/") && !file.type.startsWith("image/")) {
     throw new Error("Carica una foto o un video.");
@@ -69,7 +69,7 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
   }
 
   if (payload.size > MAX_BYTES) {
-    throw new Error("Il video compresso supera 50 MB. Usa un clip più corto e riprova.");
+    throw new Error("Il video compresso supera 80 MB. Usa un clip più corto e riprova.");
   }
 
   onStatus?.("Carico…");
