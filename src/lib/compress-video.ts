@@ -11,17 +11,32 @@ type FfmpegRuntime = {
   deleteFile: (name: string) => Promise<void>;
 };
 
-const FFMPEG_ESM = "https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/esm";
 const CORE_UMD = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
 
 let ffmpeg: FfmpegRuntime | null = null;
 let loading: Promise<FfmpegRuntime> | null = null;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 async function importFfmpegClass() {
   const load = new Function("url", "return import(url)") as (url: string) => Promise<{
     FFmpeg: new () => FfmpegRuntime;
   }>;
-  const { FFmpeg } = await load(`${FFMPEG_ESM}/index.js`);
+  const { FFmpeg } = await load(`${window.location.origin}/ffmpeg/index.js`);
   return FFmpeg;
 }
 
@@ -32,11 +47,14 @@ async function getFfmpeg(onStatus?: (message: string) => void) {
       onStatus?.("Preparo la compressione video…");
       const FFmpeg = await importFfmpegClass();
       const instance = new FFmpeg();
-      await instance.load({
-        classWorkerURL: `${FFMPEG_ESM}/worker.js`,
-        coreURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.js`, "text/javascript"),
-        wasmURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.wasm`, "application/wasm"),
-      });
+      await withTimeout(
+        instance.load({
+          coreURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.js`, "text/javascript"),
+          wasmURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.wasm`, "application/wasm"),
+        }),
+        90_000,
+        "La compressione non è partita. Ricarica la pagina e riprova.",
+      );
       ffmpeg = instance;
       return instance;
     })().catch((error) => {
