@@ -40,6 +40,30 @@ function luminance({ red, green, blue }: Rgb) {
   return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 }
 
+const videoPreview = new WeakMap<HTMLVideoElement, { canvas: HTMLCanvasElement; at: number }>();
+const PREVIEW_W = 64;
+const PREVIEW_H = 36;
+
+function previewOf(video: HTMLVideoElement) {
+  let snap = videoPreview.get(video);
+  if (!snap) {
+    const canvas = document.createElement("canvas");
+    canvas.width = PREVIEW_W;
+    canvas.height = PREVIEW_H;
+    snap = { canvas, at: 0 };
+    videoPreview.set(video, snap);
+  }
+  const now = performance.now();
+  if (now - snap.at > 400) {
+    const ctx = snap.canvas.getContext("2d", { willReadFrequently: true });
+    if (ctx && video.videoWidth > 0) {
+      ctx.drawImage(video, 0, 0, PREVIEW_W, PREVIEW_H);
+      snap.at = now;
+    }
+  }
+  return snap.canvas;
+}
+
 function sampleMediaPixel(
   media: HTMLImageElement | HTMLVideoElement,
   x: number,
@@ -66,7 +90,14 @@ function sampleMediaPixel(
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) return null;
   try {
-    context.drawImage(media, sourceX, sourceY, 1, 1, 0, 0, 1, 1);
+    if (media instanceof HTMLVideoElement) {
+      const preview = previewOf(media);
+      const px = (sourceX / sourceWidth) * PREVIEW_W;
+      const py = (sourceY / sourceHeight) * PREVIEW_H;
+      context.drawImage(preview, px, py, 1, 1, 0, 0, 1, 1);
+    } else {
+      context.drawImage(media, sourceX, sourceY, 1, 1, 0, 0, 1, 1);
+    }
     const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
     return { red, green, blue, alpha: alpha / 255 };
   } catch {

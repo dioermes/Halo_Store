@@ -13,8 +13,10 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
     target: sectionRef,
     offset: ["start start", "end start"],
   });
+  const videoHero =
+    appearance.heroDesktop.kind === "video" || appearance.heroMobile.kind === "video";
   const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.4 });
-  const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion ? "0%" : "12%"]);
+  const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion || videoHero ? "0%" : "12%"]);
   const destination = (button: SiteAppearance["heroButtons"]["shopNow"]) =>
     button.destinationType === "tag"
       ? `/catalogo?tag=${encodeURIComponent(button.destination)}`

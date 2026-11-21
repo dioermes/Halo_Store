@@ -34,7 +34,7 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
             }
             alt={section.title}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-            priority
+            playback="hover"
           />
           <div
             aria-hidden
