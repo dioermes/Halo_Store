@@ -1,19 +1,41 @@
-import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
-let ffmpeg: FFmpeg | null = null;
-let loading: Promise<FFmpeg> | null = null;
+type FfmpegRuntime = {
+  loaded: boolean;
+  load: (config: Record<string, string>) => Promise<unknown>;
+  on: (event: "progress", cb: (data: { progress: number }) => void) => void;
+  off: (event: "progress", cb: (data: { progress: number }) => void) => void;
+  writeFile: (name: string, data: Uint8Array) => Promise<void>;
+  exec: (args: string[]) => Promise<unknown>;
+  readFile: (name: string) => Promise<Uint8Array>;
+  deleteFile: (name: string) => Promise<void>;
+};
+
+const FFMPEG_ESM = "https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/esm";
+const CORE_UMD = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
+
+let ffmpeg: FfmpegRuntime | null = null;
+let loading: Promise<FfmpegRuntime> | null = null;
+
+async function importFfmpegClass() {
+  const load = new Function("url", "return import(url)") as (url: string) => Promise<{
+    FFmpeg: new () => FfmpegRuntime;
+  }>;
+  const { FFmpeg } = await load(`${FFMPEG_ESM}/index.js`);
+  return FFmpeg;
+}
 
 async function getFfmpeg(onStatus?: (message: string) => void) {
   if (ffmpeg?.loaded) return ffmpeg;
   if (!loading) {
     loading = (async () => {
       onStatus?.("Preparo la compressione video…");
+      const FFmpeg = await importFfmpegClass();
       const instance = new FFmpeg();
-      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
       await instance.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+        classWorkerURL: `${FFMPEG_ESM}/worker.js`,
+        coreURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.js`, "text/javascript"),
+        wasmURL: await toBlobURL(`${CORE_UMD}/ffmpeg-core.wasm`, "application/wasm"),
       });
       ffmpeg = instance;
       return instance;
