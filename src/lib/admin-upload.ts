@@ -1,3 +1,9 @@
+export function uploadErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return "Caricamento non riuscito";
+}
+
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_EDGE = 1400;
 

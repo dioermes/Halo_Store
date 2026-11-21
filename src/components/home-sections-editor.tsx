@@ -7,7 +7,7 @@ import {
   deleteCatalogTagAction,
   saveHomeSectionInterludeAction,
 } from "@/app/admin/actions";
-import { uploadAdminFile } from "@/lib/admin-upload";
+import { uploadAdminFile, uploadErrorMessage } from "@/lib/admin-upload";
 import { ambientImages } from "@/lib/products";
 import {
   merchKindFromFile,
@@ -86,7 +86,7 @@ function SectionInterlude({
                   onChange({ url, kind });
                   await saveHomeSectionInterludeAction(sectionId, url, kind);
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+                  setError(uploadErrorMessage(err));
                 } finally {
                   setBusy("");
                 }

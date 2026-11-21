@@ -13,7 +13,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "logo": "node scripts/build-logo.mjs assets/logo-halo-originale.png"
+    "logo": "node scripts/build-logo.mjs assets/logo-halo-originale.png",
+    "postinstall": "node scripts/patch-ffmpeg-worker.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",

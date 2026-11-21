@@ -1,20 +1,16 @@
+import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
-
-type FfmpegRuntime = {
-  loaded: boolean;
-  load: (config: Record<string, string>) => Promise<unknown>;
-  on: (event: "progress", cb: (data: { progress: number }) => void) => void;
-  off: (event: "progress", cb: (data: { progress: number }) => void) => void;
-  writeFile: (name: string, data: Uint8Array) => Promise<void>;
-  exec: (args: string[]) => Promise<unknown>;
-  readFile: (name: string) => Promise<Uint8Array>;
-  deleteFile: (name: string) => Promise<void>;
-};
 
 const CORE_UMD = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
 
-let ffmpeg: FfmpegRuntime | null = null;
-let loading: Promise<FfmpegRuntime> | null = null;
+let ffmpeg: FFmpeg | null = null;
+let loading: Promise<FFmpeg> | null = null;
+
+function asError(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error;
+  if (typeof error === "string" && error.trim()) return new Error(error);
+  return new Error(fallback);
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
   return new Promise<T>((resolve, reject) => {
@@ -26,18 +22,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
       },
       (error) => {
         window.clearTimeout(timer);
-        reject(error);
+        reject(asError(error, message));
       },
     );
   });
-}
-
-async function importFfmpegClass() {
-  const load = new Function("url", "return import(url)") as (url: string) => Promise<{
-    FFmpeg: new () => FfmpegRuntime;
-  }>;
-  const { FFmpeg } = await load(`${window.location.origin}/ffmpeg/index.js`);
-  return FFmpeg;
 }
 
 async function getFfmpeg(onStatus?: (message: string) => void) {
@@ -45,7 +33,6 @@ async function getFfmpeg(onStatus?: (message: string) => void) {
   if (!loading) {
     loading = (async () => {
       onStatus?.("Preparo la compressione video…");
-      const FFmpeg = await importFfmpegClass();
       const instance = new FFmpeg();
       await withTimeout(
         instance.load({
@@ -59,7 +46,7 @@ async function getFfmpeg(onStatus?: (message: string) => void) {
       return instance;
     })().catch((error) => {
       loading = null;
-      throw error;
+      throw asError(error, "Impossibile avviare la compressione video.");
     });
   }
   return loading;
@@ -110,8 +97,8 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
         onStatus?.("Video lungo, riduco un po’ il peso…");
         await encode(1280, 22, "2500k", "5000k");
       }
-    } catch {
-      throw new Error("Compressione video non riuscita. Prova un clip più corto.");
+    } catch (error) {
+      throw asError(error, "Compressione video non riuscita. Prova un clip più corto.");
     }
     const data = await runtime.readFile(outputName);
     await runtime.deleteFile(inputName).catch(() => undefined);

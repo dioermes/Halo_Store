@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, CircleAlert, Copy, Eye, ImagePlus, Move, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { createCatalogTagAction, saveProductAction, type SaveProductState } from "@/app/admin/actions";
-import { uploadAdminFile } from "@/lib/admin-upload";
+import { uploadAdminFile, uploadErrorMessage } from "@/lib/admin-upload";
 import { PhotoCropper } from "@/components/photo-cropper";
 import { CategoryPicker } from "@/components/category-picker";
 import {
@@ -407,7 +407,7 @@ export function ProductEditor({
       if (crop.revoke) URL.revokeObjectURL(crop.src);
       setCrop(null);
     } catch (caught) {
-      throw caught instanceof Error ? caught : new Error("Caricamento non riuscito");
+      throw new Error(uploadErrorMessage(caught));
     } finally {
       setUploading(null);
     }

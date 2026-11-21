@@ -8,7 +8,7 @@ import {
   saveSiteAppearanceAction,
   saveSiteMediaSlotAction,
 } from "@/app/admin/actions";
-import { uploadAdminFile } from "@/lib/admin-upload";
+import { uploadAdminFile, uploadErrorMessage } from "@/lib/admin-upload";
 import { resolveTaglineColors, taglineWords } from "@/lib/tagline";
 import {
   merchKindFromFile,
@@ -105,7 +105,7 @@ function MediaFields({
               setKind(uploaded.kind);
               setSaved(true);
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+              setError(uploadErrorMessage(err));
             } finally {
               setBusy("");
             }
@@ -174,7 +174,7 @@ function ShowcaseField({
                 setMedia(next);
                 setSaved("Salvato. Lo vedi in home dopo un refresh.");
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+                setError(uploadErrorMessage(err));
               } finally {
                 setBusy("");
               }
@@ -243,7 +243,7 @@ function NewsletterPopupImageField({ initialUrl }: { initialUrl: string }) {
               setUrl(uploaded);
               setSaved(true);
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Caricamento non riuscito");
+              setError(uploadErrorMessage(err));
             } finally {
               setBusy("");
             }
