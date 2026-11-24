@@ -18,6 +18,44 @@ function useDesktop() {
   return desktop;
 }
 
+function HeroClip({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute("webkit-playsinline", "true");
+    const start = () => {
+      void video.play().catch(() => undefined);
+    };
+    start();
+    video.addEventListener("canplay", start);
+    video.addEventListener("loadeddata", start);
+    return () => {
+      video.removeEventListener("canplay", start);
+      video.removeEventListener("loadeddata", start);
+    };
+  }, [src]);
+
+  return (
+    <video
+      ref={ref}
+      className="absolute inset-0 h-full w-full object-cover"
+      src={src}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      disablePictureInPicture
+      aria-label="Halo Store"
+    />
+  );
+}
+
 export function Hero({ appearance }: { appearance: SiteAppearance }) {
   const sectionRef = useRef<HTMLElement>(null);
   const desktop = useDesktop();
@@ -44,15 +82,21 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
       aria-label="Halo Store"
     >
       <h1 className="sr-only">Halo Store</h1>
-      <motion.div style={{ y: mediaY }} className="absolute inset-0">
-        <SiteMediaView
-          key={media.url}
-          media={media}
-          alt="Halo Store"
-          priority
-          className="h-full w-full object-cover"
-        />
-      </motion.div>
+      <div className="absolute inset-0">
+        {videoHero && media.kind === "video" ? (
+          <HeroClip key={media.url} src={media.url} />
+        ) : (
+          <motion.div style={{ y: mediaY }} className="absolute inset-0">
+            <SiteMediaView
+              key={media.url}
+              media={media}
+              alt="Halo Store"
+              priority
+              className="h-full w-full object-cover"
+            />
+          </motion.div>
+        )}
+      </div>
       <div className="absolute bottom-[clamp(1.5rem,5vw,3.5rem)] left-[clamp(1.25rem,4vw,2.5rem)] z-10 flex gap-[clamp(0.75rem,1.6vw,1.1rem)]">
         <Link
           href={destination(appearance.heroButtons.shopNow)}

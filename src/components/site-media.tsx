@@ -10,7 +10,7 @@ export type VideoSource = { src: string; media?: string };
 
 function playExclusive(video: HTMLVideoElement) {
   for (const other of playing) {
-    if (other !== video) {
+    if (other !== video && other.dataset.keepPlaying !== "true") {
       other.pause();
       playing.delete(other);
     }
@@ -46,17 +46,32 @@ function LazyVideo({
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+
+    if (eager) {
+      video.dataset.keepPlaying = "true";
+      video.preload = "auto";
+      void video.play().catch(() => undefined);
+      return () => {
+        delete video.dataset.keepPlaying;
+        stopPlayback(video);
+      };
+    }
+
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
       ?.saveData;
 
     const inView = (entry: IntersectionObserverEntry) => {
       if (!entry.isIntersecting || video.getClientRects().length === 0) return false;
-      return eager || entry.intersectionRatio >= 0.2;
+      return entry.intersectionRatio >= 0.2;
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !eager) video.preload = "auto";
+        if (entry.isIntersecting) video.preload = "auto";
         if (saveData || playback === "hover") {
           if (!inView(entry)) stopPlayback(video);
           return;
@@ -64,10 +79,7 @@ function LazyVideo({
         if (inView(entry)) playExclusive(video);
         else stopPlayback(video);
       },
-      {
-        rootMargin: eager ? "0px" : "240px 0px",
-        threshold: eager ? [0, 0.01, 0.2] : [0, 0.2, 0.5],
-      },
+      { rootMargin: "120px 0px", threshold: [0, 0.2, 0.5] },
     );
     observer.observe(video);
 
@@ -81,12 +93,6 @@ function LazyVideo({
     if (playback === "hover") {
       host?.addEventListener("pointerenter", onEnter);
       host?.addEventListener("pointerleave", onLeave);
-    }
-
-    if (eager && !saveData) {
-      video.preload = "auto";
-      video.setAttribute("fetchpriority", "high");
-      void video.play().catch(() => undefined);
     }
 
     return () => {
@@ -104,6 +110,7 @@ function LazyVideo({
       src={sources?.length ? undefined : url}
       crossOrigin={crossOrigin}
       preload={eager ? "auto" : "none"}
+      autoPlay={eager}
       muted
       loop
       playsInline

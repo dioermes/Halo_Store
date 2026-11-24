@@ -25,6 +25,9 @@ export default async function Home() {
 
   return (
     <>
+      {appearance.heroMobile.kind === "video" ? (
+        <link rel="preload" as="video" href={appearance.heroMobile.url} />
+      ) : null}
       <ProductListStructuredData products={products} />
       <Hero appearance={appearance} />
       {appearance.tagline ? (
