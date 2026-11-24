@@ -1,97 +1,61 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { armBackgroundVideo, SiteMediaView } from "@/components/site-media";
+import { armBackgroundVideo } from "@/components/site-media";
 import type { SiteAppearance } from "@/lib/site";
 
-function useDesktop() {
-  const [desktop, setDesktop] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 768px)");
-    const sync = () => setDesktop(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-  return desktop;
-}
-
-function HeroClip({ src }: { src: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    video.muted = true;
-    video.defaultMuted = true;
-    video.controls = false;
-    video.playsInline = true;
-    video.setAttribute("webkit-playsinline", "true");
-
-    let release: (() => void) | undefined;
-    const start = () => {
-      release ??= armBackgroundVideo(video);
-    };
-    const stop = () => {
-      release?.();
-      release = undefined;
-      video.pause();
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) start();
-        else stop();
-      },
-      { threshold: 0 },
-    );
-    observer.observe(video.parentElement ?? video);
-    start();
-    return () => {
-      observer.disconnect();
-      stop();
-    };
-  }, [src]);
-
-  return (
-    <video
-      ref={ref}
-      className="halo-bg-video absolute inset-0 h-full w-full object-cover"
-      src={src}
-      autoPlay
-      muted
-      loop
-      playsInline
-      controls={false}
-      preload="auto"
-      disablePictureInPicture
-      disableRemotePlayback
-      aria-hidden
-      {...{ "webkit-playsinline": "true", "x-webkit-airplay": "deny" }}
-    />
-  );
-}
-
-export function Hero({ appearance }: { appearance: SiteAppearance }) {
+export function Hero({
+  appearance,
+  children,
+  isVideo,
+}: {
+  appearance: SiteAppearance;
+  children: ReactNode;
+  isVideo: boolean;
+}) {
   const sectionRef = useRef<HTMLElement>(null);
-  const desktop = useDesktop();
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
   });
-  const desktopMedia = appearance.heroDesktop;
-  const mobileMedia = appearance.heroMobile;
-  const videoHero = desktopMedia.kind === "video" || mobileMedia.kind === "video";
-  const media = desktop ? desktopMedia : mobileMedia;
   const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.4 });
-  const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion || videoHero ? "0%" : "12%"]);
+  const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion || isVideo ? "0%" : "12%"]);
   const destination = (button: SiteAppearance["heroButtons"]["shopNow"]) =>
     button.destinationType === "tag"
       ? `/catalogo?tag=${encodeURIComponent(button.destination)}`
       : button.destination;
+
+  useEffect(() => {
+    if (!isVideo) return;
+    const video = sectionRef.current?.querySelector("video");
+    if (!video) return;
+
+    const desktopSrc = video.dataset.desktopSrc;
+    if (desktopSrc && window.matchMedia("(min-width: 768px)").matches) {
+      const current = video.currentSrc || video.src;
+      if (!current.includes(desktopSrc.split("#")[0])) {
+        video.src = desktopSrc;
+      }
+    }
+
+    const release = armBackgroundVideo(video);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void video.play().catch(() => undefined);
+        else video.pause();
+      },
+      { threshold: 0 },
+    );
+    observer.observe(video);
+
+    return () => {
+      observer.disconnect();
+      release();
+    };
+  }, [isVideo]);
 
   return (
     <section
@@ -100,21 +64,13 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
       aria-label="Halo Store"
     >
       <h1 className="sr-only">Halo Store</h1>
-      <div className="absolute inset-0">
-        {videoHero && media.kind === "video" ? (
-          <HeroClip key={media.url} src={media.url} />
-        ) : (
-          <motion.div style={{ y: mediaY }} className="absolute inset-0">
-            <SiteMediaView
-              key={media.url}
-              media={media}
-              alt="Halo Store"
-              priority
-              className="h-full w-full object-cover"
-            />
-          </motion.div>
-        )}
-      </div>
+      {isVideo ? (
+        <div className="absolute inset-0">{children}</div>
+      ) : (
+        <motion.div style={{ y: mediaY }} className="absolute inset-0">
+          {children}
+        </motion.div>
+      )}
       <div className="absolute bottom-[clamp(1.5rem,5vw,3.5rem)] left-[clamp(1.25rem,4vw,2.5rem)] z-10 flex gap-[clamp(0.75rem,1.6vw,1.1rem)]">
         <Link
           href={destination(appearance.heroButtons.shopNow)}

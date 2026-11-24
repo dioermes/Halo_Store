@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import type { SiteMedia } from "@/lib/site";
+import { videoSrcWithFrame } from "@/lib/video";
 
 const playing = new Set<HTMLVideoElement>();
 
@@ -10,7 +11,7 @@ export type VideoSource = { src: string; media?: string };
 
 function playExclusive(video: HTMLVideoElement) {
   for (const other of playing) {
-    if (other !== video && other.dataset.keepPlaying !== "true") {
+    if (other !== video) {
       other.pause();
       playing.delete(other);
     }
@@ -36,39 +37,18 @@ export function armBackgroundVideo(video: HTMLVideoElement) {
   const play = () => {
     video.controls = false;
     video.muted = true;
-    if (!video.paused) return;
-    void video.play().catch(() => undefined);
-  };
-  const onPlaying = () => {
-    video.controls = false;
-    video.classList.add("is-playing");
-  };
-  const onPause = () => {
-    video.classList.remove("is-playing");
-    play();
+    if (video.paused) void video.play().catch(() => undefined);
   };
   play();
-  video.addEventListener("playing", onPlaying);
-  video.addEventListener("pause", onPause);
   video.addEventListener("canplay", play);
-  video.addEventListener("loadeddata", play);
-  document.addEventListener("touchstart", play, { passive: true });
-  document.addEventListener("pointerdown", play, { passive: true });
   return () => {
-    video.classList.remove("is-playing");
-    video.removeEventListener("playing", onPlaying);
-    video.removeEventListener("pause", onPause);
     video.removeEventListener("canplay", play);
-    video.removeEventListener("loadeddata", play);
-    document.removeEventListener("touchstart", play);
-    document.removeEventListener("pointerdown", play);
   };
 }
 
 function LazyVideo({
   url,
   sources,
-  alt,
   className,
   crossOrigin,
   playback = "visible",
@@ -90,16 +70,14 @@ function LazyVideo({
     video.muted = true;
     video.defaultMuted = true;
     video.controls = false;
-    video.setAttribute("playsinline", "");
+    video.setAttribute("playsinline", "true");
     video.setAttribute("webkit-playsinline", "true");
 
     if (eager) {
-      video.dataset.keepPlaying = "true";
       video.preload = "auto";
       const release = armBackgroundVideo(video);
       return () => {
         release();
-        delete video.dataset.keepPlaying;
         stopPlayback(video);
       };
     }
@@ -154,7 +132,7 @@ function LazyVideo({
     <video
       ref={ref}
       className={`halo-bg-video absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
-      src={sources?.length ? undefined : url}
+      src={sources?.length ? undefined : videoSrcWithFrame(url)}
       crossOrigin={crossOrigin}
       preload={eager ? "auto" : "none"}
       autoPlay={playback !== "hover"}
@@ -169,7 +147,11 @@ function LazyVideo({
       {...{ "webkit-playsinline": "true", "x-webkit-airplay": "deny" }}
     >
       {sources?.map((source) => (
-        <source key={`${source.media ?? ""}:${source.src}`} src={source.src} media={source.media} />
+        <source
+          key={`${source.media ?? ""}:${source.src}`}
+          src={videoSrcWithFrame(source.src)}
+          media={source.media}
+        />
       ))}
     </video>
   );

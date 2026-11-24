@@ -1,4 +1,4 @@
-import { Hero } from "@/components/hero";
+import { HeroSection } from "@/components/hero-section";
 import { HomeCollections } from "@/components/home-collections";
 import { HomeShowcase } from "@/components/home-showcase";
 import { GiftCardShop } from "@/components/gift-card-shop";
@@ -29,7 +29,7 @@ export default async function Home() {
         <link rel="preload" as="video" href={appearance.heroMobile.url} />
       ) : null}
       <ProductListStructuredData products={products} />
-      <Hero appearance={appearance} />
+      <HeroSection appearance={appearance} />
       {appearance.tagline ? (
         <TaglineBand text={appearance.tagline} colors={appearance.taglineColors} />
       ) : null}

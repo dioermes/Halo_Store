@@ -311,11 +311,6 @@ input[type="range"] {
 
 .halo-bg-video {
   pointer-events: none;
-  opacity: 0;
-}
-
-.halo-bg-video.is-playing {
-  opacity: 1;
 }
 
 video::-webkit-media-controls,
