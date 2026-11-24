@@ -96,13 +96,17 @@ function LazyVideo({
       stopPlayback(video);
     };
 
+    const onScreen = () => {
+      const rect = video.getBoundingClientRect();
+      return rect.bottom > 0 && rect.top < window.innerHeight;
+    };
     const observer = new IntersectionObserver(
-      ([entry]) => {
+      () => {
         if (playback === "hover") {
-          if (!entry.isIntersecting) stop();
+          if (!onScreen()) stop();
           return;
         }
-        if (entry.isIntersecting) start();
+        if (onScreen()) start();
         else stop();
       },
       { rootMargin: "280px 0px", threshold: 0 },

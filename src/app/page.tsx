@@ -1,7 +1,7 @@
 import { HeroSection } from "@/components/hero-section";
 import { HomeCollections } from "@/components/home-collections";
 import { HomeShowcase } from "@/components/home-showcase";
-import { GiftCardShop } from "@/components/gift-card-shop";
+import { GiftCardSection } from "@/components/gift-card-section";
 import { StoreInfo } from "@/components/store-info";
 import { TaglineBand } from "@/components/tagline-band";
 import { HelpFaq } from "@/components/help-faq";
@@ -35,7 +35,7 @@ export default async function Home() {
       ) : null}
       <HomeCollections sections={appearance.homeSections} />
       {appearance.showcase ? <HomeShowcase media={appearance.showcase} /> : null}
-      <GiftCardShop media={appearance.giftCardMedia} />
+      <GiftCardSection media={appearance.giftCardMedia} />
       <StoreInfo />
       <HelpFaq />
       <NewsletterSignup
