@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { AutoplayClip } from "@/components/autoplay-clip";
-import { HeroDesktopSwap, PlayWhenVisible } from "@/components/background-video-runtime";
+import { HeroDesktopSwap } from "@/components/background-video-runtime";
 import { HeroButtons } from "@/components/hero";
 import type { SiteAppearance } from "@/lib/site";
 
@@ -9,7 +9,12 @@ export function HeroSection({ appearance }: { appearance: SiteAppearance }) {
   const desktop = appearance.heroDesktop;
   const isVideo = mobile.kind === "video" || desktop.kind === "video";
   const videoSrc = mobile.kind === "video" ? mobile.url : desktop.kind === "video" ? desktop.url : "";
-  const desktopSrc = desktop.kind === "video" ? desktop.url : undefined;
+  const desktopSrc =
+    desktop.kind === "video"
+      ? desktop.urlHd ?? desktop.url
+      : mobile.kind === "video"
+        ? mobile.urlHd
+        : undefined;
 
   return (
     <section
@@ -24,6 +29,7 @@ export function HeroSection({ appearance }: { appearance: SiteAppearance }) {
             src={videoSrc}
             desktopSrc={desktopSrc}
             preload="auto"
+            autoPlay
           />
         ) : (
           <Image
@@ -37,7 +43,6 @@ export function HeroSection({ appearance }: { appearance: SiteAppearance }) {
         )}
       </div>
       {isVideo ? <HeroDesktopSwap id="halo-hero-video" /> : null}
-      {isVideo ? <PlayWhenVisible id="halo-hero-video" eager /> : null}
       <HeroButtons appearance={appearance} />
     </section>
   );

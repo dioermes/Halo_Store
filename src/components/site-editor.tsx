@@ -23,8 +23,12 @@ const fieldClass =
   "mt-2 w-full rounded-xl border border-ink-line bg-ink/60 px-4 py-3 text-ivory outline-none";
 
 async function uploadMedia(file: File, onStatus?: (message: string) => void) {
-  const url = await uploadAdminFile(file, onStatus);
-  return { url, kind: merchKindFromFile(file) };
+  const uploaded = await uploadAdminFile(file, onStatus);
+  return {
+    url: uploaded.url,
+    urlHd: uploaded.urlHd,
+    kind: uploaded.kind ?? merchKindFromFile(file),
+  };
 }
 
 function MediaFields({
@@ -40,6 +44,7 @@ function MediaFields({
 }) {
   const initial = appearance[prefix];
   const [url, setUrl] = useState(initial.url);
+  const [urlHd, setUrlHd] = useState(initial.urlHd ?? "");
   const [kind, setKind] = useState(initial.kind);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -50,8 +55,8 @@ function MediaFields({
     <fieldset className="grid gap-3 rounded-2xl border border-ink-line bg-ink/40 p-5">
       <legend className="px-1 font-display text-2xl">{label}</legend>
       <p className="text-sm text-ivory-dim">
-        {hint} Comprimiamo foto e video da soli in caricamento. Si salva da solo: non serve il tasto
-        in fondo.
+        {hint} Comprimiamo foto e video da soli in caricamento (i video possono richiedere un paio di
+        minuti). Si salva da solo: non serve il tasto in fondo.
       </p>
       {url ? (
         <div className="relative aspect-video overflow-hidden rounded-xl border border-ink-line bg-ink">
@@ -64,6 +69,7 @@ function MediaFields({
         </div>
       ) : null}
       <input type="hidden" name={`${prefix}Url`} value={url} />
+      <input type="hidden" name={`${prefix}UrlHd`} value={urlHd} />
       <input type="hidden" name={`${prefix}Kind`} value={kind} />
       <label className="text-sm text-ivory-dim">
         Indirizzo file
@@ -100,8 +106,9 @@ function MediaFields({
             setError("");
             try {
               const uploaded = await uploadMedia(file, setBusy);
-              await saveSiteMediaSlotAction(prefix, uploaded.url, uploaded.kind);
+              await saveSiteMediaSlotAction(prefix, uploaded.url, uploaded.kind, uploaded.urlHd);
               setUrl(uploaded.url);
+              setUrlHd(uploaded.urlHd ?? "");
               setKind(uploaded.kind);
               setSaved(true);
             } catch (err) {
@@ -129,7 +136,7 @@ function ShowcaseField({
   initial: SiteAppearance["showcase"];
   title?: string;
   description?: string;
-  save?: (media: { url: string; kind: "image" | "video" } | null) => Promise<void>;
+  save?: (media: SiteAppearance["showcase"]) => Promise<void>;
   removeLabel?: string;
   removedMessage?: string;
 }) {
@@ -169,7 +176,7 @@ function ShowcaseField({
               setSaved("");
               try {
                 const uploaded = await uploadMedia(file, setBusy);
-                const next = { url: uploaded.url, kind: uploaded.kind };
+                const next = { url: uploaded.url, urlHd: uploaded.urlHd, kind: uploaded.kind };
                 await save(next);
                 setMedia(next);
                 setSaved("Salvato. Lo vedi in home dopo un refresh.");
@@ -239,8 +246,8 @@ function NewsletterPopupImageField({ initialUrl }: { initialUrl: string }) {
             setSaved(false);
             try {
               const uploaded = await uploadAdminFile(file, setBusy);
-              await saveNewsletterPopupImageAction(uploaded);
-              setUrl(uploaded);
+              await saveNewsletterPopupImageAction(uploaded.url);
+              setUrl(uploaded.url);
               setSaved(true);
             } catch (err) {
               setError(uploadErrorMessage(err));

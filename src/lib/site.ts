@@ -13,6 +13,7 @@ import { parseStoreContact, type StoreContact } from "@/lib/store-contact";
 
 export type SiteMedia = {
   url: string;
+  urlHd?: string;
   kind: "image" | "video";
 };
 
@@ -174,20 +175,25 @@ function mediaKind(url: string, kind: unknown): SiteMedia["kind"] {
   return "image";
 }
 
+function mediaHd(value: { urlHd?: unknown }) {
+  const urlHd = typeof value.urlHd === "string" ? value.urlHd.trim() : "";
+  return urlHd || undefined;
+}
+
 function asMedia(value: unknown, fallback: SiteMedia): SiteMedia {
   if (!value || typeof value !== "object") return fallback;
-  const row = value as { url?: unknown; kind?: unknown };
+  const row = value as { url?: unknown; kind?: unknown; urlHd?: unknown };
   const url = typeof row.url === "string" ? row.url.trim() : "";
   if (!url) return fallback;
-  return { url, kind: mediaKind(url, row.kind) };
+  return { url, urlHd: mediaHd(row), kind: mediaKind(url, row.kind) };
 }
 
 function asOptionalMedia(value: unknown): SiteMedia | null {
   if (!value || typeof value !== "object") return null;
-  const row = value as { url?: unknown; kind?: unknown };
+  const row = value as { url?: unknown; kind?: unknown; urlHd?: unknown };
   const url = typeof row.url === "string" ? row.url.trim() : "";
   if (!url) return null;
-  return { url, kind: mediaKind(url, row.kind) };
+  return { url, urlHd: mediaHd(row), kind: mediaKind(url, row.kind) };
 }
 
 function asIdList(value: unknown) {

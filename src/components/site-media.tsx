@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import type { SiteMedia } from "@/lib/site";
-import { videoSrcWithFrame } from "@/lib/video";
 
 const playing = new Set<HTMLVideoElement>();
 
@@ -136,10 +135,10 @@ function LazyVideo({
     <video
       ref={ref}
       className={`halo-bg-video absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
-      src={sources?.length ? undefined : videoSrcWithFrame(url)}
+      src={sources?.length ? undefined : url.split("#")[0]}
       crossOrigin={crossOrigin}
       preload={eager ? "auto" : "none"}
-      autoPlay={playback !== "hover"}
+      autoPlay={eager}
       muted
       loop
       playsInline
@@ -153,7 +152,7 @@ function LazyVideo({
       {sources?.map((source) => (
         <source
           key={`${source.media ?? ""}:${source.src}`}
-          src={videoSrcWithFrame(source.src)}
+          src={source.src.split("#")[0]}
           media={source.media}
         />
       ))}
@@ -180,10 +179,18 @@ export function SiteMediaView({
 }) {
   if (!media.url) return null;
   if (media.kind === "video") {
+    const hdSources =
+      sources ??
+      (media.urlHd
+        ? [
+            { src: media.urlHd, media: "(min-width: 768px)" },
+            { src: media.url },
+          ]
+        : undefined);
     return (
       <LazyVideo
         url={media.url}
-        sources={sources}
+        sources={hdSources}
         alt={alt}
         className={className}
         crossOrigin={samplePixels ? "anonymous" : undefined}

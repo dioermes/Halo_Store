@@ -95,6 +95,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         } as CSSProperties
       }
     >
+      {appearance.heroMobile.kind === "video" ? (
+        <link rel="preload" as="video" href={appearance.heroMobile.url.split("#")[0]} />
+      ) : null}
       <body
         className="min-h-full"
         suppressHydrationWarning
@@ -132,6 +135,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </FavoritesProvider>
           </StoreContactProvider>
         </ClerkProvider>
+        {appearance.heroMobile.kind === "video" ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){var v=document.getElementById("halo-hero-video");if(!v)return;v.muted=true;v.defaultMuted=true;v.playsInline=true;v.play().catch(function(){});})();`,
+            }}
+          />
+        ) : null}
       </body>
     </html>
   );

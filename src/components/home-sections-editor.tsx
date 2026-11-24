@@ -81,10 +81,14 @@ function SectionInterlude({
                 setBusy("Comprimo…");
                 setError("");
                 try {
-                  const url = await uploadAdminFile(file, setBusy);
-                  const kind = merchKindFromFile(file);
-                  onChange({ url, kind });
-                  await saveHomeSectionInterludeAction(sectionId, url, kind);
+                  const uploaded = await uploadAdminFile(file, setBusy);
+                  const next = {
+                    url: uploaded.url,
+                    urlHd: uploaded.urlHd,
+                    kind: uploaded.kind ?? merchKindFromFile(file),
+                  };
+                  onChange(next);
+                  await saveHomeSectionInterludeAction(sectionId, next);
                 } catch (err) {
                   setError(uploadErrorMessage(err));
                 } finally {

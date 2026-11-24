@@ -40,9 +40,14 @@ export function PlayWhenVisible({ id, eager = false }: { id: string; eager?: boo
         return;
       }
       if (rect.bottom > 0 && rect.top < window.innerHeight) {
+        const pending = video.dataset.src;
+        const desktop = video.dataset.desktopSrc;
+        const next =
+          desktop && window.matchMedia("(min-width: 768px)").matches ? desktop : pending;
+        if (next && !video.getAttribute("src")) video.src = next;
         video.preload = "auto";
         void video.play().catch(() => undefined);
-      } else {
+      } else if (!eager) {
         video.pause();
       }
     };

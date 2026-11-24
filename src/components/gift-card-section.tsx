@@ -14,7 +14,13 @@ export function GiftCardSection({ media }: { media: SiteMedia }) {
       <div className="relative aspect-video w-full overflow-hidden bg-[#c5cebc]">
         {media.kind === "video" && media.url ? (
           <>
-            <AutoplayClip id="halo-gift-video" src={media.url} preload="none" boot={false} />
+            <AutoplayClip
+              id="halo-gift-video"
+              src={media.url}
+              desktopSrc={media.urlHd}
+              preload="none"
+              autoPlay={false}
+            />
             <PlayWhenVisible id="halo-gift-video" />
           </>
         ) : media.url ? (

@@ -4,8 +4,30 @@ export function uploadErrorMessage(error: unknown) {
   return "Caricamento non riuscito";
 }
 
-const MAX_BYTES = 80 * 1024 * 1024;
+export type UploadedMedia = {
+  url: string;
+  urlHd?: string;
+  kind: "image" | "video";
+};
+
+const MAX_IMAGE_BYTES = 80 * 1024 * 1024;
+const MAX_VIDEO_SOURCE_BYTES = 150 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 80 * 1024 * 1024;
 const MAX_EDGE = 1400;
+const PUT_MS = 120_000;
+
+async function fetchTimed(input: RequestInfo | URL, init: RequestInit, ms: number, message: string) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw new Error(message);
+    throw error instanceof Error ? error : new Error(message);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
 
 async function readJson(response: Response) {
   const raw = await response.text();
@@ -57,33 +79,21 @@ function extensionOf(file: File) {
   return fromType || file.name.split(".").pop() || "bin";
 }
 
-export async function uploadAdminFile(file: File, onStatus?: (message: string) => void) {
-  if (file.size > MAX_BYTES) {
-    throw new Error("Il file supera 80 MB. Usa un video più corto e riprova.");
-  }
-  if (!file.type.startsWith("video/") && !file.type.startsWith("image/")) {
-    throw new Error("Carica una foto o un video.");
-  }
-
-  let payload = file;
-  if (file.type.startsWith("video/")) {
-    const { compressAdminVideo } = await import("@/lib/compress-video");
-    payload = await compressAdminVideo(file, onStatus);
-  } else {
-    onStatus?.("Comprimo la foto…");
-    payload = await compressImage(file);
-  }
-
-  if (payload.size > MAX_BYTES) {
+async function putFile(payload: File, onStatus?: (message: string) => void) {
+  if (payload.size > MAX_UPLOAD_BYTES) {
     throw new Error("Il video compresso supera 80 MB. Usa un clip più corto e riprova.");
   }
-
   onStatus?.("Carico…");
-  const signResponse = await fetch("/api/admin/upload/sign", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: payload.name, ext: extensionOf(payload) }),
-  });
+  const signResponse = await fetchTimed(
+    "/api/admin/upload/sign",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: payload.name, ext: extensionOf(payload) }),
+    },
+    30_000,
+    "Il server non ha risposto. Riprova.",
+  );
   const signed = await readJson(signResponse);
   if (!signResponse.ok || !signed.signedUrl || !signed.publicUrl) {
     throw new Error(signed.error ?? "Impossibile preparare il caricamento.");
@@ -94,12 +104,22 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
   body.append("", payload);
   const upload =
     signed.provider === "r2"
-      ? await fetch(signed.signedUrl, {
-          method: "PUT",
-          headers: { "Content-Type": signed.contentType ?? payload.type },
-          body: payload,
-        })
-      : await fetch(signed.signedUrl, { method: "PUT", body });
+      ? await fetchTimed(
+          signed.signedUrl,
+          {
+            method: "PUT",
+            headers: { "Content-Type": signed.contentType ?? payload.type },
+            body: payload,
+          },
+          PUT_MS,
+          "Il caricamento è scaduto. Riprova.",
+        )
+      : await fetchTimed(
+          signed.signedUrl,
+          { method: "PUT", body },
+          PUT_MS,
+          "Il caricamento è scaduto. Riprova.",
+        );
   if (!upload.ok) {
     throw new Error(
       upload.status === 413
@@ -108,4 +128,36 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
     );
   }
   return signed.publicUrl;
+}
+
+export async function uploadAdminFile(file: File, onStatus?: (message: string) => void): Promise<UploadedMedia> {
+  if (file.type.startsWith("video/") && file.size > MAX_VIDEO_SOURCE_BYTES) {
+    throw new Error("Il video supera 150 MB. Esporta un clip più corto e riprova.");
+  }
+  if (!file.type.startsWith("video/") && file.size > MAX_IMAGE_BYTES) {
+    throw new Error("Il file supera 80 MB. Usa una foto più piccola e riprova.");
+  }
+  if (!file.type.startsWith("video/") && !file.type.startsWith("image/")) {
+    throw new Error("Carica una foto o un video.");
+  }
+
+  if (file.type.startsWith("video/")) {
+    const { compressAdminVideo } = await import("@/lib/compress-video");
+    const { mobile, hd } = await compressAdminVideo(file, onStatus);
+    onStatus?.("Carico la versione telefono…");
+    const url = await putFile(mobile, onStatus);
+    if (!hd) return { url, kind: "video" };
+    try {
+      onStatus?.("Carico la versione HD…");
+      const urlHd = await putFile(hd, onStatus);
+      return { url, urlHd, kind: "video" };
+    } catch {
+      return { url, kind: "video" };
+    }
+  }
+
+  onStatus?.("Comprimo la foto…");
+  const payload = await compressImage(file);
+  const url = await putFile(payload, onStatus);
+  return { url, kind: "image" };
 }

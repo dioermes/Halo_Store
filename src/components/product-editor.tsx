@@ -73,7 +73,8 @@ function draftsFromProduct(product?: Product): {
 }
 
 async function uploadFile(file: File) {
-  return uploadAdminFile(file);
+  const uploaded = await uploadAdminFile(file);
+  return uploaded.url;
 }
 
 function WordButton({

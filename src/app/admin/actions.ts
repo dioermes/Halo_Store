@@ -678,9 +678,10 @@ export async function saveSiteAppearanceAction(formData: FormData) {
   const current = await getSiteAppearance();
   const media = (prefix: SiteMediaSlot) => {
     const url = String(formData.get(`${prefix}Url`) ?? "").trim();
+    const urlHd = String(formData.get(`${prefix}UrlHd`) ?? "").trim() || undefined;
     const kind = String(formData.get(`${prefix}Kind`) ?? "image") === "video" ? "video" : "image";
     if (!url) return current[prefix];
-    return { url, kind } satisfies SiteMedia;
+    return { url, urlHd, kind } satisfies SiteMedia;
   };
   const catalog = await getAllProductsAdmin();
   const merch = await getCatalogMerch();
@@ -776,20 +777,19 @@ export async function saveSiteMediaSlotAction(
   slot: SiteMediaSlot,
   url: string,
   kind: "image" | "video",
+  urlHd?: string,
 ) {
   await requireOwner();
   const slots: SiteMediaSlot[] = ["heroDesktop", "heroMobile"];
   if (!url || !slots.includes(slot)) {
     throw new Error("Media non valido.");
   }
-  await patchSiteAppearance({ [slot]: { url, kind } });
+  await patchSiteAppearance({ [slot]: { url, urlHd: urlHd || undefined, kind } });
   revalidatePath("/");
   revalidatePath("/admin/sito");
 }
 
-export async function saveGiftCardMediaAction(
-  media: { url: string; kind: "image" | "video" } | null,
-) {
+export async function saveGiftCardMediaAction(media: SiteMedia | null) {
   await requireOwner();
   if (media && !media.url) throw new Error("Media non valido.");
   await patchSiteAppearance({
@@ -799,7 +799,7 @@ export async function saveGiftCardMediaAction(
   revalidatePath("/admin/sito");
 }
 
-export async function saveShowcaseAction(media: { url: string; kind: "image" | "video" } | null) {
+export async function saveShowcaseAction(media: SiteMedia | null) {
   await requireOwner();
   if (media && !media.url) throw new Error("Media non valido.");
   await patchSiteAppearance({ showcase: media });
@@ -816,17 +816,13 @@ export async function saveNewsletterPopupImageAction(url: string) {
   revalidatePath("/admin/sito");
 }
 
-export async function saveHomeSectionInterludeAction(
-  sectionId: string,
-  url: string,
-  kind: "image" | "video",
-) {
+export async function saveHomeSectionInterludeAction(sectionId: string, media: SiteMedia) {
   await requireOwner();
-  if (!url || !sectionId) throw new Error("Media non valido.");
+  if (!media.url || !sectionId) throw new Error("Media non valido.");
   const current = await getSiteAppearance();
   if (!current.homeSections.some((section) => section.id === sectionId)) return;
   const homeSections: HomeSection[] = current.homeSections.map((section) =>
-    section.id === sectionId ? { ...section, interlude: { url, kind } } : section,
+    section.id === sectionId ? { ...section, interlude: media } : section,
   );
   await saveSiteAppearance({ ...current, homeSections });
   revalidatePath("/");
