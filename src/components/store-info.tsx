@@ -126,7 +126,7 @@ export function StoreInfo() {
               <div className="mt-10 flex gap-1.5 sm:gap-2">
                 <a
                   href={phone.href}
-                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-ivory px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-ivory px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.6rem,1.4vw,0.9rem)] text-[clamp(0.625rem,1.1vw,0.875rem)] sm:gap-2 font-medium text-ink transition-transform duration-300 hover:scale-[1.03]"
                 >
                   <Phone className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden />
                   Chiama
@@ -135,7 +135,7 @@ export function StoreInfo() {
                   href={storeConfig.maps.directions}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="group inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.6rem,1.4vw,0.9rem)] text-[clamp(0.625rem,1.1vw,0.875rem)] sm:gap-2 transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <Navigation className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden />
                   Indicazioni<span className="hidden sm:inline"> stradali</span>
@@ -144,7 +144,7 @@ export function StoreInfo() {
                   href={storeConfig.instagram.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.6rem,1.4vw,0.9rem)] text-[clamp(0.625rem,1.1vw,0.875rem)] sm:gap-2 transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <InstagramGlyph className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline lg:hidden">Seguici su </span>Instagram
@@ -153,7 +153,7 @@ export function StoreInfo() {
                   href={storeConfig.tiktok.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-2 py-2.5 text-[10px] sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm transition-colors hover:border-halo/60 hover:text-halo-bright"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-ink-line px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.6rem,1.4vw,0.9rem)] text-[clamp(0.625rem,1.1vw,0.875rem)] sm:gap-2 transition-colors hover:border-halo/60 hover:text-halo-bright"
                 >
                   <TikTokGlyph className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline lg:hidden">Seguici su </span>TikTok

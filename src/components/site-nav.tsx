@@ -301,7 +301,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
                   </filter>
                 </svg>
                 {pathname === "/" ? (
-                  <span className="relative -ml-2 block aspect-752/564 h-24 overflow-hidden sm:-ml-4 md:h-44">
+                  <span className="relative -ml-2 block aspect-752/564 h-[clamp(5.5rem,14vw,11rem)] overflow-hidden sm:-ml-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       ref={logoRef}
@@ -325,7 +325,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
                     <HaloLogoOriginal
                       imageRef={logoRef}
                       style={{ filter: "url(#halo-logo-clean)" }}
-                      className="h-23 w-auto transition-opacity duration-500 ease-out sm:h-28 md:h-40"
+                      className="h-[clamp(5.75rem,10vw,10rem)] w-auto transition-opacity duration-500 ease-out"
                     />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

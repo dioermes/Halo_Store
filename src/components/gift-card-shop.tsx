@@ -20,18 +20,18 @@ export function GiftCardShop({ media }: { media: SiteMedia }) {
       aria-labelledby="gift-card-title"
     >
       <div className="w-full">
-        <div className="relative h-[38svh] min-h-60 max-h-105 overflow-hidden bg-[#c5cebc] sm:h-[58vw] sm:min-h-90 sm:max-h-180">
+        <div className="relative min-h-[clamp(15rem,42svh,32rem)] overflow-hidden bg-[#c5cebc]">
           <SiteMediaView key={media.url} media={media} alt="Video gift card Halo Store" />
         </div>
 
         <div className="mx-auto max-w-5xl px-5 py-9 text-center sm:px-8 sm:py-12">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-ivory-dim">
+            <p className="text-[clamp(0.625rem,1vw,0.75rem)] uppercase tracking-[0.24em] text-ivory-dim">
               <strong>Gift Card</strong>
             </p>
             <h2
               id="gift-card-title"
-              className="mt-2 font-display text-3xl text-[#3f1521] sm:text-4xl"
+              className="mt-2 font-display text-[clamp(1.875rem,4vw,2.75rem)] text-[#3f1521]"
             >
               Il regalo perfetto!
             </h2>
@@ -55,7 +55,7 @@ export function GiftCardShop({ media }: { media: SiteMedia }) {
                     setAdded(false);
                   }}
                   aria-pressed={amount === value}
-                  className={`rounded-md border px-2 py-2.5 text-xs transition-colors sm:text-sm ${
+                  className={`rounded-md border px-2 py-[clamp(0.6rem,1.4vw,0.85rem)] text-[clamp(0.7rem,1.2vw,0.875rem)] transition-colors ${
                     amount === value
                       ? "border-[#3f1521] bg-[#3f1521] text-white"
                       : "border-[#3f1521]/20 bg-white text-[#3f1521] hover:border-[#3f1521]"
@@ -76,7 +76,7 @@ export function GiftCardShop({ media }: { media: SiteMedia }) {
                 setAdded(true);
                 openBag();
               }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#3f1521] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#65203a] sm:text-sm"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#3f1521] px-5 py-[clamp(0.85rem,1.8vw,1.1rem)] text-[clamp(0.7rem,1.2vw,0.875rem)] font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#65203a]"
             >
               <ShoppingBag className="h-4 w-4" aria-hidden />
               {added ? "Aggiunta al carrello" : "Aggiungi al carrello"}

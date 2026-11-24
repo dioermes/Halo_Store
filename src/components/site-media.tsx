@@ -6,6 +6,8 @@ import type { SiteMedia } from "@/lib/site";
 
 const playing = new Set<HTMLVideoElement>();
 
+export type VideoSource = { src: string; media?: string };
+
 function playExclusive(video: HTMLVideoElement) {
   for (const other of playing) {
     if (other !== video) {
@@ -24,16 +26,20 @@ function stopPlayback(video: HTMLVideoElement) {
 
 function LazyVideo({
   url,
+  sources,
   alt,
   className,
   crossOrigin,
   playback = "visible",
+  eager = false,
 }: {
   url: string;
+  sources?: VideoSource[];
   alt: string;
   className?: string;
   crossOrigin?: "anonymous";
   playback?: "visible" | "hover";
+  eager?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -43,8 +49,10 @@ function LazyVideo({
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
       ?.saveData;
 
-    const inView = (entry: IntersectionObserverEntry) =>
-      entry.isIntersecting && entry.intersectionRatio >= 0.35 && video.getClientRects().length > 0;
+    const inView = (entry: IntersectionObserverEntry) => {
+      if (!entry.isIntersecting || video.getClientRects().length === 0) return false;
+      return eager || entry.intersectionRatio >= 0.2;
+    };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -55,7 +63,7 @@ function LazyVideo({
         if (inView(entry)) playExclusive(video);
         else stopPlayback(video);
       },
-      { threshold: [0, 0.35, 0.7] },
+      { threshold: eager ? [0, 0.01, 0.2] : [0, 0.2, 0.5] },
     );
     observer.observe(video);
 
@@ -71,27 +79,36 @@ function LazyVideo({
       host?.addEventListener("pointerleave", onLeave);
     }
 
+    if (eager && !saveData) {
+      video.preload = "auto";
+      void video.play().catch(() => undefined);
+    }
+
     return () => {
       observer.disconnect();
       host?.removeEventListener("pointerenter", onEnter);
       host?.removeEventListener("pointerleave", onLeave);
       stopPlayback(video);
     };
-  }, [url, playback]);
+  }, [url, playback, eager, sources]);
 
   return (
     <video
       ref={ref}
       className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
-      src={url}
+      src={sources?.length ? undefined : url}
       crossOrigin={crossOrigin}
-      preload="metadata"
+      preload={eager ? "auto" : "metadata"}
       muted
       loop
       playsInline
       disablePictureInPicture
       aria-label={alt}
-    />
+    >
+      {sources?.map((source) => (
+        <source key={`${source.media ?? ""}:${source.src}`} src={source.src} media={source.media} />
+      ))}
+    </video>
   );
 }
 
@@ -102,6 +119,7 @@ export function SiteMediaView({
   priority = false,
   samplePixels = false,
   playback = "visible",
+  sources,
 }: {
   media: SiteMedia;
   alt: string;
@@ -109,16 +127,19 @@ export function SiteMediaView({
   priority?: boolean;
   samplePixels?: boolean;
   playback?: "visible" | "hover";
+  sources?: VideoSource[];
 }) {
   if (!media.url) return null;
   if (media.kind === "video") {
     return (
       <LazyVideo
         url={media.url}
+        sources={sources}
         alt={alt}
         className={className}
         crossOrigin={samplePixels ? "anonymous" : undefined}
         playback={playback}
+        eager={priority}
       />
     );
   }

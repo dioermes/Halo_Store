@@ -18,7 +18,7 @@ export async function SiteFooter() {
       <div className="halo-shell relative pt-20 pb-32 md:pb-20">
         <div className="flex flex-col gap-16 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
-            <HaloLogoOriginal className="h-20 w-auto sm:h-24" />
+            <HaloLogoOriginal className="h-[clamp(5rem,8vw,7.5rem)] w-auto" />
             <div className="mt-6 space-y-3 text-sm leading-relaxed text-ivory-dim">
               <p>Abbigliamento uomo.</p>
               <p>Outfit di nicchia, capi selezionati e attenzione ai dettagli.</p>

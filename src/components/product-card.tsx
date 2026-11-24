@@ -218,7 +218,7 @@ export function ProductCard({
           className="flex min-h-19 flex-col items-center px-2 pt-2 text-center sm:min-h-21 sm:pt-2.5"
           aria-label={soldOut ? `${product.name}, esaurito` : `${product.name}, ${formatPrice(product.price)}`}
         >
-          <p className="font-display halo-product-name text-[1.35rem] leading-[1.05] tracking-[-0.02em] sm:text-[1.7rem]">
+          <p className="font-display halo-product-name text-[clamp(1.35rem,2.4vw,1.85rem)] leading-[1.05] tracking-[-0.02em]">
             {product.name}
           </p>
           <div className="mt-1">

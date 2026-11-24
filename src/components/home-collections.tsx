@@ -15,14 +15,14 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
 
   return (
     <section
-      className="grid grid-cols-2 gap-2 bg-white p-2 lg:grid-cols-4 lg:gap-1 lg:p-1"
+      className="grid grid-cols-2 gap-2 bg-white p-2 md:grid-cols-4 md:gap-1 md:p-1"
       aria-label="Collezioni in evidenza"
     >
       {visible.map(({ section, tag }) => (
         <Link
           key={section.id}
           href={`/catalogo?tag=${encodeURIComponent(tag)}`}
-          className="group relative isolate min-h-[48svh] overflow-hidden bg-ink-soft sm:min-h-[60svh] lg:h-[calc(100svh-0.5rem)] lg:min-h-0"
+          className="group relative isolate min-h-[clamp(16rem,42svh,28rem)] overflow-hidden bg-ink-soft"
           aria-label={`Scopri ${section.title}`}
         >
           <SiteMediaView
@@ -40,7 +40,7 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
             aria-hidden
             className="absolute inset-0 bg-linear-to-t from-black/65 via-transparent to-transparent"
           />
-          <span className="absolute inset-x-4 bottom-5 z-10 text-xs font-semibold uppercase tracking-[0.16em] text-white sm:inset-x-5 sm:bottom-6 sm:text-sm">
+          <span className="absolute inset-x-4 bottom-5 z-10 text-[clamp(0.7rem,1.35vw,0.9rem)] font-semibold uppercase tracking-[0.16em] text-white sm:inset-x-5 sm:bottom-6">
             {section.title}
           </span>
         </Link>

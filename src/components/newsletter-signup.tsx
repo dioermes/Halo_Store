@@ -58,7 +58,7 @@ export function NewsletterSignup({
       <div className="mx-auto max-w-2xl text-center">
         <h2
           id="newsletter-signup-title"
-          className="font-display text-3xl tracking-[0.08em] sm:text-4xl"
+          className="font-display text-[clamp(1.875rem,4vw,2.75rem)] tracking-[0.08em]"
         >
           ENTRA NEL MONDO DI HALO
         </h2>
