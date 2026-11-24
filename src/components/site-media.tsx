@@ -56,6 +56,7 @@ function LazyVideo({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (entry.isIntersecting && !eager) video.preload = "auto";
         if (saveData || playback === "hover") {
           if (!inView(entry)) stopPlayback(video);
           return;
@@ -63,7 +64,10 @@ function LazyVideo({
         if (inView(entry)) playExclusive(video);
         else stopPlayback(video);
       },
-      { threshold: eager ? [0, 0.01, 0.2] : [0, 0.2, 0.5] },
+      {
+        rootMargin: eager ? "0px" : "240px 0px",
+        threshold: eager ? [0, 0.01, 0.2] : [0, 0.2, 0.5],
+      },
     );
     observer.observe(video);
 
@@ -98,11 +102,12 @@ function LazyVideo({
       className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
       src={sources?.length ? undefined : url}
       crossOrigin={crossOrigin}
-      preload={eager ? "auto" : "metadata"}
+      preload={eager ? "auto" : "none"}
       muted
       loop
       playsInline
       disablePictureInPicture
+      fetchPriority={eager ? "high" : "low"}
       aria-label={alt}
     >
       {sources?.map((source) => (

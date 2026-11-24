@@ -275,7 +275,7 @@ export function SiteNav({ categories = [] }: { categories?: StoreCategory[] }) {
       >
         <nav
           ref={navRef}
-          className="mx-auto flex max-w-336 items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4"
+          className="flex w-full items-center justify-between px-4 pt-3 sm:px-8 sm:pt-4 lg:px-10"
         >
           <Link
             href="/"

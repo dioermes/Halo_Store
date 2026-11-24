@@ -20,7 +20,7 @@ export function GiftCardShop({ media }: { media: SiteMedia }) {
       aria-labelledby="gift-card-title"
     >
       <div className="w-full">
-        <div className="relative min-h-[clamp(15rem,42svh,32rem)] overflow-hidden bg-[#c5cebc]">
+        <div className="relative aspect-video w-full overflow-hidden bg-[#c5cebc]">
           <SiteMediaView key={media.url} media={media} alt="Video gift card Halo Store" />
         </div>
 

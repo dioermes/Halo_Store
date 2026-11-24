@@ -29,15 +29,7 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
   const desktopMedia = appearance.heroDesktop;
   const mobileMedia = appearance.heroMobile;
   const videoHero = desktopMedia.kind === "video" || mobileMedia.kind === "video";
-  const bothVideo = desktopMedia.kind === "video" && mobileMedia.kind === "video";
   const media = desktop ? desktopMedia : mobileMedia;
-  const sources =
-    bothVideo && desktopMedia.url !== mobileMedia.url
-      ? [
-          { src: desktopMedia.url, media: "(min-width: 768px)" },
-          { src: mobileMedia.url },
-        ]
-      : undefined;
   const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.4 });
   const mediaY = useTransform(smooth, [0, 1], ["0%", reduceMotion || videoHero ? "0%" : "12%"]);
   const destination = (button: SiteAppearance["heroButtons"]["shopNow"]) =>
@@ -54,12 +46,10 @@ export function Hero({ appearance }: { appearance: SiteAppearance }) {
       <h1 className="sr-only">Halo Store</h1>
       <motion.div style={{ y: mediaY }} className="absolute inset-0">
         <SiteMediaView
-          key={sources ? `${desktopMedia.url}|${mobileMedia.url}` : media.url}
-          media={bothVideo ? mobileMedia : media}
-          sources={sources}
+          key={media.url}
+          media={media}
           alt="Halo Store"
           priority
-          samplePixels
           className="h-full w-full object-cover"
         />
       </motion.div>
