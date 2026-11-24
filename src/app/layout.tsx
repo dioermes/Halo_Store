@@ -96,7 +96,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       }
     >
       {appearance.heroMobile.kind === "video" ? (
-        <link rel="preload" as="video" href={appearance.heroMobile.url.split("#")[0]} />
+        <link
+          rel="preload"
+          as="video"
+          href={appearance.heroMobile.url.split("#")[0]}
+          media="(max-width: 767px)"
+        />
+      ) : null}
+      {appearance.heroDesktop.kind === "video" ? (
+        <link
+          rel="preload"
+          as="video"
+          href={(appearance.heroDesktop.urlHd ?? appearance.heroDesktop.url).split("#")[0]}
+          media="(min-width: 768px)"
+        />
       ) : null}
       <body
         className="min-h-full"
@@ -135,13 +148,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </FavoritesProvider>
           </StoreContactProvider>
         </ClerkProvider>
-        {appearance.heroMobile.kind === "video" ? (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(function(){var v=document.getElementById("halo-hero-video");if(!v)return;v.muted=true;v.defaultMuted=true;v.playsInline=true;v.play().catch(function(){});})();`,
-            }}
-          />
-        ) : null}
       </body>
     </html>
   );

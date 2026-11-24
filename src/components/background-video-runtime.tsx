@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { assignDeviceVideoSrc } from "@/lib/pick-video-src";
 
 function clip(id: string) {
   return document.getElementById(id) as HTMLVideoElement | null;
@@ -9,21 +10,6 @@ function clip(id: string) {
 function layoutBox(video: HTMLVideoElement) {
   const rect = video.getBoundingClientRect();
   return { rect, unknown: rect.width <= 0 && rect.height <= 0 };
-}
-
-export function HeroDesktopSwap({ id }: { id: string }) {
-  useEffect(() => {
-    const video = clip(id);
-    const desktopSrc = video?.dataset.desktopSrc;
-    if (!video || !desktopSrc) return;
-    if (!window.matchMedia("(min-width: 768px)").matches) return;
-    const current = video.currentSrc || video.getAttribute("src") || "";
-    if (current.includes(desktopSrc.split("#")[0])) return;
-    video.src = desktopSrc;
-    video.muted = true;
-    void video.play().catch(() => undefined);
-  }, [id]);
-  return null;
 }
 
 export function PlayWhenVisible({ id, eager = false }: { id: string; eager?: boolean }) {
@@ -40,11 +26,7 @@ export function PlayWhenVisible({ id, eager = false }: { id: string; eager?: boo
         return;
       }
       if (rect.bottom > 0 && rect.top < window.innerHeight) {
-        const pending = video.dataset.src;
-        const desktop = video.dataset.desktopSrc;
-        const next =
-          desktop && window.matchMedia("(min-width: 768px)").matches ? desktop : pending;
-        if (next && !video.getAttribute("src")) video.src = next;
+        assignDeviceVideoSrc(video);
         video.preload = "auto";
         void video.play().catch(() => undefined);
       } else if (!eager) {

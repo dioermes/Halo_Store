@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { AutoplayClip } from "@/components/autoplay-clip";
-import { HeroDesktopSwap } from "@/components/background-video-runtime";
 import { HeroButtons } from "@/components/hero";
 import type { SiteAppearance } from "@/lib/site";
 
@@ -13,7 +12,7 @@ export function HeroSection({ appearance }: { appearance: SiteAppearance }) {
     desktop.kind === "video"
       ? desktop.urlHd ?? desktop.url
       : mobile.kind === "video"
-        ? mobile.urlHd
+        ? mobile.urlHd ?? mobile.url
         : undefined;
 
   return (
@@ -42,7 +41,6 @@ export function HeroSection({ appearance }: { appearance: SiteAppearance }) {
           />
         )}
       </div>
-      {isVideo ? <HeroDesktopSwap id="halo-hero-video" /> : null}
       <HeroButtons appearance={appearance} />
     </section>
   );

@@ -1,12 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { assignDeviceVideoSrc, cleanMediaUrl } from "@/lib/pick-video-src";
 import type { SiteMedia } from "@/lib/site";
 
 const playing = new Set<HTMLVideoElement>();
-
-export type VideoSource = { src: string; media?: string };
 
 function playExclusive(video: HTMLVideoElement) {
   for (const other of playing) {
@@ -47,14 +46,14 @@ export function armBackgroundVideo(video: HTMLVideoElement) {
 
 function LazyVideo({
   url,
-  sources,
+  urlHd,
   className,
   crossOrigin,
   playback = "visible",
   eager = false,
 }: {
   url: string;
-  sources?: VideoSource[];
+  urlHd?: string;
   alt: string;
   className?: string;
   crossOrigin?: "anonymous";
@@ -62,6 +61,12 @@ function LazyVideo({
   eager?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+
+  useLayoutEffect(() => {
+    const video = ref.current;
+    if (!video || !eager) return;
+    assignDeviceVideoSrc(video);
+  }, [url, urlHd, eager]);
 
   useEffect(() => {
     const video = ref.current;
@@ -74,6 +79,7 @@ function LazyVideo({
 
     if (eager) {
       video.preload = "auto";
+      assignDeviceVideoSrc(video);
       const release = armBackgroundVideo(video);
       return () => {
         release();
@@ -85,6 +91,7 @@ function LazyVideo({
     let release: (() => void) | undefined;
 
     const start = () => {
+      assignDeviceVideoSrc(video);
       video.preload = "auto";
       release ??= armBackgroundVideo(video);
       playExclusive(video);
@@ -129,13 +136,14 @@ function LazyVideo({
       host.removeEventListener("pointerleave", onLeave);
       stop();
     };
-  }, [url, playback, eager, sources]);
+  }, [url, urlHd, playback, eager]);
 
   return (
     <video
       ref={ref}
       className={`halo-bg-video absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
-      src={sources?.length ? undefined : url.split("#")[0]}
+      data-mobile-src={cleanMediaUrl(url)}
+      data-desktop-src={cleanMediaUrl(urlHd || url)}
       crossOrigin={crossOrigin}
       preload={eager ? "auto" : "none"}
       autoPlay={eager}
@@ -148,15 +156,7 @@ function LazyVideo({
       aria-hidden
       tabIndex={-1}
       {...{ "webkit-playsinline": "true", "x-webkit-airplay": "deny" }}
-    >
-      {sources?.map((source) => (
-        <source
-          key={`${source.media ?? ""}:${source.src}`}
-          src={source.src.split("#")[0]}
-          media={source.media}
-        />
-      ))}
-    </video>
+    />
   );
 }
 
@@ -167,7 +167,6 @@ export function SiteMediaView({
   priority = false,
   samplePixels = false,
   playback = "visible",
-  sources,
 }: {
   media: SiteMedia;
   alt: string;
@@ -175,22 +174,13 @@ export function SiteMediaView({
   priority?: boolean;
   samplePixels?: boolean;
   playback?: "visible" | "hover";
-  sources?: VideoSource[];
 }) {
   if (!media.url) return null;
   if (media.kind === "video") {
-    const hdSources =
-      sources ??
-      (media.urlHd
-        ? [
-            { src: media.urlHd, media: "(min-width: 768px)" },
-            { src: media.url },
-          ]
-        : undefined);
     return (
       <LazyVideo
         url={media.url}
-        sources={hdSources}
+        urlHd={media.urlHd}
         alt={alt}
         className={className}
         crossOrigin={samplePixels ? "anonymous" : undefined}

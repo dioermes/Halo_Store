@@ -15,27 +15,29 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
 
   return (
     <section
-      className="grid grid-cols-2 gap-2 bg-white p-2 md:grid-cols-4 md:gap-1 md:p-1"
+      className="grid grid-cols-2 gap-2 bg-white p-2 lg:grid-cols-4 lg:gap-1 lg:p-1"
       aria-label="Collezioni in evidenza"
     >
       {visible.map(({ section, tag }) => (
         <Link
           key={section.id}
           href={`/catalogo?tag=${encodeURIComponent(tag)}`}
-          className="group relative isolate min-h-[clamp(16rem,42svh,28rem)] overflow-hidden bg-ink-soft"
+          className="group relative block min-h-[48svh] w-full min-w-0 overflow-hidden bg-ink-soft sm:min-h-[60svh] lg:min-h-[calc(100svh-0.5rem)]"
           aria-label={`Scopri ${section.title}`}
         >
-          <SiteMediaView
-            media={
-              section.interlude ?? {
-                url: ambientImages.interior,
-                kind: "image",
+          <div className="absolute inset-0">
+            <SiteMediaView
+              media={
+                section.interlude ?? {
+                  url: ambientImages.interior,
+                  kind: "image",
+                }
               }
-            }
-            alt={section.title}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-            playback="hover"
-          />
+              alt={section.title}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              playback="hover"
+            />
+          </div>
           <div
             aria-hidden
             className="absolute inset-0 bg-linear-to-t from-black/65 via-transparent to-transparent"
