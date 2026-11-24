@@ -69,6 +69,7 @@ function HeroClip({ src }: { src: string }) {
       disablePictureInPicture
       disableRemotePlayback
       aria-hidden
+      {...{ "webkit-playsinline": "true", "x-webkit-airplay": "deny" }}
     />
   );
 }

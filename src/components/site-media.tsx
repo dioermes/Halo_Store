@@ -26,28 +26,42 @@ function stopPlayback(video: HTMLVideoElement) {
 
 export function armBackgroundVideo(video: HTMLVideoElement) {
   video.controls = false;
+  video.removeAttribute("controls");
   video.muted = true;
   video.defaultMuted = true;
   video.playsInline = true;
-  video.setAttribute("playsinline", "");
+  video.setAttribute("playsinline", "true");
   video.setAttribute("webkit-playsinline", "true");
   video.disablePictureInPicture = true;
   const play = () => {
+    video.controls = false;
+    video.muted = true;
     if (!video.paused) return;
     void video.play().catch(() => undefined);
   };
+  const onPlaying = () => {
+    video.controls = false;
+    video.classList.add("is-playing");
+  };
+  const onPause = () => {
+    video.classList.remove("is-playing");
+    play();
+  };
   play();
-  video.addEventListener("pause", play);
+  video.addEventListener("playing", onPlaying);
+  video.addEventListener("pause", onPause);
   video.addEventListener("canplay", play);
   video.addEventListener("loadeddata", play);
   document.addEventListener("touchstart", play, { passive: true });
-  document.addEventListener("click", play);
+  document.addEventListener("pointerdown", play, { passive: true });
   return () => {
-    video.removeEventListener("pause", play);
+    video.classList.remove("is-playing");
+    video.removeEventListener("playing", onPlaying);
+    video.removeEventListener("pause", onPause);
     video.removeEventListener("canplay", play);
     video.removeEventListener("loadeddata", play);
     document.removeEventListener("touchstart", play);
-    document.removeEventListener("click", play);
+    document.removeEventListener("pointerdown", play);
   };
 }
 
@@ -152,6 +166,7 @@ function LazyVideo({
       disableRemotePlayback
       aria-hidden
       tabIndex={-1}
+      {...{ "webkit-playsinline": "true", "x-webkit-airplay": "deny" }}
     >
       {sources?.map((source) => (
         <source key={`${source.media ?? ""}:${source.src}`} src={source.src} media={source.media} />

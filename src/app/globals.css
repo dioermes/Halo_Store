@@ -311,20 +311,28 @@ input[type="range"] {
 
 .halo-bg-video {
   pointer-events: none;
+  opacity: 0;
 }
 
-.halo-bg-video::-webkit-media-controls,
-.halo-bg-video::-webkit-media-controls-enclosure,
-.halo-bg-video::-webkit-media-controls-panel,
-.halo-bg-video::-webkit-media-controls-overlay-play-button,
-.halo-bg-video::-webkit-media-controls-start-playback-button {
+.halo-bg-video.is-playing {
+  opacity: 1;
+}
+
+video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-start-playback-button {
   display: none !important;
   appearance: none;
   -webkit-appearance: none;
   opacity: 0 !important;
-  pointer-events: none;
+  pointer-events: none !important;
   width: 0 !important;
   height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

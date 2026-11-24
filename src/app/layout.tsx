@@ -13,6 +13,7 @@ import { StructuredData, NavigationData } from "@/components/structured-data";
 import { CookieBanner } from "@/components/cookie-banner";
 import { NewsletterPopup } from "@/components/newsletter-popup";
 import { WhatsAppSupport } from "@/components/whatsapp-support";
+import { UnlockVideos } from "@/components/unlock-videos";
 import { storeConfig, fullAddress } from "@/lib/store-config";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getPublishedProducts } from "@/lib/catalog";
@@ -118,6 +119,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <StoreContactProvider contact={contact}>
           <FavoritesProvider>
             <ReservationProvider products={products}>
+              <UnlockVideos />
               <HaloCursor />
               <SiteNav categories={categories} />
               <main id="top">{children}</main>
