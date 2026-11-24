@@ -85,6 +85,7 @@ function LazyVideo({
 
     if (eager && !saveData) {
       video.preload = "auto";
+      video.setAttribute("fetchpriority", "high");
       void video.play().catch(() => undefined);
     }
 
@@ -107,7 +108,6 @@ function LazyVideo({
       loop
       playsInline
       disablePictureInPicture
-      fetchPriority={eager ? "high" : "low"}
       aria-label={alt}
     >
       {sources?.map((source) => (
