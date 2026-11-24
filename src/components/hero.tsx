@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { SiteMediaView } from "@/components/site-media";
+import { armBackgroundVideo, SiteMediaView } from "@/components/site-media";
 import type { SiteAppearance } from "@/lib/site";
 
 function useDesktop() {
@@ -26,32 +26,49 @@ function HeroClip({ src }: { src: string }) {
     if (!video) return;
     video.muted = true;
     video.defaultMuted = true;
+    video.controls = false;
     video.playsInline = true;
     video.setAttribute("webkit-playsinline", "true");
+
+    let release: (() => void) | undefined;
     const start = () => {
-      void video.play().catch(() => undefined);
+      release ??= armBackgroundVideo(video);
     };
+    const stop = () => {
+      release?.();
+      release = undefined;
+      video.pause();
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) start();
+        else stop();
+      },
+      { threshold: 0 },
+    );
+    observer.observe(video.parentElement ?? video);
     start();
-    video.addEventListener("canplay", start);
-    video.addEventListener("loadeddata", start);
     return () => {
-      video.removeEventListener("canplay", start);
-      video.removeEventListener("loadeddata", start);
+      observer.disconnect();
+      stop();
     };
   }, [src]);
 
   return (
     <video
       ref={ref}
-      className="absolute inset-0 h-full w-full object-cover"
+      className="halo-bg-video absolute inset-0 h-full w-full object-cover"
       src={src}
       autoPlay
       muted
       loop
       playsInline
+      controls={false}
       preload="auto"
       disablePictureInPicture
-      aria-label="Halo Store"
+      disableRemotePlayback
+      aria-hidden
     />
   );
 }

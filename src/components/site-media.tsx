@@ -24,6 +24,33 @@ function stopPlayback(video: HTMLVideoElement) {
   playing.delete(video);
 }
 
+export function armBackgroundVideo(video: HTMLVideoElement) {
+  video.controls = false;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "true");
+  video.disablePictureInPicture = true;
+  const play = () => {
+    if (!video.paused) return;
+    void video.play().catch(() => undefined);
+  };
+  play();
+  video.addEventListener("pause", play);
+  video.addEventListener("canplay", play);
+  video.addEventListener("loadeddata", play);
+  document.addEventListener("touchstart", play, { passive: true });
+  document.addEventListener("click", play);
+  return () => {
+    video.removeEventListener("pause", play);
+    video.removeEventListener("canplay", play);
+    video.removeEventListener("loadeddata", play);
+    document.removeEventListener("touchstart", play);
+    document.removeEventListener("click", play);
+  };
+}
+
 function LazyVideo({
   url,
   sources,
@@ -48,74 +75,83 @@ function LazyVideo({
     if (!video) return;
     video.muted = true;
     video.defaultMuted = true;
+    video.controls = false;
     video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("webkit-playsinline", "true");
 
     if (eager) {
       video.dataset.keepPlaying = "true";
       video.preload = "auto";
-      void video.play().catch(() => undefined);
+      const release = armBackgroundVideo(video);
       return () => {
+        release();
         delete video.dataset.keepPlaying;
         stopPlayback(video);
       };
     }
 
-    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
-      ?.saveData;
+    const host = video.parentElement ?? video;
+    let release: (() => void) | undefined;
 
-    const inView = (entry: IntersectionObserverEntry) => {
-      if (!entry.isIntersecting || video.getClientRects().length === 0) return false;
-      return entry.intersectionRatio >= 0.2;
+    const start = () => {
+      video.preload = "auto";
+      release ??= armBackgroundVideo(video);
+      playExclusive(video);
+    };
+    const stop = () => {
+      release?.();
+      release = undefined;
+      stopPlayback(video);
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) video.preload = "auto";
-        if (saveData || playback === "hover") {
-          if (!inView(entry)) stopPlayback(video);
+        if (playback === "hover") {
+          if (!entry.isIntersecting) stop();
           return;
         }
-        if (inView(entry)) playExclusive(video);
-        else stopPlayback(video);
+        if (entry.isIntersecting) start();
+        else stop();
       },
-      { rootMargin: "120px 0px", threshold: [0, 0.2, 0.5] },
+      { rootMargin: "280px 0px", threshold: 0 },
     );
-    observer.observe(video);
+    observer.observe(host);
 
     const onEnter = () => {
-      if (playback === "hover" && !saveData) playExclusive(video);
+      if (playback === "hover") start();
     };
     const onLeave = () => {
-      if (playback === "hover") stopPlayback(video);
+      if (playback === "hover") stop();
     };
-    const host = video.parentElement;
     if (playback === "hover") {
-      host?.addEventListener("pointerenter", onEnter);
-      host?.addEventListener("pointerleave", onLeave);
+      host.addEventListener("pointerenter", onEnter);
+      host.addEventListener("pointerleave", onLeave);
     }
 
     return () => {
       observer.disconnect();
-      host?.removeEventListener("pointerenter", onEnter);
-      host?.removeEventListener("pointerleave", onLeave);
-      stopPlayback(video);
+      host.removeEventListener("pointerenter", onEnter);
+      host.removeEventListener("pointerleave", onLeave);
+      stop();
     };
   }, [url, playback, eager, sources]);
 
   return (
     <video
       ref={ref}
-      className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
+      className={`halo-bg-video absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
       src={sources?.length ? undefined : url}
       crossOrigin={crossOrigin}
       preload={eager ? "auto" : "none"}
-      autoPlay={eager}
+      autoPlay={playback !== "hover"}
       muted
       loop
       playsInline
+      controls={false}
       disablePictureInPicture
-      aria-label={alt}
+      disableRemotePlayback
+      aria-hidden
+      tabIndex={-1}
     >
       {sources?.map((source) => (
         <source key={`${source.media ?? ""}:${source.src}`} src={source.src} media={source.media} />

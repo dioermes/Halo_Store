@@ -309,6 +309,24 @@ input[type="range"] {
   animation: halo-nav-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.halo-bg-video {
+  pointer-events: none;
+}
+
+.halo-bg-video::-webkit-media-controls,
+.halo-bg-video::-webkit-media-controls-enclosure,
+.halo-bg-video::-webkit-media-controls-panel,
+.halo-bg-video::-webkit-media-controls-overlay-play-button,
+.halo-bg-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+  opacity: 0 !important;
+  pointer-events: none;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -21,7 +21,12 @@ export function GiftCardShop({ media }: { media: SiteMedia }) {
     >
       <div className="w-full">
         <div className="relative aspect-video w-full overflow-hidden bg-[#c5cebc]">
-          <SiteMediaView key={media.url} media={media} alt="Video gift card Halo Store" />
+          <SiteMediaView
+            key={media.url}
+            media={media}
+            alt="Video gift card Halo Store"
+            playback="visible"
+          />
         </div>
 
         <div className="mx-auto max-w-5xl px-5 py-9 text-center sm:px-8 sm:py-12">
