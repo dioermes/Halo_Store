@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { assignDeviceVideoSrc } from "@/lib/pick-video-src";
+import { assignDeviceVideoSrc, watchDeviceVideoSrc } from "@/lib/pick-video-src";
 
 function clip(id: string) {
   return document.getElementById(id) as HTMLVideoElement | null;
@@ -36,10 +36,10 @@ export function PlayWhenVisible({ id, eager = false }: { id: string; eager?: boo
 
     sync();
     window.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
+    const stopWatch = watchDeviceVideoSrc(video);
     return () => {
       window.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
+      stopWatch();
     };
   }, [id, eager]);
   return null;

@@ -142,8 +142,18 @@ export async function uploadAdminFile(file: File, onStatus?: (message: string) =
   }
 
   if (file.type.startsWith("video/")) {
-    const { compressAdminVideo } = await import("@/lib/compress-video");
-    const { mobile, hd } = await compressAdminVideo(file, onStatus);
+    const { canUploadOriginalVideo, compressAdminVideo } = await import("@/lib/compress-video");
+    let mobile: File;
+    let hd: File | null = null;
+    try {
+      const compressed = await compressAdminVideo(file, onStatus);
+      mobile = compressed.mobile;
+      hd = compressed.hd;
+    } catch (error) {
+      if (!canUploadOriginalVideo(file)) throw error;
+      onStatus?.("Salvo il file originale (compressione troppo pesante)…");
+      mobile = file;
+    }
     onStatus?.("Carico la versione telefono…");
     const url = await putFile(mobile, onStatus);
     if (!hd) return { url, kind: "video" };

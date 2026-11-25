@@ -19,3 +19,19 @@ export function assignDeviceVideoSrc(video: HTMLVideoElement) {
   if (video.getAttribute("src") !== next) video.src = next;
   return next;
 }
+
+export function watchDeviceVideoSrc(video: HTMLVideoElement, options?: { assignNow?: boolean }) {
+  const apply = () => {
+    const before = video.getAttribute("src") ?? "";
+    if (!options?.assignNow && !before) return;
+    const next = assignDeviceVideoSrc(video);
+    if (!next || before === next) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    void video.play().catch(() => undefined);
+  };
+  if (options?.assignNow) apply();
+  const media = window.matchMedia(DESKTOP_VIDEO_MQ);
+  media.addEventListener("change", apply);
+  return () => media.removeEventListener("change", apply);
+}

@@ -6,8 +6,11 @@ const CORE_MIRRORS = [
   "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd",
 ];
 
-const ENCODE_MS = 180_000;
+const ENCODE_MS = 300_000;
+const REMUX_MS = 60_000;
 const LOAD_MS = 120_000;
+const MIN_OUTPUT = 64;
+export const MAX_ORIGINAL_UPLOAD_BYTES = 80 * 1024 * 1024;
 
 let ffmpeg: FFmpeg | null = null;
 let loading: Promise<FFmpeg> | null = null;
@@ -87,45 +90,28 @@ function toMp4(data: Uint8Array, name: string) {
   const copy = new Uint8Array(data.byteLength);
   copy.set(data);
   const blob = new Blob([copy], { type: "video/mp4" });
-  if (blob.size < 64) {
+  if (blob.size < MIN_OUTPUT) {
     throw new Error("Compressione video non riuscita. Prova un clip più corto.");
   }
   return new File([blob], name, { type: "video/mp4" });
 }
 
-async function encode(
-  runtime: FFmpeg,
-  inputName: string,
-  outputName: string,
-  edge: number,
-  crf: number,
-  rate?: { maxRate: string; bufferSize: string },
-) {
-  const args = [
-    "-i",
-    inputName,
-    "-vf",
-    `scale=${edge}:${edge}:force_original_aspect_ratio=decrease:force_divisible_by=2`,
-    "-c:v",
-    "libx264",
-    "-profile:v",
-    "high",
-    "-pix_fmt",
-    "yuv420p",
-    "-crf",
-    String(crf),
-  ];
-  if (rate) {
-    args.push("-maxrate", rate.maxRate, "-bufsize", rate.bufferSize);
-  }
-  args.push("-preset", "veryfast", "-movflags", "+faststart", "-an", "-y", outputName);
-  const code = await withTimeout(
-    runtime.exec(args, ENCODE_MS),
-    ENCODE_MS + 5_000,
-    "La compressione sta impiegando troppo. Prova un clip più corto.",
-  );
-  if (code !== 0) {
-    throw new Error("Compressione video non riuscita. Prova un clip più corto o un altro formato (MP4).");
+export function canUploadOriginalVideo(file: File) {
+  const name = file.name.toLowerCase();
+  const typeOk =
+    file.type === "video/mp4" ||
+    file.type === "video/quicktime" ||
+    name.endsWith(".mp4") ||
+    name.endsWith(".mov");
+  return typeOk && file.size >= MIN_OUTPUT && file.size <= MAX_ORIGINAL_UPLOAD_BYTES;
+}
+
+async function memfsSize(runtime: FFmpeg, name: string) {
+  try {
+    const data = await runtime.readFile(name);
+    return data instanceof Uint8Array ? data.byteLength : 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -135,6 +121,99 @@ async function readOutput(runtime: FFmpeg, name: string, fileName: string) {
   const file = toMp4(bytes, fileName);
   await runtime.deleteFile(name).catch(() => undefined);
   return file;
+}
+
+async function remuxFaststart(runtime: FFmpeg, rawName: string, outputName: string) {
+  const fastName = `${outputName}.fast.mp4`;
+  try {
+    await withTimeout(
+      runtime.exec(["-i", rawName, "-c", "copy", "-movflags", "+faststart", "-y", fastName]),
+      REMUX_MS,
+      "La compressione sta impiegando troppo. Prova un clip più corto.",
+    );
+    if ((await memfsSize(runtime, fastName)) >= MIN_OUTPUT) {
+      await runtime.deleteFile(rawName).catch(() => undefined);
+      await runtime.rename(fastName, outputName).catch(() => undefined);
+      if ((await memfsSize(runtime, outputName)) >= MIN_OUTPUT) return;
+    }
+    await runtime.deleteFile(fastName).catch(() => undefined);
+  } catch {
+    await runtime.deleteFile(fastName).catch(() => undefined);
+  }
+  if (rawName !== outputName) {
+    await runtime.rename(rawName, outputName).catch(() => undefined);
+  }
+}
+
+async function encode(
+  runtime: FFmpeg,
+  inputName: string,
+  outputName: string,
+  edge: number,
+  crf: number,
+) {
+  const rawName = `${outputName}.raw.mp4`;
+  await runtime.deleteFile(rawName).catch(() => undefined);
+  await runtime.deleteFile(outputName).catch(() => undefined);
+  const args = [
+    "-i",
+    inputName,
+    "-vf",
+    `scale=${edge}:${edge}:force_original_aspect_ratio=decrease:force_divisible_by=2`,
+    "-fpsmax",
+    "30",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-profile:v",
+    "high",
+    "-pix_fmt",
+    "yuv420p",
+    "-crf",
+    String(crf),
+    "-an",
+    "-y",
+    rawName,
+  ];
+  let timedOut = false;
+  const code = await withTimeout(runtime.exec(args), ENCODE_MS, "timeout").catch((error) => {
+    timedOut = true;
+    return asError(error, "timeout");
+  });
+  if (typeof code !== "number") {
+    timedOut = true;
+  }
+  const size = await memfsSize(runtime, rawName);
+  if (size >= MIN_OUTPUT) {
+    await remuxFaststart(runtime, rawName, outputName);
+    if ((await memfsSize(runtime, outputName)) >= MIN_OUTPUT) return;
+    if ((await memfsSize(runtime, rawName)) >= MIN_OUTPUT) {
+      await runtime.rename(rawName, outputName).catch(() => undefined);
+      if ((await memfsSize(runtime, outputName)) >= MIN_OUTPUT) return;
+    }
+  }
+  await runtime.deleteFile(rawName).catch(() => undefined);
+  await runtime.deleteFile(outputName).catch(() => undefined);
+  if (timedOut || code === 1) {
+    throw new Error("La compressione sta impiegando troppo. Prova un clip più corto.");
+  }
+  throw new Error("Compressione video non riuscita. Prova un clip più corto o un altro formato (MP4).");
+}
+
+async function encodeIfPossible(
+  runtime: FFmpeg,
+  inputName: string,
+  outputName: string,
+  edge: number,
+  crf: number,
+) {
+  try {
+    await encode(runtime, inputName, outputName, edge, crf);
+    return (await memfsSize(runtime, outputName)) >= MIN_OUTPUT;
+  } catch {
+    return false;
+  }
 }
 
 export async function compressAdminVideo(file: File, onStatus?: (message: string) => void): Promise<CompressedVideo> {
@@ -154,37 +233,56 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
   const hdName = "out-h.mp4";
   try {
     await runtime.writeFile(inputName, await fetchFile(file));
-    onStatus?.("Comprimo la versione telefono… può richiedere un minuto");
-    try {
-      await encode(runtime, inputName, mobileName, 1280, 18);
-    } catch {
+    onStatus?.("Comprimo la versione telefono… può richiedere qualche minuto");
+    let mobileOk = await encodeIfPossible(runtime, inputName, mobileName, 1280, 23);
+    if (!mobileOk) {
       onStatus?.("Riprovo con un file più leggero…");
-      await encode(runtime, inputName, mobileName, 960, 23);
+      mobileOk = await encodeIfPossible(runtime, inputName, mobileName, 960, 28);
     }
-    const mobile = await readOutput(runtime, mobileName, "video.mp4");
+
+    let mobile: File;
+    if (mobileOk) {
+      mobile = await readOutput(runtime, mobileName, "video.mp4");
+    } else if (canUploadOriginalVideo(file)) {
+      onStatus?.("Salvo il file originale (compressione troppo pesante)…");
+      await runtime.deleteFile(inputName).catch(() => undefined);
+      resetFfmpeg();
+      return { mobile: file, hd: null };
+    } else {
+      throw new Error("Compressione video non riuscita. Prova un clip più corto o un MP4 sotto i 80 MB.");
+    }
 
     onStatus?.("Comprimo la versione HD…");
     let hd: File | null = null;
     try {
-      await encode(runtime, inputName, hdName, 1920, 18, { maxRate: "8000k", bufferSize: "16000k" });
-      hd = await readOutput(runtime, hdName, "video-hd.mp4");
+      const hdOk = await encodeIfPossible(runtime, inputName, hdName, 1920, 23);
+      if (hdOk) hd = await readOutput(runtime, hdName, "video-hd.mp4");
     } catch {
       hd = null;
     }
 
     await runtime.deleteFile(inputName).catch(() => undefined);
+    await runtime.deleteFile(mobileName).catch(() => undefined);
+    await runtime.deleteFile(hdName).catch(() => undefined);
     return { mobile, hd };
   } catch (error) {
-    await resetFfmpeg();
-    const detail = logs.at(-1);
+    resetFfmpeg();
+    if (canUploadOriginalVideo(file)) {
+      onStatus?.("Salvo il file originale (compressione troppo pesante)…");
+      return { mobile: file, hd: null };
+    }
     throw asError(
       error,
-      detail
+      logs.at(-1)
         ? "Compressione video non riuscita. Prova un clip più corto o un MP4."
         : "Compressione video non riuscita. Ricarica la pagina e riprova.",
     );
   } finally {
-    runtime.off("log", onLog);
-    runtime.off("progress", onProgress);
+    try {
+      runtime.off("log", onLog);
+      runtime.off("progress", onProgress);
+    } catch {
+      /* worker already terminated */
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { assignDeviceVideoSrc, cleanMediaUrl } from "@/lib/pick-video-src";
+import { assignDeviceVideoSrc, cleanMediaUrl, watchDeviceVideoSrc } from "@/lib/pick-video-src";
 import type { SiteMedia } from "@/lib/site";
 
 const playing = new Set<HTMLVideoElement>();
@@ -79,9 +79,10 @@ function LazyVideo({
 
     if (eager) {
       video.preload = "auto";
-      assignDeviceVideoSrc(video);
+      const stopWatch = watchDeviceVideoSrc(video, { assignNow: true });
       const release = armBackgroundVideo(video);
       return () => {
+        stopWatch();
         release();
         stopPlayback(video);
       };
@@ -130,7 +131,10 @@ function LazyVideo({
       host.addEventListener("pointerleave", onLeave);
     }
 
+    const stopWatch = watchDeviceVideoSrc(video);
+
     return () => {
+      stopWatch();
       observer.disconnect();
       host.removeEventListener("pointerenter", onEnter);
       host.removeEventListener("pointerleave", onLeave);

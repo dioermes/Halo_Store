@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { assignDeviceVideoSrc, cleanMediaUrl } from "@/lib/pick-video-src";
+import { cleanMediaUrl, watchDeviceVideoSrc } from "@/lib/pick-video-src";
 
 export function AutoplayClip({
   id,
@@ -22,12 +22,11 @@ export function AutoplayClip({
 
   useLayoutEffect(() => {
     const video = ref.current;
-    if (!video || !autoPlay) return;
-    assignDeviceVideoSrc(video);
+    if (!video) return;
     video.muted = true;
     video.defaultMuted = true;
     video.playsInline = true;
-    void video.play().catch(() => undefined);
+    return watchDeviceVideoSrc(video, { assignNow: autoPlay });
   }, [autoPlay, mobile, desktop]);
 
   return (
