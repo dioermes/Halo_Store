@@ -18,7 +18,7 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
       className="grid grid-cols-2 gap-2 bg-white p-2 lg:grid-cols-4 lg:gap-1 lg:p-1"
       aria-label="Collezioni in evidenza"
     >
-      {visible.map(({ section, tag }) => (
+      {visible.map(({ section, tag }, index) => (
         <Link
           key={section.id}
           href={`/catalogo?tag=${encodeURIComponent(tag)}`}
@@ -36,6 +36,8 @@ export function HomeCollections({ sections }: { sections: HomeSection[] }) {
               alt={section.title}
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               playback="hover"
+              sizes="(max-width: 1023px) 50vw, 25vw"
+              priority={index < 2}
             />
           </div>
           <div

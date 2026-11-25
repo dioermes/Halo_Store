@@ -171,6 +171,7 @@ export function SiteMediaView({
   priority = false,
   samplePixels = false,
   playback = "visible",
+  sizes = "100vw",
 }: {
   media: SiteMedia;
   alt: string;
@@ -178,6 +179,7 @@ export function SiteMediaView({
   priority?: boolean;
   samplePixels?: boolean;
   playback?: "visible" | "hover";
+  sizes?: string;
 }) {
   if (!media.url) return null;
   if (media.kind === "video") {
@@ -199,7 +201,7 @@ export function SiteMediaView({
       alt={alt}
       fill
       priority={priority}
-      sizes="100vw"
+      sizes={sizes}
       className={`object-cover ${className ?? ""}`}
     />
   );

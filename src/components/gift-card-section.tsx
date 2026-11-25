@@ -11,7 +11,7 @@ export function GiftCardSection({ media }: { media: SiteMedia }) {
       className="bg-white pb-8 text-[#3f1521] sm:pb-12"
       aria-labelledby="gift-card-title"
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-[#c5cebc]">
+      <div className="relative aspect-video w-full overflow-hidden bg-white">
         {media.kind === "video" && media.url ? (
           <>
             <AutoplayClip

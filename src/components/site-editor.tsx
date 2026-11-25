@@ -615,7 +615,7 @@ export function SiteEditor({
         key="gift-card"
         initial={appearance.giftCardMedia}
         title="Video gift card"
-        description="Foto o video in cima alla sezione gift card della home. Comprimiamo i file da soli in caricamento. Si salva da solo."
+        description="Foto o video in cima alla sezione gift card della home. Il telefono usa la versione compressa, il PC quella HD. Se sul computer è sgranata, ricarica qui il video. Comprimiamo i file da soli. Si salva da solo."
         save={saveGiftCardMediaAction}
         removeLabel="Ripristina originale"
         removedMessage="Ripristinato il video originale."

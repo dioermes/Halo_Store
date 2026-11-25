@@ -260,6 +260,10 @@ export async function compressAdminVideo(file: File, onStatus?: (message: string
     } catch {
       hd = null;
     }
+    if (!hd && canUploadOriginalVideo(file)) {
+      onStatus?.("Uso il file originale per il PC…");
+      hd = file;
+    }
 
     await runtime.deleteFile(inputName).catch(() => undefined);
     await runtime.deleteFile(mobileName).catch(() => undefined);
